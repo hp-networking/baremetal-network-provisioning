@@ -1,0 +1,7 @@
+[run]
+branch = True
+source = networking_vsphere
+omit = baremetal_network_provisioning/tests/*,baremetal_network_provisioning/openstack/*
+
+[report]
+ignore-errors = True
