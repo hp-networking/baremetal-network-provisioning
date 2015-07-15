@@ -1,0 +1,7 @@
+[run]
+branch = True
+source = baremetal_network_provisioning
+omit = baremetal_network_provisioning/tests/*,baremetal_network_provisioning/openstack/*
+
+[report]
+ignore-errors = True
