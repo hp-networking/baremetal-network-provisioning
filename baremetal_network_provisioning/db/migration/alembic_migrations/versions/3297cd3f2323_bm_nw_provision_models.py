@@ -16,14 +16,14 @@
 """bm network provisioning
 
 Revision ID: 3297cd3f2323
-Revises: 599c6a226151
+Revises: start_bm_nw_provisioning
 Create Date: 2015-07-06 00:25:06.980102
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '3297cd3f2323'
-down_revision = '599c6a226151'
+down_revision = 'start_bm_nw_provisioning'
 
 from alembic import op
 import sqlalchemy as sa
