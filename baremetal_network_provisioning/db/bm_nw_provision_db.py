@@ -110,7 +110,7 @@ def delete_hp_ironic_switch_port_mapping(context, record_dict):
     with session.begin(subtransactions=True):
         if(record_dict['neutron_port_id']):
             session.query(models.HPIronicSwitchPortMapping).filter_by(
-                id=record_dict['neutron_port_id']).delete()
+                neutron_port_id=record_dict['neutron_port_id']).delete()
 
 
 def get_hp_ironic_switch_port_mapping_by_neutron_port_id(context, record_dict):
