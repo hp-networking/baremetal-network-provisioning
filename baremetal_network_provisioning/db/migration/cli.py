@@ -15,7 +15,6 @@
 
 from neutron.db.migration.cli import alembic_config
 from neutron.db.migration.cli import CONF
-from neutron.db.migration.cli import *
 import os
 
 
@@ -28,4 +27,3 @@ def main():
     config.neutron_config = CONF
     CONF()
     CONF.command.func(config, CONF.command.name)
-

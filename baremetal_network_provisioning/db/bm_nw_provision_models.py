@@ -40,8 +40,8 @@ class HPIronicSwitchPortMapping(model_base.BASEV2):
     """Define neutron port and HP switch port mapping."""
     neutron_port_id = sa.Column(sa.String(36), primary_key=True)
     switch_port_id = sa.Column(sa.String(36),
-                       sa.ForeignKey('hpswitchports.id',
-                                     ondelete='CASCADE'))
+                               sa.ForeignKey('hpswitchports.id',
+                                             ondelete='CASCADE'))
     lag_id = sa.Column(sa.String(36),
                        sa.ForeignKey('hpswitchlagports.id',
                                      ondelete='CASCADE'))
