@@ -144,8 +144,9 @@ def update_hp_ironic_switch_port_mapping_with_seg_id(context, rec_dict):
     try:
         with context.session.begin(subtransactions=True):
             (context.session.query(models.HPIronicSwitchPortMapping).filter_by(
-                id=rec_dict['id']).update(
+                neutron_port_id=rec_dict['neutron_port_id']).update(
                     {'access_type': rec_dict['access_type'],
+                     'bind_requested': rec_dict['bind_requested'],
                      'segmentation_id': rec_dict['segmentation_id']},
                     synchronize_session=False))
     except exc.NoResultFound:
