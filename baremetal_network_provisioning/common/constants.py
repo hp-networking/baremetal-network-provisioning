@@ -14,8 +14,9 @@
 # under the License.
 # service type constants:
 
-TRUNK = 'TRUNK'
-ACCESS = 'ACCESS'
+TRUNK = 'trunk'
+ACCESS = 'access'
 BIND_IGNORE = 'bind_ignore'
 BIND_SUCCESS = 'bind_success'
+BIND_FAILURE = 'bind_failure'
 HP_VIF_TYPE = 'hp-ironic'

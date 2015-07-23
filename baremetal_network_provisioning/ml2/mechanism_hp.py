@@ -30,7 +30,7 @@ from baremetal_network_provisioning.common import exceptions as hp_exc
 LOG = logging.getLogger(__name__)
 hp_opts = [
     cfg.StrOpt('net_provisioning_driver',
-               default='neutron.plugins.ml2.drivers.hp'
+               default='baremetal_network_provisioning.ml2'
                '.hp_network_provisioning_driver.HPNetworkProvisioningDriver',
                help=_("Driver to provision networks on the switches in"
                       "the cloud fabric")),
@@ -103,7 +103,7 @@ class HPMechanismDriver(api.MechanismDriver):
             except hp_exc.HPNetProvisioningDriverError as e:
                 LOG.error(_LE("HPNetProvisioningDriverError"), e)
                 raise ml2_exc.MechanismDriverError()
-            LOG.debug("successfully deleted the baremetal port %(port)",
+            LOG.debug("successfully deleted the baremetal port %(port)s",
                       {'port': context.current['id']})
 
     def delete_port_postcommit(self, context):
@@ -117,7 +117,7 @@ class HPMechanismDriver(api.MechanismDriver):
                    'network': context.network.current['id']})
         port_id = context.current['id']
         for segment in context.segments_to_bind:
-            segmentation_id = segment[api.ID]
+            segmentation_id = segment.get(api.SEGMENTATION_ID)
             if self._is_vlan_segment(segment, context):
                 profile = self._get_binding_profile(context)
                 port_status = context.status
@@ -134,7 +134,7 @@ class HPMechanismDriver(api.MechanismDriver):
                                   e)
                         raise ml2_exc.MechanismDriverError()
                     if b_status == hp_const.BIND_SUCCESS:
-                        context.set_binding(segmentation_id,
+                        context.set_binding(segment[api.ID],
                                             self.vif_type,
                                             self.vif_details,
                                             status=port_status)
@@ -167,6 +167,7 @@ class HPMechanismDriver(api.MechanismDriver):
         port = context.current
         port_id = port['id']
         is_lag = False
+        bind_port_dict = None
         profile = self._get_binding_profile(context)
         local_link_information = profile.get('local_link_information')
         LOG.debug("_construct_port local link info %s(local_info)",
@@ -183,7 +184,12 @@ class HPMechanismDriver(api.MechanismDriver):
             bind_port_dict = port_dict.get('port')
             bind_port_dict['segmentation_id'] = segmentation_id
             bind_port_dict['access_type'] = hp_const.ACCESS
-        return port_dict
+        else:
+            return port_dict
+        final_dict = {'port': bind_port_dict}
+        LOG.debug("final port dict  %(final_dict)s",
+                  {'final_dict': final_dict})
+        return final_dict
 
     def _get_binding_profile(self, context):
         """get binding profile from port context."""
