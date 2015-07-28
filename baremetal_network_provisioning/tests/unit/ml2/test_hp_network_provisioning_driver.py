@@ -13,7 +13,7 @@
 #    under the License.
 #
 from baremetal_network_provisioning.common import constants as hp_const
-from baremetal_network_provisioning.common import exceptions as hp_exec
+from baremetal_network_provisioning.common import exceptions as hp_ex
 from baremetal_network_provisioning.db import bm_nw_provision_db as db
 from baremetal_network_provisioning.db import bm_nw_provision_models as models
 from baremetal_network_provisioning.ml2 import (hp_network_provisioning_driver
@@ -57,7 +57,7 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
         with mock.patch.object(self.driver,
                                '_do_request',
                                return_value=res_unavail):
-            self.assertRaises(hp_exec.ConnectionFailed,
+            self.assertRaises(hp_ex.ConnectionFailed,
                               self.driver.create_port,
                               port_dict)
 
@@ -68,7 +68,7 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
         with mock.patch.object(self.driver,
                                '_do_request',
                                return_value=res_unavail):
-            error = self.assertRaises(hp_exec.ConnectionFailed,
+            error = self.assertRaises(hp_ex.ConnectionFailed,
                                       self.driver.create_port,
                                       port_dict)
             self.assertEqual(' Connection has failed: 404 Client Error: None',
@@ -99,7 +99,7 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
         with mock.patch.object(self.driver,
                                '_do_request',
                                return_value=res_unavail):
-            self.assertRaises(hp_exec.ConnectionFailed,
+            self.assertRaises(hp_ex.ConnectionFailed,
                               self.driver.bind_port_to_segment,
                               port_dict)
 
