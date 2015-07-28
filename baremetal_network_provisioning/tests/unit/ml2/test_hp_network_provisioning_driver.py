@@ -16,14 +16,16 @@ from baremetal_network_provisioning.common import constants as hp_const
 from baremetal_network_provisioning.common import exceptions as hp_exec
 from baremetal_network_provisioning.db import bm_nw_provision_db as db
 from baremetal_network_provisioning.db import bm_nw_provision_models as models
-from baremetal_network_provisioning.ml2 import hp_network_provisioning_driver as driver
+from baremetal_network_provisioning.ml2 import (hp_network_provisioning_driver
+                                                as driver)
+
+import contextlib
 
 import mock
 from oslo_config import cfg
 import requests
 
 from neutron.tests import base
-
 CONF = cfg.CONF
 
 
@@ -35,7 +37,7 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
         self.driver = driver.HPNetworkProvisioningDriver()
 
     def test_create_port_with_200_ok(self):
-        """test_create_port_with_valid_device."""
+        """Test create port for 200 OK for get devices REST."""
         port_dict = self._get_port_payload()
         res_200 = FakeResponse(200)
         with mock.patch.object(self.driver,
@@ -48,7 +50,7 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
                     self.driver.create_port(port_dict)
 
     def test_create_port_with_connection_failed(self):
-        """test_create_port_with_connection_failed."""
+        """Test create port with SDN controller error."""
         port_dict = self._get_port_payload()
         res_unavail = FakeResponse(503, headers={'retry-after': '10'},
                                    reason="connection error")
@@ -60,7 +62,7 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
                               port_dict)
 
     def test_create_port_with_invalid_device(self):
-        """test_create_port_with_invalid_device."""
+        """Test create port with invalid device."""
         port_dict = self._get_port_payload()
         res_unavail = FakeResponse(404, headers={'retry-after': '10'})
         with mock.patch.object(self.driver,
@@ -73,20 +75,24 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
                              error.msg)
 
     def test_bind_port_to_segment_success(self):
-        """test_bind_port_to_segment_success."""
+        """Test bind port to segment for success case."""
         port_dict = self._get_port_payload()
         res_204 = FakeResponse(204)
-        with mock.patch.object(self.driver,
-                               '_do_request',
-                               return_value=res_204):
-            with mock.patch.object(db,
-                                   'update_hp_ironic_swport_map_with_seg_id',
-                                   return_value=None):
+        with contextlib.nested(
+            mock.patch.object(self.driver,
+                              '_do_request',
+                              return_value=res_204),
+            mock.patch.object(db,
+                              'update_hp_ironic_swport_map_with_seg_id',
+                              return_value=None)):
                     value = self.driver.bind_port_to_segment(port_dict)
                     self.assertEqual(value, hp_const.BIND_SUCCESS)
 
     def test_bind_port_to_segment_with_connection_failed(self):
-        """test_bind_port_to_segment_with_connection_failed."""
+        """Test bind port to segment_with connection failure
+
+        from SDN controller.
+        """
         port_dict = self._get_port_payload()
         res_unavail = FakeResponse(503, headers={'retry-after': '10'},
                                    reason="connection_error")
@@ -98,7 +104,7 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
                               port_dict)
 
     def test_bind_port_to_segment_with_failure(self):
-        """test_bind_port_to_segment_with_failure."""
+        """Test bind port to segment with bind failure."""
         port_dict = self._get_port_payload()
         res_unavail = FakeResponse(203, headers={'retry-after': '10'})
         with mock.patch.object(self.driver,
@@ -108,11 +114,11 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
             self.assertEqual(value, hp_const.BIND_FAILURE)
 
     def test_update_port(self):
-        """test_update_port."""
+        """Test update port ."""
         pass
 
     def test_delete_port(self):
-        """test_delete_port."""
+        """Test delete port."""
         with mock.patch.object(db,
                                'get_hp_ironic_swport_map_by_id',
                                return_value=models.HPIronicSwitchPortMapping):
@@ -122,7 +128,7 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
                 self.driver.delete_port('fake_id')
 
     def _get_port_payload(self):
-        """_get_port_payload for processing requests."""
+        """Get port payload for processing requests."""
         port_dict = {'port':
                      {'segmentation_id': '1001',
                       'bind_requested': True,
