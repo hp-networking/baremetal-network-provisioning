@@ -23,7 +23,7 @@ from neutron import context as neutron_context
 from baremetal_network_provisioning.common import constants as hp_const
 from baremetal_network_provisioning.common import exceptions as hp_exec
 from baremetal_network_provisioning.db import bm_nw_provision_db as db
-from baremetal_network_provisioning.ml2 import network_provisioning_api as np_api
+from baremetal_network_provisioning.ml2 import network_provisioning_api as api
 
 
 LOG = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ hp_opts = [
 cfg.CONF.register_opts(hp_opts, "default")
 
 
-class HPNetworkProvisioningDriver(np_api.NetworkProvisioningApi):
+class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
     """Back-end mechanism driver implementation for bare
 
     metal provisioning.
@@ -137,8 +137,8 @@ class HPNetworkProvisioningDriver(np_api.NetworkProvisioningApi):
             resp.raise_for_status()
             if resp.status_code == 204:
                 LOG.debug("PUT request for physicalInterfaces is succeeded")
-                db.update_hp_ironic_switch_port_mapping_with_seg_id(self.context,
-                                                                    bind_dict)
+                db.update_hp_ironic_swport_map_with_seg_id(self.context,
+                                                           bind_dict)
                 return hp_const.BIND_SUCCESS
             else:
                 return hp_const.BIND_FAILURE
@@ -171,8 +171,8 @@ class HPNetworkProvisioningDriver(np_api.NetworkProvisioningApi):
         """
         # TODO(Selvakumar) need to implement the REST call logic
         neutron_port_dict = {'neutron_port_id': port_id}
-        switch_port_id = db.get_hp_ironic_switch_port_mapping_by_neutron_port_id(self.context,
-                                                                                 neutron_port_dict)
+        switch_port_id = db.get_hp_ironic_swport_map_by_id(self.context,
+                                                           neutron_port_dict)
         switch_port_dict = {'id': switch_port_id.switch_port_id}
         db.delete_hp_switch_port(self.context, switch_port_dict)
 

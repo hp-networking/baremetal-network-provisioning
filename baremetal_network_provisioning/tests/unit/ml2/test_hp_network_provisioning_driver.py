@@ -80,7 +80,7 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
                                '_do_request',
                                return_value=res_204):
             with mock.patch.object(db,
-                                   'update_hp_ironic_switch_port_mapping_with_seg_id',
+                                   'update_hp_ironic_swport_map_with_seg_id',
                                    return_value=None):
                     value = self.driver.bind_port_to_segment(port_dict)
                     self.assertEqual(value, hp_const.BIND_SUCCESS)
@@ -114,7 +114,7 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
     def test_delete_port(self):
         """test_delete_port."""
         with mock.patch.object(db,
-                               'get_hp_ironic_switch_port_mapping_by_neutron_port_id',
+                               'get_hp_ironic_swport_map_by_id',
                                return_value=models.HPIronicSwitchPortMapping):
             with mock.patch.object(db,
                                    'delete_hp_switch_port',

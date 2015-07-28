@@ -113,7 +113,7 @@ def delete_hp_ironic_switch_port_mapping(context, record_dict):
                 neutron_port_id=record_dict['neutron_port_id']).delete()
 
 
-def get_hp_ironic_switch_port_mapping_by_neutron_port_id(context, record_dict):
+def get_hp_ironic_swport_map_by_id(context, record_dict):
     """Get ironic_switch_port_mapping that matches the supplied id."""
     try:
         query = context.session.query(models.HPIronicSwitchPortMapping)
@@ -139,7 +139,7 @@ def update_hp_switch_lag_port(context, rec_dict):
                   rec_dict['id'])
 
 
-def update_hp_ironic_switch_port_mapping_with_seg_id(context, rec_dict):
+def update_hp_ironic_swport_map_with_seg_id(context, rec_dict):
     """Update hp_ironic_switch_port_mapping."""
     try:
         with context.session.begin(subtransactions=True):
@@ -151,17 +151,17 @@ def update_hp_ironic_switch_port_mapping_with_seg_id(context, rec_dict):
                     synchronize_session=False))
     except exc.NoResultFound:
         LOG.debug('no ironic switch port mapping found for id %s',
-                  rec_dict['id'])
+                  rec_dict['neutron_port_id'])
 
 
-def update_hp_ironic_switch_port_mapping_with_bind_req(context, rec_dict):
+def update_hp_ironic_swport_map_with_bind_req(context, rec_dict):
     """Update hp_ironic_switch_port_mapping."""
     try:
         with context.session.begin(subtransactions=True):
             (context.session.query(models.HPIronicSwitchPortMapping).filter_by(
-                id=rec_dict['id']).update(
+                neutron_port_id=rec_dict['neutron_port_id']).update(
                     {'bind_requested': rec_dict['bind_requested']},
                     synchronize_session=False))
     except exc.NoResultFound:
         LOG.debug('no ironic switch port mapping found for id %s',
-                  rec_dict['id'])
+                  rec_dict['neutron_port_id'])
