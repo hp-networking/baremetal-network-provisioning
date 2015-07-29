@@ -165,3 +165,16 @@ def update_hp_ironic_swport_map_with_bind_req(context, rec_dict):
     except exc.NoResultFound:
         LOG.debug('no ironic switch port mapping found for id %s',
                   rec_dict['neutron_port_id'])
+
+
+def get_hp_switch_port_by_id(context, record_dict):
+    """Get hp_switch_port that matches the supplied switch id."""
+    try:
+        query = context.session.query(models.HPSwitchPort)
+        switch_port = query.filter_by(
+            id=record_dict['id']).one()
+    except exc.NoResultFound:
+        LOG.debug('no hp switch port found for %s and %s',
+                  record_dict['id'])
+        return
+    return switch_port

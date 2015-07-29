@@ -126,12 +126,16 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
         port_dict = self._get_port_payload()
         res_204 = FakeResponse(204)
         ironic_model = models.HPIronicSwitchPortMapping
+        sw_port_model = models.HPSwitchPort
         with contextlib.nested(mock.patch.object(self.driver,
                                                  '_do_request',
                                                  return_value=res_204),
                                mock.patch.object(db,
                                'get_hp_ironic_swport_map_by_id',
                                                  return_value=ironic_model),
+                               mock.patch.object(db,
+                               'get_hp_switch_port_by_id',
+                                                 return_value=sw_port_model),
                                mock.patch.object(db,
                                                  'delete_hp_switch_port',
                                                  return_value=None)):

@@ -157,13 +157,28 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
         port_id = port_dict['port']['id']
         rec_dict = {'neutron_port_id': port_id}
         bind_port_dict = port_dict.get('port')
-        switch_port_map = db.get_hp_ironic_swport_map_by_id(self.context,
+        ironic_port_map = db.get_hp_ironic_swport_map_by_id(self.context,
                                                             rec_dict)
-        bind_port_dict['segmentation_id'] = switch_port_map.segmentation_id
-        resp = self._do_vlan_provisioning(port_dict, False)
+        bind_port_dict['segmentation_id'] = ironic_port_map.segmentation_id
+        hp_switch_port_id = ironic_port_map.switch_port_id
+        hp_sw_port_dict = {'id': hp_switch_port_id}
+        switch_port_map = db.get_hp_switch_port_by_id(self.context,
+                                                      hp_sw_port_dict)
+        switch_id = switch_port_map.switch_id
+        port_name = switch_port_map.port_name
+        inner_switchports_dict = {'port_id': port_name, 'switch_id':
+                                  switch_id}
+        switchports_list = []
+        switchports_list.append(inner_switchports_dict)
+        switchports_dict = {'switchports': switchports_list}
+        switchports_dict['segmentation_id'] = ironic_port_map.segmentation_id
+        switchports_dict['access_type'] = hp_const.ACCESS
+        LOG.debug(" switchports_dict %(switchports_dict)s ",
+                  {'switchports_dict': switchports_dict})
+        delete_port_dict = {'port': switchports_dict}
+        resp = self._do_vlan_provisioning(delete_port_dict, False)
         if resp and resp.status_code == 204:
-            switch_port_dict = {'id': switch_port_map.switch_port_id}
-            db.delete_hp_switch_port(self.context, switch_port_dict)
+            db.delete_hp_switch_port(self.context, hp_sw_port_dict)
         else:
             LOG.error("Could not delete the switch port due to invalid"
                       "response")
