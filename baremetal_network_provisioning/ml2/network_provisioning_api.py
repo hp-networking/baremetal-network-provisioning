@@ -45,6 +45,6 @@ class NetworkProvisioningApi(object):
         pass
 
     @abc.abstractmethod
-    def delete_port(self, port_id):
+    def delete_port(self, port_dict):
         """delete_port ."""
         pass

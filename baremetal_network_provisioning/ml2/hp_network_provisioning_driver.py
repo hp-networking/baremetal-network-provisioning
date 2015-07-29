@@ -38,7 +38,7 @@ hp_opts = [
                help=_("full path to the certificate file containing the"
                       "SDN Controller")),
     cfg.StrOpt('timeout',
-               default=30,
+               default=15,
                help=_("Timeout in seconds to wait for SDN HTTP request"
                       "completion.")),
 ]
@@ -119,41 +119,17 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
         external SDN controller for provisioning VLAN for the switch port where
         bare metal is connected.
         """
-        switchport = port_dict['port']['switchports']
-        switch_mac_id = switchport[0]['switch_id']
-        segmentation_id = port_dict['port']['segmentation_id']
-        bind_dict = {'neutron_port_id': port_dict['port']['id'],
-                     'access_type': hp_const.ACCESS,
-                     'segmentation_id': segmentation_id,
-                     'bind_requested': True,
-                     }
-        if switch_mac_id:
-            put_url = self._frame_port_url(switch_mac_id)
-        try:
-            port_pay_load = self._get_port_pay_load(port_dict)
-            LOG.debug("port_pay_load %(port_pay_load)s ",
-                      {'port_pay_load': port_pay_load})
-            resp = self._do_request('PUT', put_url, port_pay_load)
-            resp.raise_for_status()
-            if resp.status_code == 204:
-                LOG.debug("PUT request for physicalInterfaces is succeeded")
-                db.update_hp_ironic_swport_map_with_seg_id(self.context,
-                                                           bind_dict)
-                return hp_const.BIND_SUCCESS
-            else:
-                return hp_const.BIND_FAILURE
-        except requests.exceptions.Timeout as e:
-            LOG.error("Timed out in SDN controller : %s", e)
-            raise hp_exec.HPNetProvisioningDriverError(msg="Timed Out"
-                                                           "with SDN"
-                                                           "controller: %s"
-                                                           % e)
-        except requests.exceptions.SSLError as e:
-            LOG.error("SSLError to SDN controller : %s", e)
-            raise hp_exec.SslCertificateValidationError(msg=e)
-        except Exception as e:
-            LOG.error("ConnectionFailed to SDN controller : %s", e)
-            raise hp_exec.ConnectionFailed(msg=e)
+        LOG.debug("bind_port_to_segment with port dict %(port_dict)s",
+                  {'port_dict': port_dict})
+        bind_dict = self._get_bind_dict(port_dict)
+        resp = self._do_vlan_provisioning(port_dict, True)
+        if resp.status_code == 204:
+            LOG.debug("PUT request for physicalInterfaces is succeeded")
+            db.update_hp_ironic_swport_map_with_seg_id(self.context,
+                                                       bind_dict)
+            return hp_const.BIND_SUCCESS
+        else:
+            return hp_const.BIND_FAILURE
 
     def update_port(self, port_dict):
         """update_port. This call makes the REST request to the external
@@ -161,20 +137,36 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
         SDN controller for provision VLAN on switch port where bare metal
         is connected.
         """
-        return
+        LOG.debug("update_port with port dict %(port_dict)s",
+                  {'port_dict': port_dict})
+        port_id = port_dict['port']['id']
+        bind_requested = port_dict['port']['bind_requested']
+        update_dict = {'neutron_port_id': port_id,
+                       'bind_requested': bind_requested}
+        db.update_hp_ironic_swport_map_with_bind_req(self.context,
+                                                     update_dict)
 
-    def delete_port(self, port_id):
+    def delete_port(self, port_dict):
         """delete_port. This call makes the REST request to the external
 
         SDN controller for un provision VLAN for the switch port where
         bare metal is connected.
         """
-        # TODO(Selvakumar) need to implement the REST call logic
-        neutron_port_dict = {'neutron_port_id': port_id}
-        switch_port_id = db.get_hp_ironic_swport_map_by_id(self.context,
-                                                           neutron_port_dict)
-        switch_port_dict = {'id': switch_port_id.switch_port_id}
-        db.delete_hp_switch_port(self.context, switch_port_dict)
+        LOG.debug("delete_port with port dict %(port_dict)s",
+                  {'port_dict': port_dict})
+        port_id = port_dict['port']['id']
+        rec_dict = {'neutron_port_id': port_id}
+        bind_port_dict = port_dict.get('port')
+        switch_port_map = db.get_hp_ironic_swport_map_by_id(self.context,
+                                                            rec_dict)
+        bind_port_dict['segmentation_id'] = switch_port_map.segmentation_id
+        resp = self._do_vlan_provisioning(port_dict, False)
+        if resp and resp.status_code == 204:
+            switch_port_dict = {'id': switch_port_map.switch_port_id}
+            db.delete_hp_switch_port(self.context, switch_port_dict)
+        else:
+            LOG.error("Could not delete the switch port due to invalid"
+                      "response")
 
     def _do_request(self, method, urlpath, obj):
         """Send REST request to the SDN controller."""
@@ -203,8 +195,8 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
         url = self.base_url + '/' + switch_id
         return url
 
-    def _get_port_pay_load(self, port_dict):
-        """form  port payload for SDN controller REST request."""
+    def _get_port_pay_load(self, port_dict, include_seg_id=None):
+        """Form  port payload for SDN controller REST request."""
         switchports = port_dict['port']['switchports']
         port_list = []
         bind_port_dict = port_dict.get('port')
@@ -214,8 +206,51 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
         access_type = bind_port_dict['access_type']
         for switch_port in switchports:
             port_id = switch_port['port_id']
-            res_port_dict = {'port': port_id,
-                             'type': access_type,
-                             'vids': seg_id_list}
+            if include_seg_id:
+                res_port_dict = {'port': port_id,
+                                 'type': access_type,
+                                 'includeVlans': seg_id_list}
+            else:
+                res_port_dict = {'port': port_id,
+                                 'type': access_type,
+                                 'excludeVlans': seg_id_list}
             port_list.append(res_port_dict)
         return {'ports': port_list}
+
+    def _get_bind_dict(self, port_dict):
+        segmentation_id = port_dict['port']['segmentation_id']
+        bind_dict = {'neutron_port_id': port_dict['port']['id'],
+                     'access_type': hp_const.ACCESS,
+                     'segmentation_id': segmentation_id,
+                     'bind_requested': True,
+                     }
+        return bind_dict
+
+    def _do_vlan_provisioning(self, port_dict, include_seg_id):
+        """Provisioning or de-provisioning the VLANs for physical port."""
+        switchport = port_dict['port']['switchports']
+        if not switchport:
+            return
+        switch_mac_id = switchport[0]['switch_id']
+        put_url = self._frame_port_url(switch_mac_id)
+        LOG.debug("_do_vlan_provisioning put_url %(put_url)",
+                  {'put_url': put_url})
+        try:
+            port_pay_load = self._get_port_pay_load(port_dict, include_seg_id)
+            LOG.debug("port_pay_load %(port_pay_load)s ",
+                      {'port_pay_load': port_pay_load})
+            resp = self._do_request('PUT', put_url, port_pay_load)
+            resp.raise_for_status()
+            return resp
+        except requests.exceptions.Timeout as e:
+            LOG.error("Timed out in SDN controller : %s", e)
+            raise hp_exec.HPNetProvisioningDriverError(msg="Timed Out"
+                                                           "with SDN"
+                                                           "controller: %s"
+                                                           % e)
+        except requests.exceptions.SSLError as e:
+            LOG.error("SSLError to SDN controller : %s", e)
+            raise hp_exec.SslCertificateValidationError(msg=e)
+        except Exception as e:
+            LOG.error("ConnectionFailed to SDN controller : %s", e)
+            raise hp_exec.ConnectionFailed(msg=e)
