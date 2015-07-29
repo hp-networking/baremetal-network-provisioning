@@ -17,6 +17,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
 
+from neutron.common import constants as n_const
 from neutron.extensions import portbindings
 from neutron.i18n import _LE
 from neutron.plugins.common import constants
@@ -77,11 +78,14 @@ class HPMechanismDriver(api.MechanismDriver):
 
     def update_port_precommit(self, context):
         """update_port_precommit."""
-        if not self._is_port_of_interest(context):
+        vnic_type = self._get_vnic_type(context)
+        if vnic_type != portbindings.VNIC_BAREMETAL:
             return
-        port_dict = self._construct_port(context, False)
-        LOG.debug("update_port_precommit  port dict %s(port_dict)",
-                  {'port_dict': port_dict})
+        profile = self._get_binding_profile(context)
+        port_dict = self._construct_port(context)
+        bind_requested = profile.get('bind_requested')
+        bind_port_dict = port_dict.get('port')
+        bind_port_dict['bind_requested'] = bind_requested
         try:
             self.np_driver.update_port(port_dict)
         except hp_exc.HPNetProvisioningDriverError as e:
@@ -95,11 +99,10 @@ class HPMechanismDriver(api.MechanismDriver):
     def delete_port_precommit(self, context):
         """delete_port_postcommit."""
         vnic_type = self._get_vnic_type(context)
-        port = context.current
-        port_id = port['id']
+        port_dict = self._construct_port(context, True)
         if vnic_type == portbindings.VNIC_BAREMETAL:
             try:
-                self.np_driver.delete_port(port_id)
+                self.np_driver.delete_port(port_dict)
             except hp_exc.HPNetProvisioningDriverError as e:
                 LOG.error(_LE("HPNetProvisioningDriverError"), e)
                 raise ml2_exc.MechanismDriverError()
@@ -120,7 +123,7 @@ class HPMechanismDriver(api.MechanismDriver):
             segmentation_id = segment.get(api.SEGMENTATION_ID)
             if self._is_vlan_segment(segment, context):
                 profile = self._get_binding_profile(context)
-                port_status = context.status
+                port_status = n_const.PORT_STATUS_ACTIVE
                 if not self._is_port_of_interest(context):
                     return
                 b_requested = profile.get('bind_requested')
@@ -170,9 +173,9 @@ class HPMechanismDriver(api.MechanismDriver):
         bind_port_dict = None
         profile = self._get_binding_profile(context)
         local_link_information = profile.get('local_link_information')
-        LOG.debug("_construct_port local link info %s(local_info)",
+        LOG.debug("_construct_port local link info %(local_info)s",
                   {'local_info': local_link_information})
-        if len(local_link_information) > 1:
+        if local_link_information and len(local_link_information) > 1:
             is_lag = True
         port_dict = {'port':
                      {'id': port_id,

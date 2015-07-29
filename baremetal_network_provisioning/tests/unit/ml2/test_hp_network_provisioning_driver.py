@@ -40,13 +40,14 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
         """Test create port for 200 OK for get devices REST."""
         port_dict = self._get_port_payload()
         res_200 = FakeResponse(200)
-        with mock.patch.object(self.driver,
-                               '_do_request',
-                               return_value=res_200):
-            with mock.patch.object(db, 'add_hp_switch_port',
-                                   return_value=None):
-                with mock.patch.object(db, 'add_hp_ironic_switch_port_mapping',
-                                       return_value=None):
+        with contextlib.nested(mock.patch.object(self.driver,
+                                                 '_do_request',
+                                                 return_value=res_200),
+                               mock.patch.object(db, 'add_hp_switch_port',
+                                                 return_value=None),
+                               mock.patch.object(db,
+                               'add_hp_ironic_switch_port_mapping',
+                                                 return_value=None)):
                     self.driver.create_port(port_dict)
 
     def test_create_port_with_connection_failed(self):
@@ -114,18 +115,27 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
             self.assertEqual(value, hp_const.BIND_FAILURE)
 
     def test_update_port(self):
-        """Test update port ."""
-        pass
+        """Test update ironic  port ."""
+        port_dict = self._get_port_payload()
+        with mock.patch.object(db,
+                               'update_hp_ironic_swport_map_with_bind_req'):
+            self.driver.update_port(port_dict)
 
     def test_delete_port(self):
-        """Test delete port."""
-        with mock.patch.object(db,
+        """Test delete ironic port."""
+        port_dict = self._get_port_payload()
+        res_204 = FakeResponse(204)
+        ironic_model = models.HPIronicSwitchPortMapping
+        with contextlib.nested(mock.patch.object(self.driver,
+                                                 '_do_request',
+                                                 return_value=res_204),
+                               mock.patch.object(db,
                                'get_hp_ironic_swport_map_by_id',
-                               return_value=models.HPIronicSwitchPortMapping):
-            with mock.patch.object(db,
-                                   'delete_hp_switch_port',
-                                   return_value=None):
-                self.driver.delete_port('fake_id')
+                                                 return_value=ironic_model),
+                               mock.patch.object(db,
+                                                 'delete_hp_switch_port',
+                                                 return_value=None)):
+                self.driver.delete_port(port_dict)
 
     def _get_port_payload(self):
         """Get port payload for processing requests."""
