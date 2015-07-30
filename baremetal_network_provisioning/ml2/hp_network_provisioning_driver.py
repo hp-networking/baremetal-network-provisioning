@@ -156,10 +156,8 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
                   {'port_dict': port_dict})
         port_id = port_dict['port']['id']
         rec_dict = {'neutron_port_id': port_id}
-        bind_port_dict = port_dict.get('port')
         ironic_port_map = db.get_hp_ironic_swport_map_by_id(self.context,
                                                             rec_dict)
-        bind_port_dict['segmentation_id'] = ironic_port_map.segmentation_id
         hp_switch_port_id = ironic_port_map.switch_port_id
         hp_sw_port_dict = {'id': hp_switch_port_id}
         switch_port_map = db.get_hp_switch_port_by_id(self.context,
@@ -214,11 +212,10 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
         """Form  port payload for SDN controller REST request."""
         switchports = port_dict['port']['switchports']
         port_list = []
-        bind_port_dict = port_dict.get('port')
-        segmentation_id = bind_port_dict['segmentation_id']
+        segmentation_id = port_dict['port']['segmentation_id']
         seg_id_list = []
         seg_id_list.append(str(segmentation_id))
-        access_type = bind_port_dict['access_type']
+        access_type = port_dict['port']['access_type']
         for switch_port in switchports:
             port_id = switch_port['port_id']
             if include_seg_id:

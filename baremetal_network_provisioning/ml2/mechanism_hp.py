@@ -79,7 +79,8 @@ class HPMechanismDriver(api.MechanismDriver):
     def update_port_precommit(self, context):
         """update_port_precommit."""
         vnic_type = self._get_vnic_type(context)
-        if vnic_type != portbindings.VNIC_BAREMETAL:
+        binding_profile = self._get_binding_profile(context)
+        if vnic_type != portbindings.VNIC_BAREMETAL or not binding_profile:
             return
         profile = self._get_binding_profile(context)
         port_dict = self._construct_port(context)
@@ -99,7 +100,7 @@ class HPMechanismDriver(api.MechanismDriver):
     def delete_port_precommit(self, context):
         """delete_port_postcommit."""
         vnic_type = self._get_vnic_type(context)
-        port_dict = self._construct_port(context, True)
+        port_dict = self._construct_port(context, False)
         if vnic_type == portbindings.VNIC_BAREMETAL:
             try:
                 self.np_driver.delete_port(port_dict)
