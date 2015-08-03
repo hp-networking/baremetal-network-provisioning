@@ -146,15 +146,14 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
         db.update_hp_ironic_swport_map_with_bind_req(self.context,
                                                      update_dict)
 
-    def delete_port(self, port_dict):
+    def delete_port(self, port_id):
         """delete_port. This call makes the REST request to the external
 
         SDN controller for un provision VLAN for the switch port where
         bare metal is connected.
         """
-        LOG.debug("delete_port with port dict %(port_dict)s",
-                  {'port_dict': port_dict})
-        port_id = port_dict['port']['id']
+        LOG.debug("delete_port with port_id %(port_id)s",
+                  {'port_id': port_id})
         rec_dict = {'neutron_port_id': port_id}
         ironic_port_map = db.get_hp_ironic_swport_map_by_id(self.context,
                                                             rec_dict)

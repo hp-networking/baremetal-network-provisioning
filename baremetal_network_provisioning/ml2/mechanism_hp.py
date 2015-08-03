@@ -100,10 +100,10 @@ class HPMechanismDriver(api.MechanismDriver):
     def delete_port_precommit(self, context):
         """delete_port_postcommit."""
         vnic_type = self._get_vnic_type(context)
-        port_dict = self._construct_port(context, False)
+        port_id = context.current['id']
         if vnic_type == portbindings.VNIC_BAREMETAL:
             try:
-                self.np_driver.delete_port(port_dict)
+                self.np_driver.delete_port(port_id)
             except hp_exc.HPNetProvisioningDriverError as e:
                 LOG.error(_LE("HPNetProvisioningDriverError"), e)
                 raise ml2_exc.MechanismDriverError()
