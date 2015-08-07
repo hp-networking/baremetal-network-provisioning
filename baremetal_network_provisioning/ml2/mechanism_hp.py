@@ -142,6 +142,7 @@ class HPMechanismDriver(api.MechanismDriver):
             False
 
     def _construct_port(self, context, segmentation_id=None):
+        """"Contruct port dict."""
         port = context.current
         port_id = port['id']
         is_lag = False

@@ -28,6 +28,7 @@ CONF = cfg.CONF
 
 
 class TestHPMechDriver(base.BaseTestCase):
+    """Test class for mech driver."""
 
     def setUp(self):
         super(TestHPMechDriver, self).setUp()
@@ -37,6 +38,7 @@ class TestHPMechDriver(base.BaseTestCase):
         self.driver._load_drivers()
 
     def _get_port_context(self, tenant_id, net_id, vm_id, network):
+        """Get port context."""
         port = {'device_id': vm_id,
                 'device_owner': 'compute',
                 'binding:host_id': 'ubuntu1',
@@ -53,6 +55,7 @@ class TestHPMechDriver(base.BaseTestCase):
         return FakePortContext(port, port, network)
 
     def _get_network_context(self, tenant_id, net_id, seg_id, shared):
+        """Get network context."""
         network = {'id': net_id,
                    'tenant_id': tenant_id,
                    'name': 'test-net',
@@ -61,6 +64,7 @@ class TestHPMechDriver(base.BaseTestCase):
         return FakeNetworkContext(network, network_segments, network)
 
     def _get_port_dict(self):
+        """Get port dict."""
         port_dict = {'port':
                      {'segmentation_id': 1001,
                       'access_type': hp_const.ACCESS,
