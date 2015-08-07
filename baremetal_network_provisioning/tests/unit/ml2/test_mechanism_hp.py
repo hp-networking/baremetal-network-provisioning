@@ -91,6 +91,8 @@ class TestHPMechDriver(base.BaseTestCase):
             cons_port.assert_called_with(fake_context)
             c_port.assert_called_with(fake_port_dict)
 
+    # TODO(Koteswar): portbindings is not having VNIC_BAREMETAL.
+    # Commenting this test case for now.
     '''def test_delete_port_precommit(self):
         """Test delete_port_precommit method."""
         fake_port_id = mock.Mock()
@@ -145,6 +147,45 @@ class TestHPMechDriver(base.BaseTestCase):
                                               network_context)
         port_dict = self.driver._construct_port(port_context, segmentation_id)
         self.assertEqual(port_dict, fake_port_dict)
+
+    def test__get_binding_profile(self):
+        """Test _get_binding_profile method."""
+        tenant_id = 'ten-1'
+        network_id = 'net1-id'
+        segmentation_id = 1001
+        vm_id = 'vm1'
+        network_context = self._get_network_context(tenant_id,
+                                                    network_id,
+                                                    segmentation_id,
+                                                    False)
+
+        port_context = self._get_port_context(tenant_id,
+                                              network_id,
+                                              vm_id,
+                                              network_context)
+        fake_profile = {'local_link_information':
+                        [{'switch_id': '11:22:33:44:55:66',
+                          'port_id': 'Tengig0/1'}]}
+        profile = self.driver._get_binding_profile(port_context)
+        self.assertEqual(profile, fake_profile)
+
+    def test__get_vnic_type(self):
+        """Test _get_binding_profile method."""
+        tenant_id = 'ten-1'
+        network_id = 'net1-id'
+        segmentation_id = 1001
+        vm_id = 'vm1'
+        network_context = self._get_network_context(tenant_id,
+                                                    network_id,
+                                                    segmentation_id,
+                                                    False)
+
+        port_context = self._get_port_context(tenant_id,
+                                              network_id,
+                                              vm_id,
+                                              network_context)
+        vnic_type = self.driver._get_vnic_type(port_context)
+        self.assertEqual(vnic_type, 'baremetal')
 
 
 class FakeNetworkContext(object):

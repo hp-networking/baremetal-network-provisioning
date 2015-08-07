@@ -171,3 +171,17 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
         result = db.get_hp_ironic_swport_map_by_id(
             self.ctx, {'neutron_port_id': "n1234"})
         self.assertEqual(False, result.bind_requested)
+
+    def test_get_hp_switch_port_by_id(self):
+        """Test get_hp_switch_port_by_switchid_portname method."""
+        with self.ctx.session.begin(subtransactions=True):
+            entry = models.HPSwitchPort(
+                id="phy1234",
+                switch_id="switch1",
+                port_name="Tengig0/1",
+                lag_id=None)
+            self.ctx.session.add(entry)
+        result = db.get_hp_switch_port_by_id(
+            self.ctx,
+            {'id': "phy1234"})
+        self.assertEqual(entry, result)
