@@ -65,4 +65,4 @@ def upgrade():
                     sa.ForeignKeyConstraint(['switch_port_id'],
                                             ['hpswitchports.id'],
                                             ondelete='CASCADE'),
-                    sa.PrimaryKeyConstraint('neutron_port_id'))
+                    sa.PrimaryKeyConstraint('switch_port_id'))

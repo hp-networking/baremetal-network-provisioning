@@ -118,7 +118,7 @@ def get_hp_ironic_swport_map_by_id(context, record_dict):
     try:
         query = context.session.query(models.HPIronicSwitchPortMapping)
         port_mapping = query.filter_by(
-            neutron_port_id=record_dict['neutron_port_id']).one()
+            neutron_port_id=record_dict['neutron_port_id']).all()
     except exc.NoResultFound:
         LOG.debug('no hp ironic switch port mapping found for neutron port%s',
                   record_dict['neutron_port_id'])
@@ -167,6 +167,19 @@ def update_hp_ironic_swport_map_with_bind_req(context, rec_dict):
                   rec_dict['neutron_port_id'])
 
 
+def update_hp_ironic_swport_map_with_lag_id(context, rec_dict):
+    """Update hp_ironic_switch_port_mapping."""
+    try:
+        with context.session.begin(subtransactions=True):
+            (context.session.query(models.HPIronicSwitchPortMapping).filter_by(
+                neutron_port_id=rec_dict['neutron_port_id']).update(
+                    {'lag_id': rec_dict['id']},
+                    synchronize_session=False))
+    except exc.NoResultFound:
+        LOG.debug('no ironic switch port mapping found for id %s',
+                  rec_dict['neutron_port_id'])
+
+
 def get_hp_switch_port_by_id(context, record_dict):
     """Get hp_switch_port that matches the supplied switch id."""
     try:
@@ -175,6 +188,45 @@ def get_hp_switch_port_by_id(context, record_dict):
             id=record_dict['id']).one()
     except exc.NoResultFound:
         LOG.debug('no hp switch port found for %s',
+                  record_dict['id'])
+        return
+    return switch_port
+
+
+def update_hp_switch_ports_with_lag_id(context, rec_dict):
+    """Update hp switch ports with lag_id."""
+    try:
+        with context.session.begin(subtransactions=True):
+            (context.session.query(models.HPSwitchPort).filter_by(
+                id=rec_dict['id']).update(
+                    {'lag_id': rec_dict['lag_id']},
+                    synchronize_session=False))
+    except exc.NoResultFound:
+        LOG.debug('no hp port found for lag_id %s',
+                  rec_dict['lag_id'])
+
+
+def get_lag_id_by_neutron_port_id(context, record_dict):
+    """Get lag_id that matches the supplied port id."""
+    try:
+        query = context.session.query(models.HPIronicSwitchPortMapping)
+        switch_port = query.filter_by(
+            neutron_port_id=record_dict['neutron_port_id']).all()
+    except exc.NoResultFound:
+        LOG.debug('no hp lag_id  found for %s',
+                  record_dict['neutron_port_id'])
+        return
+    return switch_port
+
+
+def get_ext_lag_id_by_lag_id(context, record_dict):
+    """Get ext_lag_id  that matches the supplied neutron lag id."""
+    try:
+        query = context.session.query(models.HPSwitchLAGPort)
+        switch_port = query.filter_by(
+            id=record_dict['id']).one()
+    except exc.NoResultFound:
+        LOG.debug('no hp lag_id  found for %s',
                   record_dict['id'])
         return
     return switch_port
