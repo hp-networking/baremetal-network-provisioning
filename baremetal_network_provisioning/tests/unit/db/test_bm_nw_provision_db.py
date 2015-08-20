@@ -29,10 +29,10 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
 
     def _get_switch_port_dict(self):
         """Get a switch port dict."""
-        rec_dict = {'id': "phy1234",
+        rec_dict = {'id': "1234",
                     'switch_id': "test_switch1",
                     'port_name': "Tengig0/1",
-                    'lag_id': None}
+                    'lag_id': "lag1234"}
         return rec_dict
 
     def _get_switch_lag_port_dict(self):
@@ -44,27 +44,12 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
     def _get_ironic_switch_port_map_dict(self):
         """Get a ironic switch port map dict."""
         rec_dict = {'neutron_port_id': "n1234",
-                    'switch_port_id': None,
-                    'lag_id': None,
+                    'switch_port_id': "1234",
+                    'lag_id': "lag1234",
                     'access_type': "access",
                     'segmentation_id': 100,
                     'bind_requested': True}
         return rec_dict
-
-    def test_add_hp_switch_port(self):
-        """Test add_hp_switch_port method."""
-        rec_dict = self._get_switch_port_dict()
-        db.add_hp_switch_port(self.ctx, rec_dict)
-        count = self.ctx.session.query(models.HPSwitchPort).count()
-        self.assertEqual(1, count)
-
-    def test_delete_hp_switch_port(self):
-        """Test delete_hp_switch_port method."""
-        rec_dict = self._get_switch_port_dict()
-        db.add_hp_switch_port(self.ctx, rec_dict)
-        db.delete_hp_switch_port(self.ctx, rec_dict)
-        count = self.ctx.session.query(models.HPSwitchPort).count()
-        self.assertEqual(count, 0)
 
     def test_add_hp_switch_lag_port(self):
         """Test add_hp_switch_lag_port method."""
@@ -73,70 +58,44 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
         count = self.ctx.session.query(models.HPSwitchLAGPort).count()
         self.assertEqual(1, count)
 
-    def test_delete_hp_switch_lag_port(self):
-        """Test delete_hp_switch_lag_port method."""
-        rec_dict = self._get_switch_lag_port_dict()
-        db.add_hp_switch_lag_port(self.ctx, rec_dict)
-        db.delete_hp_switch_lag_port(self.ctx, rec_dict)
-        count = self.ctx.session.query(models.HPSwitchLAGPort).count()
-        self.assertEqual(count, 0)
+    def test_add_hp_switch_port(self):
+        """Test add_hp_switch_port method."""
+        self._add_switch_and_lag_port()
+        count = self.ctx.session.query(models.HPSwitchPort).count()
+        self.assertEqual(1, count)
 
     def test_add_hp_ironic_switch_port_mapping(self):
         """Test hp_ironic_switch_port_mapping."""
+        self._add_switch_and_lag_port()
         rec_dict = self._get_ironic_switch_port_map_dict()
         db.add_hp_ironic_switch_port_mapping(self.ctx, rec_dict)
         count = self.ctx.session.query(
             models.HPIronicSwitchPortMapping).count()
         self.assertEqual(1, count)
 
-    def test_delete_hp_ironic_switch_port_mapping(self):
-        """Test delete_hp_ironic_switch_port_mapping."""
-        rec_dict = self._get_ironic_switch_port_map_dict()
-        db.add_hp_ironic_switch_port_mapping(self.ctx, rec_dict)
-        db.delete_hp_ironic_switch_port_mapping(self.ctx, rec_dict)
-        count = self.ctx.session.query(
-            models.HPIronicSwitchPortMapping).count()
-        self.assertEqual(count, 0)
-
     def test_get_hp_switch_port_by_switchid_portname(self):
         """Test get_hp_switch_port_by_switchid_portname method."""
-        with self.ctx.session.begin(subtransactions=True):
-            entry = models.HPSwitchPort(
-                id="phy1234",
-                switch_id="switch1",
-                port_name="Tengig0/1",
-                lag_id=None)
-            self.ctx.session.add(entry)
+        self._add_switch_and_lag_port()
         result = db.get_hp_switch_port_by_switchid_portname(
             self.ctx,
-            {'switch_id': "switch1", 'port_name': "Tengig0/1"})
-        self.assertEqual(entry, result)
+            {'switch_id': "test_switch1", 'port_name': "Tengig0/1"})
+        self.assertEqual('test_switch1', result.switch_id)
 
     def test_get_hp_switch_lag_port_by_id(self):
         """Test get_hp_switch_lag_port_by_id method."""
-        with self.ctx.session.begin(subtransactions=True):
-            entry = models.HPSwitchLAGPort(
-                id="lag1234",
-                external_lag_id="extlag123")
-            self.ctx.session.add(entry)
+        self._add_switch_and_lag_port()
         result = db.get_hp_switch_lag_port_by_id(
             self.ctx, {'id': "lag1234"})
-        self.assertEqual(entry, result)
+        self.assertEqual('lag1234', result.id)
 
     def test_get_hp_ironic_swport_map_by_id(self):
         """Test get_hp_ironic_swport_map_by_id method."""
-        with self.ctx.session.begin(subtransactions=True):
-            entry = models.HPIronicSwitchPortMapping(
-                neutron_port_id="n1234",
-                switch_port_id=None,
-                lag_id=None,
-                access_type="access",
-                segmentation_id=100,
-                bind_requested=True)
-            self.ctx.session.add(entry)
+        self._add_switch_and_lag_port()
+        rec_dict = self._get_ironic_switch_port_map_dict()
+        db.add_hp_ironic_switch_port_mapping(self.ctx, rec_dict)
         result = db.get_hp_ironic_swport_map_by_id(
             self.ctx, {'neutron_port_id': "n1234"})
-        self.assertEqual(entry, result)
+        self.assertEqual("n1234", result[0].neutron_port_id)
 
     def test_update_hp_switch_lag_port(self):
         """Test update_hp_switch_lag_port method."""
@@ -150,6 +109,7 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
 
     def test_update_hp_ironic_swport_map_with_seg_id(self):
         """Test update_hp_ironic_swport_map_with_seg_id method."""
+        self._add_switch_and_lag_port()
         rec_dict = self._get_ironic_switch_port_map_dict()
         db.add_hp_ironic_switch_port_mapping(self.ctx, rec_dict)
         db.update_hp_ironic_swport_map_with_seg_id(
@@ -159,10 +119,11 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
                        'bind_requested': True})
         result = db.get_hp_ironic_swport_map_by_id(
             self.ctx, {'neutron_port_id': "n1234"})
-        self.assertEqual(200, result.segmentation_id)
+        self.assertEqual(200, result[0].segmentation_id)
 
     def test_update_hp_ironic_swport_map_with_bind_req(self):
         """Test update_hp_ironic_swport_map_with_bind_req method."""
+        self._add_switch_and_lag_port()
         rec_dict = self._get_ironic_switch_port_map_dict()
         db.add_hp_ironic_switch_port_mapping(self.ctx, rec_dict)
         db.update_hp_ironic_swport_map_with_bind_req(
@@ -170,18 +131,76 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
                        'bind_requested': False})
         result = db.get_hp_ironic_swport_map_by_id(
             self.ctx, {'neutron_port_id': "n1234"})
-        self.assertEqual(False, result.bind_requested)
+        self.assertEqual(False, result[0].bind_requested)
 
     def test_get_hp_switch_port_by_id(self):
         """Test get_hp_switch_port_by_switchid_portname method."""
-        with self.ctx.session.begin(subtransactions=True):
-            entry = models.HPSwitchPort(
-                id="phy1234",
-                switch_id="switch1",
-                port_name="Tengig0/1",
-                lag_id=None)
-            self.ctx.session.add(entry)
+        self._add_switch_and_lag_port()
         result = db.get_hp_switch_port_by_id(
             self.ctx,
-            {'id': "phy1234"})
-        self.assertEqual(entry, result)
+            {'id': "1234"})
+        self.assertEqual("1234", result.id)
+
+    def test_delete_hp_switch_port(self):
+        """Test delete_hp_switch_port method."""
+        self._add_switch_and_lag_port()
+        sw_rec_dict = self._get_switch_port_dict()
+        db.delete_hp_switch_port(self.ctx, sw_rec_dict)
+        count = self.ctx.session.query(models.HPSwitchPort).count()
+        self.assertEqual(count, 0)
+
+    def test_delete_hp_ironic_switch_port_mapping(self):
+        """Test delete_hp_ironic_switch_port_mapping."""
+        self._add_switch_and_lag_port()
+        rec_dict = self._get_ironic_switch_port_map_dict()
+        db.add_hp_ironic_switch_port_mapping(self.ctx, rec_dict)
+        db.delete_hp_ironic_switch_port_mapping(self.ctx, rec_dict)
+        count = self.ctx.session.query(
+            models.HPIronicSwitchPortMapping).count()
+        self.assertEqual(count, 0)
+
+    def test_delete_hp_switch_lag_port(self):
+        """Test delete_hp_switch_lag_port method."""
+        self._add_switch_and_lag_port()
+        lag_dict = self._get_switch_lag_port_dict()
+        db.delete_hp_switch_lag_port(self.ctx, lag_dict)
+        count = self.ctx.session.query(models.HPSwitchLAGPort).count()
+        self.assertEqual(count, 0)
+
+    def _add_switch_and_lag_port(self):
+        """Add entries to hpswitchports and hpswitchlagports."""
+        sw_rec_dict = self._get_switch_port_dict()
+        lag_dict = self._get_switch_lag_port_dict()
+        db.add_hp_switch_lag_port(self.ctx, lag_dict)
+        db.add_hp_switch_port(self.ctx, sw_rec_dict)
+
+    def test_update_hp_ironic_swport_map_with_lag_id(self):
+        """Test update_hp_ironic_swport_map_with_lag_id method."""
+        self._add_switch_and_lag_port()
+        rec_dict = self._get_ironic_switch_port_map_dict()
+        lag_dict = {'id': "lag1234",
+                    'external_lag_id': "1234",
+                    'neutron_port_id': "n1234"}
+        db.add_hp_ironic_switch_port_mapping(self.ctx, rec_dict)
+        db.update_hp_ironic_swport_map_with_lag_id(
+            self.ctx, lag_dict)
+        result = db.get_hp_ironic_swport_map_by_id(
+            self.ctx, {'neutron_port_id': "n1234"})
+        self.assertEqual("lag1234", result[0].lag_id)
+
+    def test_update_hp_swport_with_lag_id(self):
+        """Test update_hp_swport_with_lag_id method."""
+        self._add_switch_and_lag_port()
+        lag_dict = {'id': "lag1234", 'lag_id': "1234"}
+        db.update_hp_switch_ports_with_lag_id(self.ctx, lag_dict)
+        result = db.get_hp_switch_port_by_id(
+            self.ctx,
+            {'id': "1234"})
+        self.assertEqual("lag1234", result.lag_id)
+
+    def test_get_ext_lag_id_by_id(self):
+        """Test get_ext_lag_id_by_id method."""
+        self._add_switch_and_lag_port()
+        result = db.get_ext_lag_id_by_lag_id(
+            self.ctx, {'id': "lag1234"})
+        self.assertEqual('extlag123', result.external_lag_id)
