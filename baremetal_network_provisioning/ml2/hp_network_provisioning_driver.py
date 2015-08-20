@@ -71,6 +71,7 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
                   {'port_dict': port_dict})
         lag_id = None
         switchports = port_dict['port']['switchports']
+        neutron_port_id = port_dict['port']['id']
         for switchport in switchports:
             switch_port_id = uuidutils.generate_uuid()
             switch_mac_id = switchport['switch_id']
@@ -84,35 +85,39 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
                 LOG.debug("response from SDN controller %(resp)s ",
                           {'resp': resp})
                 resp.raise_for_status()
+                mapping_dict = {'neutron_port_id': neutron_port_id,
+                                'switch_port_id': switch_port_id,
+                                'lag_id': lag_id,
+                                'access_type': None,
+                                'segmentation_id': None,
+                                'bind_requested': False}
+                session = self.context.session
+                if resp.status_code == requests.codes.OK:
+                    with session.begin(subtransactions=True):
+                        db.add_hp_switch_port(self.context, rec_dict)
+                        db.add_hp_ironic_switch_port_mapping(self.context,
+                                                             mapping_dict)
+                else:
+                    LOG.error(" Given physical switch does not exists")
+                    raise hp_exec.HPNetProvisioningDriverError(msg="Failed to"
+                                                               "communicate"
+                                                               "SDN"
+                                                               "Controller")
             except requests.exceptions.Timeout as e:
                 LOG.error(" Request timed out in SDN controller : %s", e)
+                self._roll_back_created_ports(neutron_port_id)
                 raise hp_exec.HPNetProvisioningDriverError(msg="Timed Out"
                                                                "with SDN"
                                                                "controller: %s"
                                                                % e)
             except requests.exceptions.SSLError as e:
                 LOG.error(" SSLError to SDN controller : %s", e)
+                self._roll_back_created_ports(neutron_port_id)
                 raise hp_exec.SslCertificateValidationError(msg=e)
             except Exception as e:
                 LOG.error(" ConnectionFailed to SDN controller : %s", e)
+                self._roll_back_created_ports(neutron_port_id)
                 raise hp_exec.ConnectionFailed(msg=e)
-            mapping_dict = {'neutron_port_id': port_dict['port']['id'],
-                            'switch_port_id': switch_port_id,
-                            'lag_id': lag_id,
-                            'access_type': None,
-                            'segmentation_id': None,
-                            'bind_requested': False}
-            session = self.context.session
-            if resp.status_code == requests.codes.OK:
-                with session.begin(subtransactions=True):
-                    db.add_hp_switch_port(self.context, rec_dict)
-                    db.add_hp_ironic_switch_port_mapping(self.context,
-                                                         mapping_dict)
-            else:
-                LOG.error(" Given physical switch does not exists")
-                raise hp_exec.HPNetProvisioningDriverError(msg="Failed to"
-                                                           "communicate with"
-                                                           "SDN Controller:")
 
     def bind_port_to_segment(self, port_dict):
         """bind_port_to_network. This call makes the REST request to the
@@ -400,3 +405,14 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
             if ext_lag_id:
                 break
         return ext_lag_id
+
+    def _roll_back_created_ports(self, neutron_port_id):
+        rec_dict = {"neutron_port_id": neutron_port_id}
+        hp_sw_ports = db.get_hp_ironic_swport_map_by_id(self.context, rec_dict)
+        if not hp_sw_ports:
+            return
+        for hp_sw_port in hp_sw_ports:
+            hp_sw_port_id = hp_sw_port.switch_port_id
+            hp_sw_port_dict = {'id': hp_sw_port_id}
+            db.delete_hp_switch_port(self.context, hp_sw_port_dict)
+        LOG.debug("Roll back for the created ports succeeded")
