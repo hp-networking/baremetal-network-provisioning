@@ -19,13 +19,10 @@ from oslo_utils import importutils
 
 from neutron.common import constants as n_const
 from neutron.extensions import portbindings
-from neutron.i18n import _LE
 from neutron.plugins.common import constants
-from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import driver_api as api
 
 from baremetal_network_provisioning.common import constants as hp_const
-from baremetal_network_provisioning.common import exceptions as hp_exc
 
 
 LOG = logging.getLogger(__name__)
@@ -64,13 +61,7 @@ class HPMechanismDriver(api.MechanismDriver):
         if not self._is_port_of_interest(context):
             return
         port_dict = self._construct_port(context)
-        LOG.debug("create_port_precommit  port dict %s(port_dict)",
-                  {'port_dict': port_dict})
-        try:
-            self.np_driver.create_port(port_dict)
-        except hp_exc.HPNetProvisioningDriverError as e:
-            LOG.error(_LE("HPNetProvisioningDriverError"), e)
-            raise ml2_exc.MechanismDriverError()
+        self.np_driver.create_port(port_dict)
 
     def create_port_postcommit(self, context):
         """create_port_postcommit."""
@@ -86,11 +77,7 @@ class HPMechanismDriver(api.MechanismDriver):
         bind_requested = profile.get('bind_requested')
         bind_port_dict = port_dict.get('port')
         bind_port_dict['bind_requested'] = bind_requested
-        try:
-            self.np_driver.update_port(port_dict)
-        except hp_exc.HPNetProvisioningDriverError as e:
-            LOG.error(_LE("HPNetProvisioningDriverError"), e)
-            raise ml2_exc.MechanismDriverError()
+        self.np_driver.update_port(port_dict)
 
     def update_port_postcommit(self, context):
         """update_port_postcommit."""
@@ -101,13 +88,7 @@ class HPMechanismDriver(api.MechanismDriver):
         vnic_type = self._get_vnic_type(context)
         port_id = context.current['id']
         if vnic_type == portbindings.VNIC_BAREMETAL:
-            try:
-                self.np_driver.delete_port(port_id)
-            except hp_exc.HPNetProvisioningDriverError as e:
-                LOG.error(_LE("HPNetProvisioningDriverError"), e)
-                raise ml2_exc.MechanismDriverError()
-            LOG.debug("successfully deleted the baremetal port %(port)s",
-                      {'port': context.current['id']})
+            self.np_driver.delete_port(port_id)
 
     def delete_port_postcommit(self, context):
         pass
@@ -129,13 +110,7 @@ class HPMechanismDriver(api.MechanismDriver):
                 b_requested = profile.get('bind_requested')
                 if b_requested is True:
                     port = self._construct_port(context, segmentation_id)
-                    try:
-                        b_status = self.np_driver.bind_port_to_segment(port)
-                    except hp_exc.HPNetProvisioningDriverError as e:
-                        LOG.error(_LE("HPNetProvisioningDriverError"
-                                      "in bind_port"),
-                                  e)
-                        raise ml2_exc.MechanismDriverError()
+                    b_status = self.np_driver.bind_port_to_segment(port)
                     if b_status == hp_const.BIND_SUCCESS:
                         context.set_binding(segment[api.ID],
                                             self.vif_type,
@@ -167,6 +142,7 @@ class HPMechanismDriver(api.MechanismDriver):
             False
 
     def _construct_port(self, context, segmentation_id=None):
+        """"Contruct port dict."""
         port = context.current
         port_id = port['id']
         is_lag = False
