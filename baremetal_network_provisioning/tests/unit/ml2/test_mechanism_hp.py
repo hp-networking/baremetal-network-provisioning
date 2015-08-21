@@ -22,7 +22,7 @@ import contextlib
 import mock
 from oslo_config import cfg
 
-# from neutron.extensions import portbindings
+from neutron.extensions import portbindings
 from neutron.tests import base
 CONF = cfg.CONF
 
@@ -50,7 +50,8 @@ class TestHPMechDriver(base.BaseTestCase):
                 {'local_link_information': [{'switch_id': '11:22:33:44:55:66',
                                              'port_id': 'Tengig0/1'}]},
                 'binding:vnic_type': 'baremetal',
-                'admin_state_up': True
+                'admin_state_up': True,
+                'bind_requested': True
                 }
         return FakePortContext(port, port, network)
 
@@ -95,12 +96,22 @@ class TestHPMechDriver(base.BaseTestCase):
             cons_port.assert_called_with(fake_context)
             c_port.assert_called_with(fake_port_dict)
 
-    # TODO(Koteswar): portbindings is not having VNIC_BAREMETAL.
-    # Commenting this test case for now.
-    '''def test_delete_port_precommit(self):
+    def test_delete_port_precommit(self):
         """Test delete_port_precommit method."""
-        fake_port_id = mock.Mock()
-        fake_context = mock.Mock()
+        tenant_id = 'ten-1'
+        network_id = 'net1-id'
+        segmentation_id = 1001
+        vm_id = 'vm1'
+        network_context = self._get_network_context(tenant_id,
+                                                    network_id,
+                                                    segmentation_id,
+                                                    False)
+
+        port_context = self._get_port_context(tenant_id,
+                                              network_id,
+                                              vm_id,
+                                              network_context)
+        port_id = port_context.current['id']
         with contextlib.nested(
             mock.patch.object(hp_mech.HPMechanismDriver,
                               '_get_vnic_type',
@@ -109,28 +120,36 @@ class TestHPMechDriver(base.BaseTestCase):
                               'delete_port',
                               return_value=None)
         ) as (vnic_type, d_port):
-            self.driver.delete_port_precommit(fake_context)
-            vnic_type.assert_called_with(fake_context)
-            d_port.assert_called_with(fake_port_id)'''
+            self.driver.delete_port_precommit(port_context)
+            vnic_type.assert_called_with(port_context)
+            d_port.assert_called_with(port_id)
 
     def test_update_port_precommit(self):
         """Test update_port_precommit method."""
-        fake_port_dict = mock.Mock()
-        fake_context = mock.Mock()
+        tenant_id = 'ten-1'
+        network_id = 'net1-id'
+        segmentation_id = 1001
+        vm_id = 'vm1'
+        fake_port_dict = self._get_port_dict()
+        network_context = self._get_network_context(tenant_id,
+                                                    network_id,
+                                                    segmentation_id,
+                                                    False)
+
+        port_context = self._get_port_context(tenant_id,
+                                              network_id,
+                                              vm_id,
+                                              network_context)
         with contextlib.nested(
-            mock.patch.object(hp_mech.HPMechanismDriver,
-                              '_is_port_of_interest',
-                              return_value=True),
             mock.patch.object(hp_mech.HPMechanismDriver,
                               '_construct_port',
                               return_value=fake_port_dict),
             mock.patch.object(np_drv.HPNetworkProvisioningDriver,
                               'update_port',
                               return_value=None)
-        ) as (is_port, cons_port, u_port):
-            self.driver.update_port_precommit(fake_context)
-            is_port.assert_called_with(fake_context)
-            cons_port.assert_called_with(fake_context, False)
+        ) as (cons_port, u_port):
+            self.driver.update_port_precommit(port_context)
+            cons_port.assert_called_with(port_context)
             u_port.assert_called_with(fake_port_dict)
 
     def test__construct_port(self):
