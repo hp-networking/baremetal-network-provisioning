@@ -377,7 +377,7 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
         device_port_list = []
         for key, value in device_dict.iteritems():
             device_port_dict = {}
-            device_port_dict['id'] = key
+            device_port_dict['deviceId'] = key
             device_port_dict['ports'] = value
             device_port_list.append(device_port_dict)
         return {"devices": device_port_list,
