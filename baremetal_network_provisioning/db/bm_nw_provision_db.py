@@ -100,7 +100,7 @@ def add_hp_ironic_switch_port_mapping(context, record_dict):
             lag_id=record_dict['lag_id'],
             access_type=record_dict['access_type'],
             segmentation_id=record_dict['segmentation_id'],
-            bind_requested=record_dict['bind_requested'])
+            host_id=record_dict['host_id'])
         session.add(mapping)
 
 
@@ -146,21 +146,8 @@ def update_hp_ironic_swport_map_with_seg_id(context, rec_dict):
             (context.session.query(models.HPIronicSwitchPortMapping).filter_by(
                 neutron_port_id=rec_dict['neutron_port_id']).update(
                     {'access_type': rec_dict['access_type'],
-                     'bind_requested': rec_dict['bind_requested'],
+                     'host_id': rec_dict['host_id'],
                      'segmentation_id': rec_dict['segmentation_id']},
-                    synchronize_session=False))
-    except exc.NoResultFound:
-        LOG.debug('no ironic switch port mapping found for id %s',
-                  rec_dict['neutron_port_id'])
-
-
-def update_hp_ironic_swport_map_with_bind_req(context, rec_dict):
-    """Update hp_ironic_switch_port_mapping."""
-    try:
-        with context.session.begin(subtransactions=True):
-            (context.session.query(models.HPIronicSwitchPortMapping).filter_by(
-                neutron_port_id=rec_dict['neutron_port_id']).update(
-                    {'bind_requested': rec_dict['bind_requested']},
                     synchronize_session=False))
     except exc.NoResultFound:
         LOG.debug('no ironic switch port mapping found for id %s',

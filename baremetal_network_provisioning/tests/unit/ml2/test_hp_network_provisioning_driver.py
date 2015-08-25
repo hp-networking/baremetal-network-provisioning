@@ -142,13 +142,6 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
             value = self.driver.bind_port_to_segment(port_dict)
             self.assertEqual(value, hp_const.BIND_FAILURE)
 
-    def test_update_port(self):
-        """Test update ironic  port ."""
-        port_dict = self._get_port_payload()
-        with mock.patch.object(db,
-                               'update_hp_ironic_swport_map_with_bind_req'):
-            self.driver.update_port(port_dict)
-
     def test_delete_port(self):
         """Test delete ironic port."""
         port_dict = self._get_port_payload()
@@ -193,7 +186,7 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
         """Get lag port payload for processing requests."""
         port_dict = {'port':
                      {'segmentation_id': '1001',
-                      'bind_requested': True,
+                      'host_id': 'ironic',
                       'access_type': hp_const.ACCESS,
                       'switchports':
                       [{'port_id': 'Ten-GigabitEthernet1/0/35',
@@ -208,7 +201,7 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
         """Get port payload for processing requests."""
         port_dict = {'port':
                      {'segmentation_id': '1001',
-                      'bind_requested': True,
+                      'host_id': 'ironic',
                       'access_type': hp_const.ACCESS,
                       'switchports':
                       [{'port_id': 'Ten-GigabitEthernet1/0/35',

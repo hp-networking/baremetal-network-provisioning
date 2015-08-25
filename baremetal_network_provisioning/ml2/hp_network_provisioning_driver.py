@@ -90,7 +90,7 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
                                 'lag_id': lag_id,
                                 'access_type': None,
                                 'segmentation_id': None,
-                                'bind_requested': False}
+                                'host_id': None}
                 session = self.context.session
                 if resp.status_code == requests.codes.OK:
                     with session.begin(subtransactions=True):
@@ -162,14 +162,7 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
         SDN controller for provision VLAN on switch port where bare metal
         is connected.
         """
-        LOG.debug("update_port with port dict %(port_dict)s",
-                  {'port_dict': port_dict})
-        port_id = port_dict['port']['id']
-        bind_requested = port_dict['port']['bind_requested']
-        update_dict = {'neutron_port_id': port_id,
-                       'bind_requested': bind_requested}
-        db.update_hp_ironic_swport_map_with_bind_req(self.context,
-                                                     update_dict)
+        pass
 
     def delete_port(self, port_id):
         """delete_port. This call makes the REST request to the external
@@ -287,10 +280,11 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
 
     def _get_bind_dict(self, port_dict):
         segmentation_id = port_dict['port']['segmentation_id']
+        host_id = port_dict['port']['host_id']
         bind_dict = {'neutron_port_id': port_dict['port']['id'],
                      'access_type': hp_const.ACCESS,
                      'segmentation_id': segmentation_id,
-                     'bind_requested': True,
+                     'host_id': host_id,
                      }
         return bind_dict
 
@@ -377,7 +371,7 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
         device_port_list = []
         for key, value in device_dict.iteritems():
             device_port_dict = {}
-            device_port_dict['id'] = key
+            device_port_dict['deviceId'] = key
             device_port_dict['ports'] = value
             device_port_list.append(device_port_dict)
         return {"devices": device_port_list,

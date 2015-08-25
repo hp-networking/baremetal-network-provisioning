@@ -58,7 +58,7 @@ def upgrade():
                     sa.Column('access_type', sa.String(length=36),
                               nullable=True),
                     sa.Column('segmentation_id', sa.Integer, nullable=True),
-                    sa.Column('bind_requested', sa.Boolean, default=False),
+                    sa.Column('host_id', sa.String(length=36), nullable=True),
                     sa.ForeignKeyConstraint(['lag_id'],
                                             ['hpswitchlagports.id'],
                                             ondelete='CASCADE'),

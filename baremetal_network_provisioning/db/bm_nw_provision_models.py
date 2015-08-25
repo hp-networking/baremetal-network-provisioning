@@ -48,4 +48,4 @@ class HPIronicSwitchPortMapping(model_base.BASEV2):
                                      ondelete='CASCADE'))
     access_type = sa.Column(sa.String(36))
     segmentation_id = sa.Column(sa.Integer)
-    bind_requested = sa.Column(sa.Boolean)
+    host_id = sa.Column(sa.String(36))

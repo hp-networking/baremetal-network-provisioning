@@ -48,7 +48,7 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
                     'lag_id': "lag1234",
                     'access_type': "access",
                     'segmentation_id': 100,
-                    'bind_requested': True}
+                    'host_id': 'ironic'}
         return rec_dict
 
     def test_add_hp_switch_lag_port(self):
@@ -116,22 +116,10 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
             self.ctx, {'neutron_port_id': "n1234",
                        'access_type': "access",
                        'segmentation_id': 200,
-                       'bind_requested': True})
+                       'host_id': 'ironic'})
         result = db.get_hp_ironic_swport_map_by_id(
             self.ctx, {'neutron_port_id': "n1234"})
         self.assertEqual(200, result[0].segmentation_id)
-
-    def test_update_hp_ironic_swport_map_with_bind_req(self):
-        """Test update_hp_ironic_swport_map_with_bind_req method."""
-        self._add_switch_and_lag_port()
-        rec_dict = self._get_ironic_switch_port_map_dict()
-        db.add_hp_ironic_switch_port_mapping(self.ctx, rec_dict)
-        db.update_hp_ironic_swport_map_with_bind_req(
-            self.ctx, {'neutron_port_id': "n1234",
-                       'bind_requested': False})
-        result = db.get_hp_ironic_swport_map_by_id(
-            self.ctx, {'neutron_port_id': "n1234"})
-        self.assertEqual(False, result[0].bind_requested)
 
     def test_get_hp_switch_port_by_id(self):
         """Test get_hp_switch_port_by_switchid_portname method."""

@@ -41,7 +41,7 @@ class TestHPMechDriver(base.BaseTestCase):
         """Get port context."""
         port = {'device_id': vm_id,
                 'device_owner': 'compute',
-                'binding:host_id': 'ubuntu1',
+                'binding:host_id': 'ironic',
                 'name': 'test-port',
                 'tenant_id': tenant_id,
                 'id': 123456,
@@ -51,7 +51,6 @@ class TestHPMechDriver(base.BaseTestCase):
                                              'port_id': 'Tengig0/1'}]},
                 'binding:vnic_type': 'baremetal',
                 'admin_state_up': True,
-                'bind_requested': True
                 }
         return FakePortContext(port, port, network)
 
@@ -68,6 +67,7 @@ class TestHPMechDriver(base.BaseTestCase):
         """Get port dict."""
         port_dict = {'port':
                      {'segmentation_id': 1001,
+                      'host_id': 'ironic',
                       'access_type': hp_const.ACCESS,
                       'switchports':
                       [{'port_id': 'Tengig0/1',
@@ -123,34 +123,6 @@ class TestHPMechDriver(base.BaseTestCase):
             self.driver.delete_port_precommit(port_context)
             vnic_type.assert_called_with(port_context)
             d_port.assert_called_with(port_id)
-
-    def test_update_port_precommit(self):
-        """Test update_port_precommit method."""
-        tenant_id = 'ten-1'
-        network_id = 'net1-id'
-        segmentation_id = 1001
-        vm_id = 'vm1'
-        fake_port_dict = self._get_port_dict()
-        network_context = self._get_network_context(tenant_id,
-                                                    network_id,
-                                                    segmentation_id,
-                                                    False)
-
-        port_context = self._get_port_context(tenant_id,
-                                              network_id,
-                                              vm_id,
-                                              network_context)
-        with contextlib.nested(
-            mock.patch.object(hp_mech.HPMechanismDriver,
-                              '_construct_port',
-                              return_value=fake_port_dict),
-            mock.patch.object(np_drv.HPNetworkProvisioningDriver,
-                              'update_port',
-                              return_value=None)
-        ) as (cons_port, u_port):
-            self.driver.update_port_precommit(port_context)
-            cons_port.assert_called_with(port_context)
-            u_port.assert_called_with(fake_port_dict)
 
     def test__construct_port(self):
         """Test _construct_port method."""
