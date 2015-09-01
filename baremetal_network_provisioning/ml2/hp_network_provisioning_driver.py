@@ -75,15 +75,25 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
         for switchport in switchports:
             switch_port_id = uuidutils.generate_uuid()
             switch_mac_id = switchport['switch_id']
+            port_id = switchport['port_id']
             rec_dict = {'id': switch_port_id,
                         'switch_id': switch_mac_id,
-                        'port_name': switchport['port_id'],
+                        'port_name': port_id,
                         'lag_id': None}
             switch_url = self._frame_switch_url(switch_mac_id)
             try:
                 resp = self._do_request('GET', switch_url, None)
-                LOG.debug("response from SDN controller %(resp)s ",
+                LOG.error("response from SDN controller %(resp)s ",
                           {'resp': resp})
+                if not resp:
+                    raise hp_exec.HPNetProvisioningDriverError(msg="response "
+                                                               "is none")
+                port_list = resp.json()['ports']
+                if port_id not in port_list:
+                    self._roll_back_created_ports(neutron_port_id)
+                    raise hp_exec.HPNetProvisioningDriverError(msg="Given port"
+                                                               " does not"
+                                                               " exists")
                 resp.raise_for_status()
                 mapping_dict = {'neutron_port_id': neutron_port_id,
                                 'switch_port_id': switch_port_id,
@@ -395,6 +405,8 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
         for lag_model in lag_models:
             ext_lag = db.get_ext_lag_id_by_lag_id(self.context,
                                                   {'id': lag_model.lag_id})
+            if not ext_lag:
+                return None
             ext_lag_id = ext_lag.external_lag_id
             if ext_lag_id:
                 break

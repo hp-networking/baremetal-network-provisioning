@@ -23,6 +23,7 @@ import contextlib
 
 import mock
 from oslo_config import cfg
+from oslo_serialization import jsonutils
 import requests
 
 from neutron.tests import base
@@ -35,14 +36,21 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
         super(TestHPNetworkProvisioningDriver, self).setUp()
         CONF.set_override('base_url', 'fake_url', 'default')
         self.driver = driver.HPNetworkProvisioningDriver()
+        self._body = {'ports': ['Ten-GigabitEthernet1/0/35']}
+        self._lag_body = {'ports': ['Ten-GigabitEthernet1/0/35',
+                                    'Ten-GigabitEthernet1/0/36']}
 
     def test_create_port_with_200_ok(self):
         """Test create port for 200 OK for get devices REST."""
         port_dict = self._get_port_payload()
-        res_200 = FakeResponse(200)
+        self.resp_headers = {"content-type": "application/json"}
+        return_value = FakeResponse(status_code=200,
+                                    content=jsonutils.dumps(self._body),
+                                    headers=self.resp_headers)
+        requests.request.return_value = return_value
         with contextlib.nested(mock.patch.object(self.driver,
                                                  '_do_request',
-                                                 return_value=res_200),
+                                                 return_value=return_value),
                                mock.patch.object(db, 'add_hp_switch_port',
                                                  return_value=None),
                                mock.patch.object(db,
@@ -53,10 +61,14 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
     def test_create_lag_port_with_200_ok(self):
         """Test create lag  port for 200 OK for get devices REST."""
         port_dict = self._get_lag_port_payload()
-        res_200 = FakeResponse(200)
+        self.resp_headers = {"content-type": "application/json"}
+        return_value = FakeResponse(status_code=200,
+                                    content=jsonutils.dumps(self._lag_body),
+                                    headers=self.resp_headers)
+        requests.request.return_value = return_value
         with contextlib.nested(mock.patch.object(self.driver,
                                                  '_do_request',
-                                                 return_value=res_200),
+                                                 return_value=return_value),
                                mock.patch.object(db, 'add_hp_switch_port',
                                                  return_value=None),
                                mock.patch.object(db,
@@ -67,8 +79,9 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
     def test_create_port_with_connection_failed(self):
         """Test create port with SDN controller error."""
         port_dict = self._get_port_payload()
-        res_unavail = FakeResponse(503, headers={'retry-after': '10'},
-                                   reason="connection error")
+        res_unavail = FakeResponse(status_code=200,
+                                   headers={'retry-after': '10'},
+                                   content=self._body)
         with mock.patch.object(self.driver,
                                '_do_request',
                                return_value=res_unavail):
@@ -79,14 +92,15 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
     def test_create_port_with_invalid_device(self):
         """Test create port with invalid device."""
         port_dict = self._get_port_payload()
-        res_unavail = FakeResponse(404, headers={'retry-after': '10'})
+        res_unavail = FakeResponse(content=None, status_code=503,
+                                   headers={'retry-after': '10'})
         with mock.patch.object(self.driver,
                                '_do_request',
                                return_value=res_unavail):
             error = self.assertRaises(hp_ex.ConnectionFailed,
                                       self.driver.create_port,
                                       port_dict)
-            self.assertEqual(' Connection has failed: 404 Client Error: None',
+            self.assertEqual(' Connection has failed: response is none',
                              error.msg)
 
     def test_bind_port_to_segment_success(self):
@@ -212,13 +226,11 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
 
 
 class FakeResponse(requests.Response):
-    def __init__(self, status_code=None, text=None, headers=None, reason=None):
-        self._text = text
+    def __init__(self, status_code=None, body=None, headers=None, reason=None,
+                 content=None, encoding=None):
+        self._content = content
         self.status_code = status_code
+        self.encoding = encoding
         self.reason = reason
         if headers is not None:
             self.headers = headers
-
-    @property
-    def text(self):
-        return self._text
