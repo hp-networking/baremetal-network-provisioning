@@ -207,6 +207,8 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
         else:
             ir_prt_map = db.get_hp_ironic_swport_map_by_id(self.context,
                                                            rec_dict)
+            if not ir_prt_map:
+                return
             hp_switch_port_id = ir_prt_map[0].switch_port_id
             hp_sw_port_dict = {'id': hp_switch_port_id}
             switch_port_map = db.get_hp_switch_port_by_id(self.context,
@@ -332,6 +334,7 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
         lag_url = self._frame_lag_url()
         LOG.debug("_do_lag_request put_url %(put_url)",
                   {'put_url': lag_url})
+        neutron_port_id = port_dict['port']['id']
         try:
             if include_seg_id:
                 switchport = port_dict['port']['switchports']
@@ -347,15 +350,18 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
             resp.raise_for_status()
             return resp
         except requests.exceptions.Timeout as e:
+            self._roll_back_created_ports(neutron_port_id)
             LOG.error("Timed out in SDN controller : %s", e)
             raise hp_exec.HPNetProvisioningDriverError(msg="Timed Out"
                                                            "with SDN"
                                                            "controller: %s"
                                                            % e)
         except requests.exceptions.SSLError as e:
+            self._roll_back_created_ports(neutron_port_id)
             LOG.error("SSLError to SDN controller : %s", e)
             raise hp_exec.SslCertificateValidationError(msg=e)
         except Exception as e:
+            self._roll_back_created_ports(neutron_port_id)
             LOG.error("ConnectionFailed to SDN controller : %s", e)
             raise hp_exec.ConnectionFailed(msg=e)
 
