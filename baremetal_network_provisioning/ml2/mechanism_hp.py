@@ -69,7 +69,15 @@ class HPMechanismDriver(api.MechanismDriver):
 
     def update_port_precommit(self, context):
         """update_port_precommit."""
-        pass
+        vnic_type = self._get_vnic_type(context)
+        profile = self._get_binding_profile(context)
+        if vnic_type != portbindings.VNIC_BAREMETAL or not profile:
+            return
+        port_dict = self._construct_port(context)
+        host_id = context.current['binding:host_id']
+        bind_port_dict = port_dict.get('port')
+        bind_port_dict['host_id'] = host_id
+        self.np_driver.update_port(port_dict)
 
     def update_port_postcommit(self, context):
         """update_port_postcommit."""

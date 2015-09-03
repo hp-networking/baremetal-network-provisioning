@@ -167,6 +167,19 @@ def update_hp_ironic_swport_map_with_lag_id(context, rec_dict):
                   rec_dict['neutron_port_id'])
 
 
+def update_hp_ironic_swport_map_with_host_id(context, rec_dict):
+    """Update hp_ironic_switch_port_mapping."""
+    try:
+        with context.session.begin(subtransactions=True):
+            (context.session.query(models.HPIronicSwitchPortMapping).filter_by(
+                neutron_port_id=rec_dict['neutron_port_id']).update(
+                    {'host_id': rec_dict['host_id']},
+                    synchronize_session=False))
+    except exc.NoResultFound:
+        LOG.debug('no ironic switch port mapping found for id %s',
+                  rec_dict['neutron_port_id'])
+
+
 def get_hp_switch_port_by_id(context, record_dict):
     """Get hp_switch_port that matches the supplied switch id."""
     try:

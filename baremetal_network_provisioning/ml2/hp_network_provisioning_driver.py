@@ -172,7 +172,38 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
         SDN controller for provision VLAN on switch port where bare metal
         is connected.
         """
-        pass
+        LOG.debug("update_port with port dict %(port_dict)s",
+                  {'port_dict': port_dict})
+        port_id = port_dict['port']['id']
+        host_id = port_dict['port']['host_id']
+        rec_dict = {'neutron_port_id': port_id}
+        ironic_port_list = db.get_hp_ironic_swport_map_by_id(self.context,
+                                                             rec_dict)
+        switchports = port_dict['port']['switchports']
+        if not ironic_port_list:
+            raise hp_exec.HPNetProvisioningDriverError(msg="ironic port list "
+                                                       "is empty")
+        if not len(switchports) == len(ironic_port_list):
+            raise hp_exec.HPNetProvisioningDriverError(msg="given switchports "
+                                                       "dict does not match")
+        for ironic_port in ironic_port_list:
+            hp_switch_port_id = ironic_port.switch_port_id
+            hp_sw_port_dict = {'id': hp_switch_port_id}
+            switch_port_map = db.get_hp_switch_port_by_id(self.context,
+                                                          hp_sw_port_dict)
+            switch_id_db = switch_port_map.switch_id
+            port_name_db = switch_port_map.port_name
+            if not any(d['port_id'] == port_name_db for d in switchports):
+                raise hp_exec.HPNetProvisioningDriverError(msg="given port"
+                                                           "does not exists")
+            if not any(d['switch_id'] == switch_id_db for d in switchports):
+                raise hp_exec.HPNetProvisioningDriverError(msg="given switch"
+                                                           "does not exists")
+
+        update_dict = {'neutron_port_id': port_id,
+                       'host_id': host_id}
+        db.update_hp_ironic_swport_map_with_host_id(self.context,
+                                                    update_dict)
 
     def delete_port(self, port_id):
         """delete_port. This call makes the REST request to the external
@@ -189,27 +220,22 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
             is_lag = True
         else:
             is_lag = False
+        if not ir_ports:
+                return
+        host_id = ir_ports[0].host_id
         if is_lag:
+            if not host_id:
+                self._delete_lag_ports(ir_ports)
+                return
             ext_lag_id = self._get_ext_lag_id_by_port_id(port_id)
             resp = self._do_lag_request(None, False, ext_lag_id)
             if resp and resp.status_code == 204:
-                for ironic_port in ir_ports:
-                    hp_sw_port_id = ironic_port.switch_port_id
-                    hp_sw_port_dict = {'id': hp_sw_port_id}
-                    lag_id = ironic_port.lag_id
-                    db.delete_hp_switch_port(self.context, hp_sw_port_dict)
-                if lag_id:
-                    lag_dict = {'id': lag_id}
-                    db.delete_hp_switch_lag_port(self.context, lag_dict)
+                self._delete_lag_ports(ir_ports)
             else:
                 LOG.error("Could not delete the switch port due to invalid"
                           "response")
         else:
-            ir_prt_map = db.get_hp_ironic_swport_map_by_id(self.context,
-                                                           rec_dict)
-            if not ir_prt_map:
-                return
-            hp_switch_port_id = ir_prt_map[0].switch_port_id
+            hp_switch_port_id = ir_ports[0].switch_port_id
             hp_sw_port_dict = {'id': hp_switch_port_id}
             switch_port_map = db.get_hp_switch_port_by_id(self.context,
                                                           hp_sw_port_dict)
@@ -220,11 +246,14 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
             switchports_list = []
             switchports_list.append(inner_switchports_dict)
             switchports_dict = {'switchports': switchports_list}
-            switchports_dict['segmentation_id'] = ir_prt_map[0].segmentation_id
+            switchports_dict['segmentation_id'] = ir_ports[0].segmentation_id
             switchports_dict['access_type'] = hp_const.ACCESS
             LOG.debug(" switchports_dict %(switchports_dict)s ",
                       {'switchports_dict': switchports_dict})
             delete_port_dict = {'port': switchports_dict}
+            if not host_id:
+                db.delete_hp_switch_port(self.context, hp_sw_port_dict)
+                return
             resp = self._do_vlan_provisioning(delete_port_dict, False)
             if resp and resp.status_code == 204:
                 db.delete_hp_switch_port(self.context, hp_sw_port_dict)
@@ -332,9 +361,10 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
     def _do_lag_request(self, port_dict, include_seg_id, ext_lag_id):
         """LAG request for lag ports."""
         lag_url = self._frame_lag_url()
-        LOG.debug("_do_lag_request put_url %(put_url)",
+        LOG.debug("_do_lag_request put_url %(put_url)s",
                   {'put_url': lag_url})
-        neutron_port_id = port_dict['port']['id']
+        if port_dict:
+            neutron_port_id = port_dict['port']['id']
         try:
             if include_seg_id:
                 switchport = port_dict['port']['switchports']
@@ -350,18 +380,21 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
             resp.raise_for_status()
             return resp
         except requests.exceptions.Timeout as e:
-            self._roll_back_created_ports(neutron_port_id)
+            if neutron_port_id:
+                self._roll_back_created_ports(neutron_port_id)
             LOG.error("Timed out in SDN controller : %s", e)
             raise hp_exec.HPNetProvisioningDriverError(msg="Timed Out"
                                                            "with SDN"
                                                            "controller: %s"
                                                            % e)
         except requests.exceptions.SSLError as e:
-            self._roll_back_created_ports(neutron_port_id)
+            if neutron_port_id:
+                self._roll_back_created_ports(neutron_port_id)
             LOG.error("SSLError to SDN controller : %s", e)
             raise hp_exec.SslCertificateValidationError(msg=e)
         except Exception as e:
-            self._roll_back_created_ports(neutron_port_id)
+            if neutron_port_id:
+                self._roll_back_created_ports(neutron_port_id)
             LOG.error("ConnectionFailed to SDN controller : %s", e)
             raise hp_exec.ConnectionFailed(msg=e)
 
@@ -428,3 +461,13 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
             hp_sw_port_dict = {'id': hp_sw_port_id}
             db.delete_hp_switch_port(self.context, hp_sw_port_dict)
         LOG.debug("Roll back for the created ports succeeded")
+
+    def _delete_lag_ports(self, ir_ports):
+        for ironic_port in ir_ports:
+            hp_sw_port_id = ironic_port.switch_port_id
+            hp_sw_port_dict = {'id': hp_sw_port_id}
+            lag_id = ironic_port.lag_id
+            db.delete_hp_switch_port(self.context, hp_sw_port_dict)
+        if lag_id:
+            lag_dict = {'id': lag_id}
+            db.delete_hp_switch_lag_port(self.context, lag_dict)
