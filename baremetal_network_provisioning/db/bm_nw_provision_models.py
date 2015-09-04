@@ -32,8 +32,6 @@ class HPSwitchPort(model_base.BASEV2, models_v2.HasId):
     lag_id = sa.Column(sa.String(36),
                        sa.ForeignKey('hpswitchlagports.id',
                                      ondelete='CASCADE'))
-    __table_args__ = (sa.UniqueConstraint(switch_id,
-                                          port_name),)
 
 
 class HPIronicSwitchPortMapping(model_base.BASEV2):

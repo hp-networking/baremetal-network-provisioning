@@ -223,8 +223,9 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
         if not ir_ports:
                 return
         host_id = ir_ports[0].host_id
+        seg_id = ir_ports[0].segmentation_id
         if is_lag:
-            if not host_id:
+            if not host_id and not seg_id:
                 self._delete_lag_ports(ir_ports)
                 return
             ext_lag_id = self._get_ext_lag_id_by_port_id(port_id)
@@ -251,7 +252,7 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
             LOG.debug(" switchports_dict %(switchports_dict)s ",
                       {'switchports_dict': switchports_dict})
             delete_port_dict = {'port': switchports_dict}
-            if not host_id:
+            if not host_id and not seg_id:
                 db.delete_hp_switch_port(self.context, hp_sw_port_dict)
                 return
             resp = self._do_vlan_provisioning(delete_port_dict, False)
