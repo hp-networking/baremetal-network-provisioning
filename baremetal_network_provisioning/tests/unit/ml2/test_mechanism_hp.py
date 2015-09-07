@@ -73,6 +73,7 @@ class TestHPMechDriver(base.BaseTestCase):
                       [{'port_id': 'Tengig0/1',
                           'switch_id': '11:22:33:44:55:66'}],
                       'id': 123456,
+                      'network_id': "net1-id",
                       'is_lag': False}}
         return port_dict
 

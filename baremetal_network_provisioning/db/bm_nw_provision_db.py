@@ -18,6 +18,8 @@ from sqlalchemy.orm import exc
 
 from baremetal_network_provisioning.db import bm_nw_provision_models as models
 
+from neutron.db import models_v2
+
 
 LOG = logging.getLogger(__name__)
 
@@ -230,3 +232,8 @@ def get_ext_lag_id_by_lag_id(context, record_dict):
                   record_dict['id'])
         return
     return switch_port
+
+
+def get_subnets_by_network(context, network_id):
+        subnet_qry = context.session.query(models_v2.Subnet)
+        return subnet_qry.filter_by(network_id=network_id).all()

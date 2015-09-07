@@ -51,6 +51,8 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
         with contextlib.nested(mock.patch.object(self.driver,
                                                  '_do_request',
                                                  return_value=return_value),
+                               mock.patch.object(db, 'get_subnets_by_network',
+                                                 return_value="subnet"),
                                mock.patch.object(db, 'add_hp_switch_port',
                                                  return_value=None),
                                mock.patch.object(db,
@@ -66,7 +68,9 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
                                     content=jsonutils.dumps(self._lag_body),
                                     headers=self.resp_headers)
         requests.request.return_value = return_value
-        with contextlib.nested(mock.patch.object(self.driver,
+        with contextlib.nested(mock.patch.object(db, 'get_subnets_by_network',
+                                                 return_value=["subnet"]),
+                               mock.patch.object(self.driver,
                                                  '_do_request',
                                                  return_value=return_value),
                                mock.patch.object(db, 'add_hp_switch_port',
@@ -82,9 +86,11 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
         res_unavail = FakeResponse(status_code=200,
                                    headers={'retry-after': '10'},
                                    content=self._body)
-        with mock.patch.object(self.driver,
-                               '_do_request',
-                               return_value=res_unavail):
+        with contextlib.nested(mock.patch.object(db, 'get_subnets_by_network',
+                                                 return_value=["subnet"]),
+                               mock.patch.object(self.driver,
+                                                 '_do_request',
+                               return_value=res_unavail)):
             self.assertRaises(hp_ex.ConnectionFailed,
                               self.driver.create_port,
                               port_dict)
@@ -94,9 +100,11 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
         port_dict = self._get_port_payload()
         res_unavail = FakeResponse(content=None, status_code=503,
                                    headers={'retry-after': '10'})
-        with mock.patch.object(self.driver,
-                               '_do_request',
-                               return_value=res_unavail):
+        with contextlib.nested(mock.patch.object(self.driver,
+                                                 '_do_request',
+                               return_value=res_unavail),
+                               mock.patch.object(db, 'get_subnets_by_network',
+                                                 return_value="subnet")):
             error = self.assertRaises(hp_ex.ConnectionFailed,
                                       self.driver.create_port,
                                       port_dict)
@@ -208,6 +216,7 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
                        {'port_id': 'Ten-GigabitEthernet1/0/36',
                           'switch_id': '44:31:92:61:89:d2'}],
                       'id': '321f506f-5f0d-435c-9c23-c2a11f78c3e3',
+                      'network_id': 'net-id',
                       'is_lag': True}}
         return port_dict
 
@@ -221,6 +230,7 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
                       [{'port_id': 'Ten-GigabitEthernet1/0/35',
                           'switch_id': '44:31:92:61:89:d2'}],
                       'id': '321f506f-5f0d-435c-9c23-c2a11f78c3e3',
+                      'network_id': 'net-id',
                       'is_lag': False}}
         return port_dict
 

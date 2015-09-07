@@ -144,6 +144,7 @@ class HPMechanismDriver(api.MechanismDriver):
         """"Contruct port dict."""
         port = context.current
         port_id = port['id']
+        network_id = port['network_id']
         is_lag = False
         bind_port_dict = None
         profile = self._get_binding_profile(context)
@@ -155,6 +156,7 @@ class HPMechanismDriver(api.MechanismDriver):
             is_lag = True
         port_dict = {'port':
                      {'id': port_id,
+                      'network_id': network_id,
                       'is_lag': is_lag,
                       'switchports': local_link_information
                       }

@@ -72,6 +72,11 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
         lag_id = None
         switchports = port_dict['port']['switchports']
         neutron_port_id = port_dict['port']['id']
+        network_id = port_dict['port']['network_id']
+        subnets = db.get_subnets_by_network(self.context, network_id)
+        if not subnets:
+            raise hp_exec.HPNetProvisioningDriverError(msg="Subnet not found "
+                                                       "for the network")
         for switchport in switchports:
             switch_port_id = uuidutils.generate_uuid()
             switch_mac_id = switchport['switch_id']
