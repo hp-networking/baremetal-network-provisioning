@@ -76,10 +76,10 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
     def test_get_hp_switch_port_by_switchid_portname(self):
         """Test get_hp_switch_port_by_switchid_portname method."""
         self._add_switch_and_lag_port()
-        result = db.get_hp_switch_port_by_switchid_portname(
+        result = db.get_all_hp_sw_port_by_swchid_portname(
             self.ctx,
             {'switch_id': "test_switch1", 'port_name': "Tengig0/1"})
-        self.assertEqual('test_switch1', result.switch_id)
+        self.assertEqual('test_switch1', result[0].switch_id)
 
     def test_get_hp_switch_lag_port_by_id(self):
         """Test get_hp_switch_lag_port_by_id method."""

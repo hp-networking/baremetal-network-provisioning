@@ -17,8 +17,11 @@ from oslo_log import log as logging
 from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
 import requests
+import webob.exc as wexc
 
+from neutron.api.v2 import base
 from neutron import context as neutron_context
+from neutron.plugins.ml2.common import exceptions as ml2_exc
 
 from baremetal_network_provisioning.common import constants as hp_const
 from baremetal_network_provisioning.common import exceptions as hp_exec
@@ -73,10 +76,11 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
         switchports = port_dict['port']['switchports']
         neutron_port_id = port_dict['port']['id']
         network_id = port_dict['port']['network_id']
+        host_id = port_dict['port']['host_id']
         subnets = db.get_subnets_by_network(self.context, network_id)
         if not subnets:
-            raise hp_exec.HPNetProvisioningDriverError(msg="Subnet not found "
-                                                       "for the network")
+            LOG.error("Subnet not found for the network")
+            self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
         for switchport in switchports:
             switch_port_id = uuidutils.generate_uuid()
             switch_mac_id = switchport['switch_id']
@@ -85,20 +89,23 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
                         'switch_id': switch_mac_id,
                         'port_name': port_id,
                         'lag_id': None}
+            sw_ports = db.get_all_hp_sw_port_by_swchid_portname(self.context,
+                                                                rec_dict)
+            if sw_ports and host_id:
+                for sw_port in sw_ports:
+                    self._is_port_already_bound(sw_port, neutron_port_id)
             switch_url = self._frame_switch_url(switch_mac_id)
             try:
                 resp = self._do_request('GET', switch_url, None)
-                LOG.error("response from SDN controller %(resp)s ",
-                          {'resp': resp})
+                LOG.info("response from SDN controller %(resp)s ",
+                         {'resp': resp})
                 if not resp:
-                    raise hp_exec.HPNetProvisioningDriverError(msg="response "
-                                                               "is none")
+                    self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
                 port_list = resp.json()['ports']
                 if port_id not in port_list:
                     self._roll_back_created_ports(neutron_port_id)
-                    raise hp_exec.HPNetProvisioningDriverError(msg="Given port"
-                                                               " does not"
-                                                               " exists")
+                    LOG.error("Given port is not found")
+                    self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
                 resp.raise_for_status()
                 mapping_dict = {'neutron_port_id': neutron_port_id,
                                 'switch_port_id': switch_port_id,
@@ -114,25 +121,27 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
                                                              mapping_dict)
                 else:
                     LOG.error(" Given physical switch does not exists")
-                    raise hp_exec.HPNetProvisioningDriverError(msg="Failed to"
-                                                               "communicate"
-                                                               "SDN"
-                                                               "Controller")
+                    self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
             except requests.exceptions.Timeout as e:
                 LOG.error(" Request timed out in SDN controller : %s", e)
                 self._roll_back_created_ports(neutron_port_id)
-                raise hp_exec.HPNetProvisioningDriverError(msg="Timed Out"
-                                                               "with SDN"
-                                                               "controller: %s"
-                                                               % e)
+                self._raise_ml2_error(wexc.HTTPRequestTimeout, 'create_port')
             except requests.exceptions.SSLError as e:
                 LOG.error(" SSLError to SDN controller : %s", e)
                 self._roll_back_created_ports(neutron_port_id)
-                raise hp_exec.SslCertificateValidationError(msg=e)
-            except Exception as e:
-                LOG.error(" ConnectionFailed to SDN controller : %s", e)
+                self._raise_ml2_error(wexc.HTTPBadRequest, 'create_port')
+            except requests.exceptions.HTTPError as e:
+                LOG.error(" HTTPError : %s", e)
                 self._roll_back_created_ports(neutron_port_id)
-                raise hp_exec.ConnectionFailed(msg=e)
+                self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
+            except requests.exceptions.URLRequired as e:
+                LOG.error(" Invalid URL : %s", e)
+                self._roll_back_created_ports(neutron_port_id)
+                self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
+            except Exception as e:
+                LOG.error(" Bad request : %s", e)
+                self._roll_back_created_ports(neutron_port_id)
+                self._raise_ml2_error(wexc.HTTPBadRequest, 'create_port')
 
     def bind_port_to_segment(self, port_dict):
         """bind_port_to_network. This call makes the REST request to the
@@ -186,11 +195,15 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
                                                              rec_dict)
         switchports = port_dict['port']['switchports']
         if not ironic_port_list:
-            raise hp_exec.HPNetProvisioningDriverError(msg="ironic port list "
-                                                       "is empty")
+            err_msg = "ironic port list is empty"
+            self._raise_hp_net_provisioning_error(wexc.HTTPNotFound,
+                                                  'update_port',
+                                                  err_msg)
         if not len(switchports) == len(ironic_port_list):
-            raise hp_exec.HPNetProvisioningDriverError(msg="given switchports "
-                                                       "dict does not match")
+            err_msg = "given switchports dict does not match"
+            self._raise_hp_net_provisioning_error(wexc.HTTPConflict,
+                                                  'update_port',
+                                                  err_msg)
         for ironic_port in ironic_port_list:
             hp_switch_port_id = ironic_port.switch_port_id
             hp_sw_port_dict = {'id': hp_switch_port_id}
@@ -199,16 +212,39 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
             switch_id_db = switch_port_map.switch_id
             port_name_db = switch_port_map.port_name
             if not any(d['port_id'] == port_name_db for d in switchports):
-                raise hp_exec.HPNetProvisioningDriverError(msg="given port"
-                                                           "does not exists")
+                err_msg = "given port does not exists"
+                self._raise_hp_net_provisioning_error(wexc.HTTPNotFound,
+                                                      'update_port',
+                                                      err_msg)
             if not any(d['switch_id'] == switch_id_db for d in switchports):
-                raise hp_exec.HPNetProvisioningDriverError(msg="given switch"
-                                                           "does not exists")
-
+                err_msg = "given switch does not exists"
+                self._raise_hp_net_provisioning_error(wexc.HTTPNotFound,
+                                                      'update_port',
+                                                      err_msg)
+            rec_dict = {'switch_id': switch_id_db,
+                        'port_name': port_name_db}
+            switch_ports = db.get_all_hp_sw_port_by_swchid_portname(
+                self.context, rec_dict)
+            if len(switch_ports) > 1 and host_id:
+                for switch_port in switch_ports:
+                    self._is_port_already_bound(switch_port, port_id)
         update_dict = {'neutron_port_id': port_id,
                        'host_id': host_id}
         db.update_hp_ironic_swport_map_with_host_id(self.context,
                                                     update_dict)
+
+    def _is_port_already_bound(self, sw_port, neutron_port_id):
+        """Check if the given switch port already has bounded."""
+        ir_sw_port = db.get_hp_ironic_swport_map_by_sw_id(
+            self.context, sw_port)
+        if ir_sw_port and neutron_port_id == ir_sw_port.get('neutron_port_id'):
+            return
+        if ir_sw_port.get('host_id'):
+            err_msg = "given port is already bound"
+            self._raise_hp_net_provisioning_error(wexc.HTTPConflict,
+                                                  'update_port',
+                                                  err_msg)
+        return
 
     def delete_port(self, port_id):
         """delete_port. This call makes the REST request to the external
@@ -353,16 +389,14 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
             return resp
         except requests.exceptions.Timeout as e:
             LOG.error("Timed out in SDN controller : %s", e)
-            raise hp_exec.HPNetProvisioningDriverError(msg="Timed Out"
-                                                           "with SDN"
-                                                           "controller: %s"
-                                                           % e)
+            self._raise_ml2_error(wexc.HTTPRequestTimeout, 'create_port'
+                                  if include_seg_id else 'delete_port')
         except requests.exceptions.SSLError as e:
-            LOG.error("SSLError to SDN controller : %s", e)
-            raise hp_exec.SslCertificateValidationError(msg=e)
+            self._raise_ml2_error(wexc.HTTPBadRequest, 'create_port'
+                                  if include_seg_id else 'delete_port')
         except Exception as e:
-            LOG.error("ConnectionFailed to SDN controller : %s", e)
-            raise hp_exec.ConnectionFailed(msg=e)
+            self._raise_ml2_error(wexc.HTTPRequestTimeout, 'create_port'
+                                  if include_seg_id else 'delete_port')
 
     def _do_lag_request(self, port_dict, include_seg_id, ext_lag_id):
         """LAG request for lag ports."""
@@ -389,20 +423,18 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
             if neutron_port_id:
                 self._roll_back_created_ports(neutron_port_id)
             LOG.error("Timed out in SDN controller : %s", e)
-            raise hp_exec.HPNetProvisioningDriverError(msg="Timed Out"
-                                                           "with SDN"
-                                                           "controller: %s"
-                                                           % e)
+            self._raise_ml2_error(wexc.HTTPRequestTimeout, 'create_port'
+                                  if include_seg_id else 'delete_port')
         except requests.exceptions.SSLError as e:
             if neutron_port_id:
                 self._roll_back_created_ports(neutron_port_id)
-            LOG.error("SSLError to SDN controller : %s", e)
-            raise hp_exec.SslCertificateValidationError(msg=e)
+            self._raise_ml2_error(wexc.HTTPBadRequest, 'create_port'
+                                  if include_seg_id else 'delete_port')
         except Exception as e:
             if neutron_port_id:
                 self._roll_back_created_ports(neutron_port_id)
-            LOG.error("ConnectionFailed to SDN controller : %s", e)
-            raise hp_exec.ConnectionFailed(msg=e)
+            self._raise_ml2_error(wexc.HTTPRequestTimeout, 'create_port'
+                                  if include_seg_id else 'delete_port')
 
     def _lag_payload(self, port_dict):
         """Form lag payload for SDN controller lAG REST request."""
@@ -477,3 +509,11 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
         if lag_id:
             lag_dict = {'id': lag_id}
             db.delete_hp_switch_lag_port(self.context, lag_dict)
+
+    def _raise_ml2_error(self, err_type, method_name):
+        base.FAULT_MAP.update({ml2_exc.MechanismDriverError: err_type})
+        raise ml2_exc.MechanismDriverError(method=method_name)
+
+    def _raise_hp_net_provisioning_error(self, err_type, method_name, err_msg):
+        base.FAULT_MAP.update({ml2_exc.MechanismDriverError: err_type})
+        raise hp_exec.HPNetProvisioningDriverError(msg=err_msg)

@@ -45,19 +45,32 @@ def delete_hp_switch_port(context, record_dict):
                 id=record_dict['id']).delete()
 
 
-def get_hp_switch_port_by_switchid_portname(context, record_dict):
+def get_all_hp_sw_port_by_swchid_portname(context, record_dict):
     """Get hp_switch_port that matches the supplied switch id and port name."""
     try:
         query = context.session.query(models.HPSwitchPort)
         switch_port = query.filter_by(
             switch_id=record_dict['switch_id'],
-            port_name=record_dict['port_name']).one()
+            port_name=record_dict['port_name']).all()
     except exc.NoResultFound:
         LOG.debug('no hp switch port found for %s and %s',
                   record_dict['switch_id'],
                   record_dict['port_name'])
         return
     return switch_port
+
+
+def get_hp_ironic_swport_map_by_sw_id(context, record_dict):
+    """Get ironic_switch_port_mapping that matches the supplied switch id."""
+    try:
+        query = context.session.query(models.HPIronicSwitchPortMapping)
+        port_mapping = query.filter_by(
+            switch_port_id=record_dict['id']).one()
+    except exc.NoResultFound:
+        LOG.debug('no hp ironic switch port mapping found for switch id %s',
+                  record_dict['id'])
+        return
+    return port_mapping
 
 
 def add_hp_switch_lag_port(context, record_dict):

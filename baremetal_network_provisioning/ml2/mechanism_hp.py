@@ -61,7 +61,10 @@ class HPMechanismDriver(api.MechanismDriver):
         if not self._is_port_of_interest(context):
             return
         port_dict = self._construct_port(context)
-        self.np_driver.create_port(port_dict)
+        try:
+            self.np_driver.create_port(port_dict)
+        except Exception as e:
+            raise e
 
     def create_port_postcommit(self, context):
         """create_port_postcommit."""
@@ -158,14 +161,14 @@ class HPMechanismDriver(api.MechanismDriver):
                      {'id': port_id,
                       'network_id': network_id,
                       'is_lag': is_lag,
-                      'switchports': local_link_information
+                      'switchports': local_link_information,
+                      'host_id': host_id
                       }
                      }
         if segmentation_id:
             bind_port_dict = port_dict.get('port')
             bind_port_dict['segmentation_id'] = segmentation_id
             bind_port_dict['access_type'] = hp_const.ACCESS
-            bind_port_dict['host_id'] = host_id
         else:
             return port_dict
         final_dict = {'port': bind_port_dict}
