@@ -26,6 +26,7 @@ from oslo_config import cfg
 from oslo_serialization import jsonutils
 import requests
 
+from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.tests import base
 CONF = cfg.CONF
 
@@ -80,36 +81,80 @@ class TestHPNetworkProvisioningDriver(base.BaseTestCase):
                                                  return_value=None)):
                     self.driver.create_port(port_dict)
 
-    def test_create_port_with_connection_failed(self):
-        """Test create port with SDN controller error."""
+    def test_create_port_with_exception(self):
+        """Test create port with Exception."""
         port_dict = self._get_port_payload()
-        res_unavail = FakeResponse(status_code=200,
-                                   headers={'retry-after': '10'},
-                                   content=self._body)
-        with contextlib.nested(mock.patch.object(db, 'get_subnets_by_network',
-                                                 return_value=["subnet"]),
-                               mock.patch.object(self.driver,
-                                                 '_do_request',
-                               return_value=res_unavail)):
-            self.assertRaises(hp_ex.ConnectionFailed,
+        with contextlib.nested(
+            mock.patch.object(db, 'get_subnets_by_network',
+                              return_value=["subnet"]),
+            mock.patch.object(self.driver,
+                              '_roll_back_created_ports'),
+            mock.patch.object(self.driver,
+                              '_do_request',
+                              side_effect=Exception)):
+            self.assertRaises(ml2_exc.MechanismDriverError,
                               self.driver.create_port,
                               port_dict)
 
-    def test_create_port_with_invalid_device(self):
-        """Test create port with invalid device."""
+    def test_create_port_with_timeout(self):
+        """Test create port with timeout exception."""
         port_dict = self._get_port_payload()
-        res_unavail = FakeResponse(content=None, status_code=503,
-                                   headers={'retry-after': '10'})
-        with contextlib.nested(mock.patch.object(self.driver,
-                                                 '_do_request',
-                               return_value=res_unavail),
-                               mock.patch.object(db, 'get_subnets_by_network',
-                                                 return_value="subnet")):
-            error = self.assertRaises(hp_ex.ConnectionFailed,
-                                      self.driver.create_port,
-                                      port_dict)
-            self.assertEqual(' Connection has failed: response is none',
-                             error.msg)
+        with contextlib.nested(
+            mock.patch.object(self.driver,
+                              '_do_request',
+                              side_effect=requests.exceptions.Timeout),
+            mock.patch.object(self.driver,
+                              '_roll_back_created_ports'),
+            mock.patch.object(db, 'get_subnets_by_network',
+                              return_value="subnet")):
+            self.assertRaises(ml2_exc.MechanismDriverError,
+                              self.driver.create_port,
+                              port_dict)
+
+    def test_create_port_with_sslerror(self):
+        """Test create port with ssl exception."""
+        port_dict = self._get_port_payload()
+        with contextlib.nested(
+            mock.patch.object(self.driver,
+                              '_do_request',
+                              side_effect=requests.exceptions.SSLError),
+            mock.patch.object(self.driver,
+                              '_roll_back_created_ports'),
+            mock.patch.object(db, 'get_subnets_by_network',
+                              return_value="subnet")):
+            self.assertRaises(ml2_exc.MechanismDriverError,
+                              self.driver.create_port,
+                              port_dict)
+
+    def test_create_port_with_httperror(self):
+        """Test create port with http exception."""
+        port_dict = self._get_port_payload()
+        with contextlib.nested(
+            mock.patch.object(self.driver,
+                              '_do_request',
+                              side_effect=requests.exceptions.HTTPError),
+            mock.patch.object(self.driver,
+                              '_roll_back_created_ports'),
+            mock.patch.object(db, 'get_subnets_by_network',
+                              return_value="subnet")):
+            self.assertRaises(ml2_exc.MechanismDriverError,
+                              self.driver.create_port,
+                              port_dict)
+
+    def test_create_port_with_invalidurl(self):
+        """Test create port with invalid url exception."""
+        port_dict = self._get_port_payload()
+        with contextlib.nested(
+            mock.patch.object(self.driver,
+                              '_do_request',
+                              side_effect=requests.exceptions.URLRequired),
+            mock.patch.object(self.driver,
+                              '_roll_back_created_ports'),
+            mock.patch.object(db, 'get_subnets_by_network',
+                              return_value="subnet")):
+            self.assertRaises(ml2_exc.MechanismDriverError,
+                              self.driver.create_port,
+                              port_dict)
 
     def test_bind_port_to_segment_success(self):
         """Test bind port to segment for success case."""

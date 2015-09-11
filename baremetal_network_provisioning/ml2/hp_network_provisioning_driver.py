@@ -17,8 +17,11 @@ from oslo_log import log as logging
 from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
 import requests
+import webob.exc as wexc
 
+from neutron.api.v2 import base
 from neutron import context as neutron_context
+from neutron.plugins.ml2.common import exceptions as ml2_exc
 
 from baremetal_network_provisioning.common import constants as hp_const
 from baremetal_network_provisioning.common import exceptions as hp_exec
@@ -75,8 +78,10 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
         network_id = port_dict['port']['network_id']
         subnets = db.get_subnets_by_network(self.context, network_id)
         if not subnets:
-            raise hp_exec.HPNetProvisioningDriverError(msg="Subnet not found "
-                                                       "for the network")
+            LOG.error("Subnet not found for the network")
+            base.FAULT_MAP.update(
+                {ml2_exc.MechanismDriverError: wexc.HTTPNotFound})
+            raise ml2_exc.MechanismDriverError()
         for switchport in switchports:
             switch_port_id = uuidutils.generate_uuid()
             switch_mac_id = switchport['switch_id']
@@ -88,17 +93,19 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
             switch_url = self._frame_switch_url(switch_mac_id)
             try:
                 resp = self._do_request('GET', switch_url, None)
-                LOG.error("response from SDN controller %(resp)s ",
-                          {'resp': resp})
+                LOG.info("response from SDN controller %(resp)s ",
+                         {'resp': resp})
                 if not resp:
-                    raise hp_exec.HPNetProvisioningDriverError(msg="response "
-                                                               "is none")
+                    base.FAULT_MAP.update(
+                        {ml2_exc.MechanismDriverError: wexc.HTTPNotFound})
+                    raise ml2_exc.MechanismDriverError()
                 port_list = resp.json()['ports']
                 if port_id not in port_list:
                     self._roll_back_created_ports(neutron_port_id)
-                    raise hp_exec.HPNetProvisioningDriverError(msg="Given port"
-                                                               " does not"
-                                                               " exists")
+                    LOG.error("Given port is not found")
+                    base.FAULT_MAP.update(
+                        {ml2_exc.MechanismDriverError: wexc.HTTPNotFound})
+                    raise ml2_exc.MechanismDriverError()
                 resp.raise_for_status()
                 mapping_dict = {'neutron_port_id': neutron_port_id,
                                 'switch_port_id': switch_port_id,
@@ -114,25 +121,39 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
                                                              mapping_dict)
                 else:
                     LOG.error(" Given physical switch does not exists")
-                    raise hp_exec.HPNetProvisioningDriverError(msg="Failed to"
-                                                               "communicate"
-                                                               "SDN"
-                                                               "Controller")
+                    base.FAULT_MAP.update(
+                        {ml2_exc.MechanismDriverError: wexc.HTTPNotFound})
+                    raise ml2_exc.MechanismDriverError()
             except requests.exceptions.Timeout as e:
                 LOG.error(" Request timed out in SDN controller : %s", e)
                 self._roll_back_created_ports(neutron_port_id)
-                raise hp_exec.HPNetProvisioningDriverError(msg="Timed Out"
-                                                               "with SDN"
-                                                               "controller: %s"
-                                                               % e)
+                base.FAULT_MAP.update(
+                    {ml2_exc.MechanismDriverError: wexc.HTTPRequestTimeout})
+                raise ml2_exc.MechanismDriverError(method='create_port')
             except requests.exceptions.SSLError as e:
                 LOG.error(" SSLError to SDN controller : %s", e)
                 self._roll_back_created_ports(neutron_port_id)
-                raise hp_exec.SslCertificateValidationError(msg=e)
-            except Exception as e:
-                LOG.error(" ConnectionFailed to SDN controller : %s", e)
+                base.FAULT_MAP.update(
+                    {ml2_exc.MechanismDriverError: wexc.HTTPForbidden})
+                raise ml2_exc.MechanismDriverError(method='create_port')
+            except requests.exceptions.HTTPError as e:
+                LOG.error(" HTTPError : %s", e)
                 self._roll_back_created_ports(neutron_port_id)
-                raise hp_exec.ConnectionFailed(msg=e)
+                base.FAULT_MAP.update(
+                    {ml2_exc.MechanismDriverError: wexc.HTTPNotFound})
+                raise ml2_exc.MechanismDriverError(method='create_port')
+            except requests.exceptions.URLRequired as e:
+                LOG.error(" Invalid URL : %s", e)
+                self._roll_back_created_ports(neutron_port_id)
+                base.FAULT_MAP.update(
+                    {ml2_exc.MechanismDriverError: wexc.HTTPBadRequest})
+                raise ml2_exc.MechanismDriverError(method='create_port')
+            except Exception as e:
+                LOG.error(" Bad request : %s", e)
+                self._roll_back_created_ports(neutron_port_id)
+                base.FAULT_MAP.update(
+                    {ml2_exc.MechanismDriverError: wexc.HTTPBadRequest})
+                raise ml2_exc.MechanismDriverError(method='create_port')
 
     def bind_port_to_segment(self, port_dict):
         """bind_port_to_network. This call makes the REST request to the

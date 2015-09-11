@@ -61,7 +61,10 @@ class HPMechanismDriver(api.MechanismDriver):
         if not self._is_port_of_interest(context):
             return
         port_dict = self._construct_port(context)
-        self.np_driver.create_port(port_dict)
+        try:
+            self.np_driver.create_port(port_dict)
+        except Exception as e:
+            raise e
 
     def create_port_postcommit(self, context):
         """create_port_postcommit."""
