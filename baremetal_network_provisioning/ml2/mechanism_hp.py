@@ -61,7 +61,10 @@ class HPMechanismDriver(api.MechanismDriver):
         if not self._is_port_of_interest(context):
             return
         port_dict = self._construct_port(context)
-        self.np_driver.create_port(port_dict)
+        try:
+            self.np_driver.create_port(port_dict)
+        except Exception as e:
+            raise e
 
     def create_port_postcommit(self, context):
         """create_port_postcommit."""
@@ -74,9 +77,9 @@ class HPMechanismDriver(api.MechanismDriver):
         if vnic_type != portbindings.VNIC_BAREMETAL or not profile:
             return
         port_dict = self._construct_port(context)
-        bind_requested = profile.get('bind_requested')
+        host_id = context.current['binding:host_id']
         bind_port_dict = port_dict.get('port')
-        bind_port_dict['bind_requested'] = bind_requested
+        bind_port_dict['host_id'] = host_id
         self.np_driver.update_port(port_dict)
 
     def update_port_postcommit(self, context):
@@ -103,12 +106,11 @@ class HPMechanismDriver(api.MechanismDriver):
         for segment in context.segments_to_bind:
             segmentation_id = segment.get(api.SEGMENTATION_ID)
             if self._is_vlan_segment(segment, context):
-                profile = self._get_binding_profile(context)
                 port_status = n_const.PORT_STATUS_ACTIVE
                 if not self._is_port_of_interest(context):
                     return
-                b_requested = profile.get('bind_requested')
-                if b_requested is True:
+                host_id = context.current['binding:host_id']
+                if host_id:
                     port = self._construct_port(context, segmentation_id)
                     b_status = self.np_driver.bind_port_to_segment(port)
                     if b_status == hp_const.BIND_SUCCESS:
@@ -145,18 +147,22 @@ class HPMechanismDriver(api.MechanismDriver):
         """"Contruct port dict."""
         port = context.current
         port_id = port['id']
+        network_id = port['network_id']
         is_lag = False
         bind_port_dict = None
         profile = self._get_binding_profile(context)
         local_link_information = profile.get('local_link_information')
+        host_id = context.current['binding:host_id']
         LOG.debug("_construct_port local link info %(local_info)s",
                   {'local_info': local_link_information})
         if local_link_information and len(local_link_information) > 1:
             is_lag = True
         port_dict = {'port':
                      {'id': port_id,
+                      'network_id': network_id,
                       'is_lag': is_lag,
-                      'switchports': local_link_information
+                      'switchports': local_link_information,
+                      'host_id': host_id
                       }
                      }
         if segmentation_id:

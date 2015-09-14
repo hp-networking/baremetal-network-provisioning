@@ -32,19 +32,18 @@ class HPSwitchPort(model_base.BASEV2, models_v2.HasId):
     lag_id = sa.Column(sa.String(36),
                        sa.ForeignKey('hpswitchlagports.id',
                                      ondelete='CASCADE'))
-    __table_args__ = (sa.UniqueConstraint(switch_id,
-                                          port_name),)
 
 
 class HPIronicSwitchPortMapping(model_base.BASEV2):
     """Define neutron port and HP switch port mapping."""
-    neutron_port_id = sa.Column(sa.String(36), primary_key=True)
+    neutron_port_id = sa.Column(sa.String(36))
     switch_port_id = sa.Column(sa.String(36),
                                sa.ForeignKey('hpswitchports.id',
-                                             ondelete='CASCADE'))
+                                             ondelete='CASCADE'),
+                               primary_key=True)
     lag_id = sa.Column(sa.String(36),
                        sa.ForeignKey('hpswitchlagports.id',
                                      ondelete='CASCADE'))
     access_type = sa.Column(sa.String(36))
     segmentation_id = sa.Column(sa.Integer)
-    bind_requested = sa.Column(sa.Boolean)
+    host_id = sa.Column(sa.String(36))

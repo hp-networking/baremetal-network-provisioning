@@ -46,8 +46,7 @@ def upgrade():
                     sa.ForeignKeyConstraint(['lag_id'],
                                             ['hpswitchlagports.id'],
                                             ondelete='CASCADE'),
-                    sa.PrimaryKeyConstraint('id'),
-                    sa.UniqueConstraint('switch_id', 'port_name'))
+                    sa.PrimaryKeyConstraint('id'))
 
     op.create_table('hpironicswitchportmappings',
                     sa.Column('neutron_port_id', sa.String(length=36),
@@ -58,11 +57,11 @@ def upgrade():
                     sa.Column('access_type', sa.String(length=36),
                               nullable=True),
                     sa.Column('segmentation_id', sa.Integer, nullable=True),
-                    sa.Column('bind_requested', sa.Boolean, default=False),
+                    sa.Column('host_id', sa.String(length=36), nullable=True),
                     sa.ForeignKeyConstraint(['lag_id'],
                                             ['hpswitchlagports.id'],
                                             ondelete='CASCADE'),
                     sa.ForeignKeyConstraint(['switch_port_id'],
                                             ['hpswitchports.id'],
                                             ondelete='CASCADE'),
-                    sa.PrimaryKeyConstraint('neutron_port_id'))
+                    sa.PrimaryKeyConstraint('switch_port_id'))
