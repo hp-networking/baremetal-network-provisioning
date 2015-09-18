@@ -13,7 +13,6 @@
 #    under the License.
 #
 from baremetal_network_provisioning.common import constants as hp_const
-from baremetal_network_provisioning.common import exceptions as hp_ex
 from baremetal_network_provisioning.db import bm_nw_provision_db as db
 from baremetal_network_provisioning.db import bm_nw_provision_models as models
 from baremetal_network_provisioning.ml2 import (hp_network_provisioning_driver
