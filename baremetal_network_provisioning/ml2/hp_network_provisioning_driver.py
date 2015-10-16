@@ -65,83 +65,20 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
         self.timeout = float(self.conf.default.get('timeout'))
 
     def create_port(self, port_dict):
-        """create_port. This call makes the REST request to the external
+        """create_port.
 
+        This call makes the REST request to the external
         SDN controller for provision VLAN for the switch port where
         bare metal is connected.
         """
         LOG.debug("create_port port_dict %(port_dict)s",
                   {'port_dict': port_dict})
-        lag_id = None
-        switchports = port_dict['port']['switchports']
-        neutron_port_id = port_dict['port']['id']
         network_id = port_dict['port']['network_id']
-        host_id = port_dict['port']['host_id']
         subnets = db.get_subnets_by_network(self.context, network_id)
         if not subnets:
             LOG.error("Subnet not found for the network")
             self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
-        for switchport in switchports:
-            switch_port_id = uuidutils.generate_uuid()
-            switch_mac_id = switchport['switch_id']
-            port_id = switchport['port_id']
-            rec_dict = {'id': switch_port_id,
-                        'switch_id': switch_mac_id,
-                        'port_name': port_id,
-                        'lag_id': None}
-            sw_ports = db.get_all_hp_sw_port_by_swchid_portname(self.context,
-                                                                rec_dict)
-            if sw_ports and host_id:
-                for sw_port in sw_ports:
-                    self._is_port_already_bound(sw_port, neutron_port_id)
-            switch_url = self._frame_switch_url(switch_mac_id)
-            try:
-                resp = self._do_request('GET', switch_url, None)
-                LOG.info("response from SDN controller %(resp)s ",
-                         {'resp': resp})
-                if not resp:
-                    self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
-                port_list = resp.json()['ports']
-                if port_id not in port_list:
-                    self._roll_back_created_ports(neutron_port_id)
-                    LOG.error("Given port is not found")
-                    self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
-                resp.raise_for_status()
-                mapping_dict = {'neutron_port_id': neutron_port_id,
-                                'switch_port_id': switch_port_id,
-                                'lag_id': lag_id,
-                                'access_type': None,
-                                'segmentation_id': None,
-                                'host_id': None}
-                session = self.context.session
-                if resp.status_code == requests.codes.OK:
-                    with session.begin(subtransactions=True):
-                        db.add_hp_switch_port(self.context, rec_dict)
-                        db.add_hp_ironic_switch_port_mapping(self.context,
-                                                             mapping_dict)
-                else:
-                    LOG.error(" Given physical switch does not exists")
-                    self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
-            except requests.exceptions.Timeout as e:
-                LOG.error(" Request timed out in SDN controller : %s", e)
-                self._roll_back_created_ports(neutron_port_id)
-                self._raise_ml2_error(wexc.HTTPRequestTimeout, 'create_port')
-            except requests.exceptions.SSLError as e:
-                LOG.error(" SSLError to SDN controller : %s", e)
-                self._roll_back_created_ports(neutron_port_id)
-                self._raise_ml2_error(wexc.HTTPBadRequest, 'create_port')
-            except requests.exceptions.HTTPError as e:
-                LOG.error(" HTTPError : %s", e)
-                self._roll_back_created_ports(neutron_port_id)
-                self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
-            except requests.exceptions.URLRequired as e:
-                LOG.error(" Invalid URL : %s", e)
-                self._roll_back_created_ports(neutron_port_id)
-                self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
-            except Exception as e:
-                LOG.error(" Bad request : %s", e)
-                self._roll_back_created_ports(neutron_port_id)
-                self._raise_ml2_error(wexc.HTTPBadRequest, 'create_port')
+        self.create_switch_port(port_dict)
 
     def bind_port_to_segment(self, port_dict):
         """bind_port_to_network. This call makes the REST request to the
@@ -149,6 +86,7 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
         external SDN controller for provisioning VLAN for the switch port where
         bare metal is connected.
         """
+
         LOG.debug("bind_port_to_segment with port dict %(port_dict)s",
                   {'port_dict': port_dict})
         bind_dict = self._get_bind_dict(port_dict)
@@ -186,6 +124,7 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
         SDN controller for provision VLAN on switch port where bare metal
         is connected.
         """
+
         LOG.debug("update_port with port dict %(port_dict)s",
                   {'port_dict': port_dict})
         port_id = port_dict['port']['id']
@@ -195,10 +134,12 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
                                                              rec_dict)
         switchports = port_dict['port']['switchports']
         if not ironic_port_list:
-            err_msg = "ironic port list is empty"
-            self._raise_hp_net_provisioning_error(wexc.HTTPNotFound,
-                                                  'update_port',
-                                                  err_msg)
+            # We are creating the switch ports because initial ironic
+            # port-create will not supply local link information for tenant .
+            # networks . Later ironic port-update , the local link information
+            # value will be supplied.
+            self.create_switch_port(port_dict)
+            return
         if not len(switchports) == len(ironic_port_list):
             err_msg = "given switchports dict does not match"
             self._raise_hp_net_provisioning_error(wexc.HTTPConflict,
@@ -252,6 +193,7 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
         SDN controller for un provision VLAN for the switch port where
         bare metal is connected.
         """
+
         LOG.debug("delete_port with port_id %(port_id)s",
                   {'port_id': port_id})
         rec_dict = {'neutron_port_id': port_id}
@@ -517,3 +459,69 @@ class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
     def _raise_hp_net_provisioning_error(self, err_type, method_name, err_msg):
         base.FAULT_MAP.update({ml2_exc.MechanismDriverError: err_type})
         raise hp_exec.HPNetProvisioningDriverError(msg=err_msg)
+
+    def create_switch_port(self, port_dict):
+        switchports = port_dict['port']['switchports']
+        neutron_port_id = port_dict['port']['id']
+        host_id = port_dict['port']['host_id']
+        for switchport in switchports:
+            switch_port_id = uuidutils.generate_uuid()
+            switch_mac_id = switchport['switch_id']
+            port_id = switchport['port_id']
+            rec_dict = {'id': switch_port_id,
+                        'switch_id': switch_mac_id,
+                        'port_name': port_id,
+                        'lag_id': None}
+            sw_ports = db.get_all_hp_sw_port_by_swchid_portname(self.context,
+                                                                rec_dict)
+            if sw_ports and host_id:
+                for sw_port in sw_ports:
+                    self._is_port_already_bound(sw_port, neutron_port_id)
+            switch_url = self._frame_switch_url(switch_mac_id)
+            try:
+                resp = self._do_request('GET', switch_url, None)
+                LOG.info("response from SDN controller %(resp)s ",
+                         {'resp': resp})
+                if not resp:
+                    self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
+                port_list = resp.json()['ports']
+                if port_id not in port_list:
+                    self._roll_back_created_ports(neutron_port_id)
+                    LOG.error("Given port is not found")
+                    self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
+                resp.raise_for_status()
+                mapping_dict = {'neutron_port_id': neutron_port_id,
+                                'switch_port_id': switch_port_id,
+                                'lag_id': None,
+                                'access_type': None,
+                                'segmentation_id': None,
+                                'host_id': None}
+                session = self.context.session
+                if resp.status_code == requests.codes.OK:
+                    with session.begin(subtransactions=True):
+                        db.add_hp_switch_port(self.context, rec_dict)
+                        db.add_hp_ironic_switch_port_mapping(self.context,
+                                                             mapping_dict)
+                else:
+                    LOG.error(" Given physical switch does not exists")
+                    self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
+            except requests.exceptions.Timeout as e:
+                LOG.error(" Request timed out in SDN controller : %s", e)
+                self._roll_back_created_ports(neutron_port_id)
+                self._raise_ml2_error(wexc.HTTPRequestTimeout, 'create_port')
+            except requests.exceptions.SSLError as e:
+                LOG.error(" SSLError to SDN controller : %s", e)
+                self._roll_back_created_ports(neutron_port_id)
+                self._raise_ml2_error(wexc.HTTPBadRequest, 'create_port')
+            except requests.exceptions.HTTPError as e:
+                LOG.error(" HTTPError : %s", e)
+                self._roll_back_created_ports(neutron_port_id)
+                self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
+            except requests.exceptions.URLRequired as e:
+                LOG.error(" Invalid URL : %s", e)
+                self._roll_back_created_ports(neutron_port_id)
+                self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
+            except Exception as e:
+                LOG.error(" Bad request : %s", e)
+                self._roll_back_created_ports(neutron_port_id)
+                self._raise_ml2_error(wexc.HTTPBadRequest, 'create_port')
