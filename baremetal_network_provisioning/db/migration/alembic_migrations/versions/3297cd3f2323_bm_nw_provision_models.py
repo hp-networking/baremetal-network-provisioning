@@ -66,3 +66,50 @@ def upgrade():
                                             ['hpswitchports.id'],
                                             ondelete='CASCADE'),
                     sa.PrimaryKeyConstraint('neutron_port_id'))
+
+    op.create_table('bnpphysicalswitchports',
+                    sa.Column('id', sa.String(36), nullable=False),
+                    sa.Column('switch_id', sa.String(36), nullable=False),
+                    sa.Column('interface_name', sa.String(255),
+                              nullable=False),
+                    sa.Column('ifindex', sa.String(255), nullable=False),
+                    sa.Column('port_status', sa.String(16), nullable=False),
+                    sa.PrimaryKeyConstraint('id'),
+                    sa.UniqueConstraint('switch_id', 'interface_name'))
+
+    op.create_table('bnpphysicalswitchs',
+                    sa.Column('id', sa.String(36), nullable=False),
+                    sa.Column('ip_address', sa.String(64), nullable=False),
+                    sa.Column('mac_address', sa.String(32), nullable=True),
+                    sa.Column('status', sa.String(16), nullable=False),
+                    sa.Column('access_protocol', sa.String(16),
+                              nullable=False),
+                    sa.Column('vendor', sa.String(16), nullable=False),
+                    sa.Column('security_name', sa.String(255), nullable=True),
+                    sa.Column('auth_protocol', sa.String(16), nullable=True),
+                    sa.Column('auth_key', sa.String(255), nullable=True),
+                    sa.Column('priv_protocol', sa.String(16), nullable=True),
+                    sa.Column('priv_key', sa.String(255), nullable=True),
+                    sa.Column('security_level', sa.String(16), nullable=True),
+                    sa.ForeignKeyConstraint(
+                        ['id'],
+                        ['bnpphysicalswitchports.switch_id'],
+                        ondelete='CASCADE'),
+                    sa.PrimaryKeyConstraint('id'))
+
+    op.create_table('bnpswitchportmappings',
+                    sa.Column('neutron_port_id', sa.String(36),
+                              nullable=False),
+                    sa.Column('switch_port_id', sa.String(36),
+                              nullable=False),
+                    sa.Column('switch_id', sa.String(36), nullable=False),
+                    sa.UniqueConstraint('neutron_port_id', 'switch_port_id'))
+
+    op.create_table('bnpneutronports',
+                    sa.Column('neutron_port_id', sa.String(36),
+                              nullable=False),
+                    sa.Column('lag_id', sa.String(36), nullable=True),
+                    sa.Column('access_type', sa.String(16), nullable=False),
+                    sa.Column('segmentation_id', sa.Integer, nullable=False),
+                    sa.Column('bind_status', sa.Boolean(), nullable=True),
+                    sa.PrimaryKeyConstraint('neutron_port_id'))
