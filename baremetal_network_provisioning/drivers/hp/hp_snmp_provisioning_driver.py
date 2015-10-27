@@ -13,11 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from baremetal_network_provisioning.drivers.snmp import (port_provisioning_api
-                                                         as api)
+from baremetal_network_provisioning.drivers import (port_provisioning_driver
+                                                    as driver)
 
 
-class HPSNMPProvisioningDriver(api.PortProvisioningApi):
+class HPSNMPProvisioningDriver(driver.PortProvisioningDriver):
     """Back-end mechanism driver implementation for bare
 
     metal provisioning.
