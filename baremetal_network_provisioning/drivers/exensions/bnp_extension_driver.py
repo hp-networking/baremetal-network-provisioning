@@ -25,15 +25,3 @@ class BNPExtensionDriver(api.ExtensionDriver):
 
     def initialize(self):
         LOG.info(_("BNPExtensionDriver initialization complete"))
-
-    @property
-    def extension_alias(self):
-        """Supported extension alias.
-
-        identifying the core API extension supported
-                  by this BNP driver
-        """
-        if not hasattr(self, '_aliases'):
-            aliases = self._supported_extension_aliases[:]
-            self._aliases = aliases
-        return self._aliases
