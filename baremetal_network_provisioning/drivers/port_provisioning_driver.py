@@ -20,7 +20,7 @@ import six
 
 
 @six.add_metaclass(abc.ABCMeta)
-class PortProvisioningApi(object):
+class PortProvisioningDriver(object):
     """Interface between Back-end driver and other generic
 
     network-provisioning drivers.
