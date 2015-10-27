@@ -178,3 +178,82 @@ def get_hp_switch_port_by_id(context, record_dict):
                   record_dict['id'])
         return
     return switch_port
+
+
+def add_bnp_phys_switch(self, context, switch):
+    session = context.session
+    with session.begin(subtransactions=True):
+        phy_switch = models.BNPPhysicalSwitch(
+            id=switch['id'],
+            ip_address=switch['ip_address'],
+            mac_address=switch['mac_address'],
+            status=switch['status'],
+            access_protocol=switch['access_protocol'],
+            vendor=switch['vendor'],
+            security_name=switch['security_name'],
+            auth_protocol=switch['auth_protocol'],
+            auth_key=switch['auth_key'],
+            priv_protocol=switch['priv_protocol'],
+            priv_key=switch['priv_key'],
+            security_level=switch['security_level'])
+        session.add(phy_switch)
+
+
+def get_bnp_phys_switch(self, context, switch_id):
+    """Get physical switch that matches id."""
+    try:
+        query = context.session.query(models.BNPPhysicalSwitch)
+        switch = query.filter_by(id=switch_id).one()
+    except exc.NoResultFound:
+        LOG.debug('no physical switch found with id: %s', switch_id)
+        return
+    return switch
+
+
+def get_bnp_phys_switch_by_mac(self, context, mac):
+    """Get physical switch that matches mac address."""
+    try:
+        query = context.session.query(models.BNPPhysicalSwitch)
+        switch = query.filter_by(mac_address=mac).one()
+    except exc.NoResultFound:
+        LOG.debug('no physical switch found with mac address: %s', mac)
+        return
+    return switch
+
+
+def delete_bnp_phys_switch(self, context, switch_id):
+    """Delete physical switch that matches switch_id."""
+    session = context.session
+    with session.begin(subtransactions=True):
+        if switch_id:
+            session.query(models.BNPPhysicalSwitch).filter_by(
+                id=switch_id).delete()
+
+
+def get_all_bnp_phys_switches(self, context):
+    """Get all physical switches."""
+    try:
+        query = context.session.query(models.BNPPhysicalSwitch)
+        switches = query.all()
+    except exc.NoResultFound:
+        LOG.debug('no physical switch found')
+        return
+    return switches
+
+
+def update_bnp_phys_switch(self, context, switch_id, switch):
+    """Update physical switch."""
+    try:
+        with context.session.begin(subtransactions=True):
+            (context.session.query(models.BNPPhysicalSwitch).filter_by(
+                id=switch_id).update(
+                    {'status': switch['status'],
+                     'security_name': switch['security_name'],
+                     'auth_protocol': switch['auth_protocol'],
+                     'auth_key': switch['auth_key'],
+                     'priv_protocol': switch['priv_protocol'],
+                     'priv_key': switch['priv_key'],
+                     'security_level': switch['security_level']},
+                    synchronize_session=False))
+    except exc.NoResultFound:
+        LOG.debug('no physical switch found for id: %s', switch_id)
