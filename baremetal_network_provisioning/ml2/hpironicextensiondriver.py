@@ -33,7 +33,4 @@ class HPIronicExtensionDriver(api.ExtensionDriver):
         identifying the core API extension supported
                   by this BNP driver
         """
-        if not hasattr(self, '_aliases'):
-            aliases = self._supported_extension_aliases[:]
-            self._aliases = aliases
-        return self._aliases
+        return self._supported_extension_aliases
