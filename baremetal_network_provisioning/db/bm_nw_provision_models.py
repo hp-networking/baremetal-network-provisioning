@@ -68,6 +68,7 @@ class BNPPhysicalSwitch(model_base.BASEV2, models_v2.HasId):
     status = sa.Column(sa.String(16), nullable=False)
     access_protocol = sa.Column(sa.String(16), nullable=False)
     vendor = sa.Column(sa.String(16), nullable=False)
+    write_community = sa.Column(sa.String(255), nullable=True)
     security_name = sa.Column(sa.String(255), nullable=True)
     auth_protocol = sa.Column(sa.String(16), nullable=True)
     auth_key = sa.Column(sa.String(255), nullable=True)
@@ -75,7 +76,8 @@ class BNPPhysicalSwitch(model_base.BASEV2, models_v2.HasId):
     priv_key = sa.Column(sa.String(255), nullable=True)
     security_level = sa.Column(sa.String(16), nullable=True)
     sa.PrimaryKeyConstraint('id')
-    sa.ForeignKeyConstraint('id', 'bnp_physical_switchports.switch_id',
+    sa.ForeignKeyConstraint(['id'],
+                            ['bnp_physical_switchports.switch_id'],
                             ondelete='CASCADE')
 
 
@@ -97,6 +99,6 @@ class BNPNeutronPorts(model_base.BASEV2):
     segmentation_id = sa.Column(sa.Integer, nullable=False)
     bind_status = sa.Column(sa.Boolean(), nullable=True)
     sa.PrimaryKeyConstraint('neutron_port_id')
-    sa.ForeignKeyConstraint('neutron_port_id',
-                            'bnp_switch_port_mappings.neutron_port_id',
+    sa.ForeignKeyConstraint(['neutron_port_id'],
+                            ['bnp_switch_port_mappings.neutron_port_id'],
                             ondelete='CASCADE')

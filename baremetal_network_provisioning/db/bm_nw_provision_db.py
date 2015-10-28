@@ -208,6 +208,19 @@ def get_hp_switch_port_by_id(context, record_dict):
     return switch_port
 
 
+def update_hp_switch_ports_with_lag_id(context, rec_dict):
+    """Update hp switch ports with lag_id."""
+    try:
+        with context.session.begin(subtransactions=True):
+            (context.session.query(models.HPSwitchPort).filter_by(
+                id=rec_dict['id']).update(
+                    {'lag_id': rec_dict['lag_id']},
+                    synchronize_session=False))
+    except exc.NoResultFound:
+        LOG.debug('no hp port found for lag_id %s',
+                  rec_dict['lag_id'])
+
+
 def get_lag_id_by_neutron_port_id(context, record_dict):
     """Get lag_id that matches the supplied port id."""
     try:
@@ -258,13 +271,25 @@ def add_bnp_phys_switch(self, context, switch):
         session.add(phy_switch)
 
 
+def add_bnp_phys_switch_port(self, context, port):
+    session = context.session
+    with session.begin(subtransactions=True):
+        switch_port = models.BNPPhysicalSwitchPort(
+            id=port['id'],
+            switch_id=port['switch_id'],
+            interface_name=port['interface_name'],
+            ifindex=port['ifindex'],
+            port_status=port['port_status'])
+        session.add(switch_port)
+
+
 def get_bnp_phys_switch(self, context, switch_id):
     """Get physical switch that matches id."""
     try:
         query = context.session.query(models.BNPPhysicalSwitch)
         switch = query.filter_by(id=switch_id).one()
     except exc.NoResultFound:
-        LOG.debug('no physical switch found with id: %s', switch_id)
+        LOG.error('no physical switch found with id: %s', switch_id)
         return
     return switch
 
@@ -275,7 +300,7 @@ def get_bnp_phys_switch_by_mac(self, context, mac):
         query = context.session.query(models.BNPPhysicalSwitch)
         switch = query.filter_by(mac_address=mac).one()
     except exc.NoResultFound:
-        LOG.debug('no physical switch found with mac address: %s', mac)
+        LOG.error('no physical switch found with mac address: %s', mac)
         return
     return switch
 
@@ -295,19 +320,42 @@ def get_all_bnp_phys_switches(self, context):
         query = context.session.query(models.BNPPhysicalSwitch)
         switches = query.all()
     except exc.NoResultFound:
-        LOG.debug('no physical switch found')
+        LOG.error('no physical switch found')
         return
     return switches
 
 
-def update_bnp_phys_switch(self, context, switch_id, switch):
-    """Update physical switch."""
+def update_bnp_phys_switch_status(self, context, switch_id, switch):
+    """Update physical switch status."""
     try:
         with context.session.begin(subtransactions=True):
             (context.session.query(models.BNPPhysicalSwitch).filter_by(
                 id=switch_id).update(
-                    {'status': switch['status'],
-                     'security_name': switch['security_name'],
+                    {'status': switch['status']},
+                    synchronize_session=False))
+    except exc.NoResultFound:
+        LOG.error('no physical switch found for id: %s', switch_id)
+
+
+def update_bnp_phys_switch_snmpv2(self, context, switch_id, switch):
+    """Update physical switch with snmpv2 params."""
+    try:
+        with context.session.begin(subtransactions=True):
+            (context.session.query(models.BNPPhysicalSwitch).filter_by(
+                id=switch_id).update(
+                    {'write_community': switch['write_community']},
+                    synchronize_session=False))
+    except exc.NoResultFound:
+        LOG.error('no physical switch found for id: %s', switch_id)
+
+
+def update_bnp_phys_switch_snmpv3(self, context, switch_id, switch):
+    """Update physical switch with snmpv3 params."""
+    try:
+        with context.session.begin(subtransactions=True):
+            (context.session.query(models.BNPPhysicalSwitch).filter_by(
+                id=switch_id).update(
+                    {'security_name': switch['security_name'],
                      'auth_protocol': switch['auth_protocol'],
                      'auth_key': switch['auth_key'],
                      'priv_protocol': switch['priv_protocol'],
@@ -315,18 +363,4 @@ def update_bnp_phys_switch(self, context, switch_id, switch):
                      'security_level': switch['security_level']},
                     synchronize_session=False))
     except exc.NoResultFound:
-        LOG.debug('no physical switch found for id: %s', switch_id)
-
-
-def update_hp_switch_ports_with_lag_id(context, rec_dict):
-    """Update hp switch ports with lag_id."""
-    try:
-        with context.session.begin(subtransactions=True):
-            (context.session.query(models.HPSwitchPort).filter_by(
-                id=rec_dict['id']).update(
-                    {'lag_id': rec_dict['lag_id']},
-                    synchronize_session=False))
-    except exc.NoResultFound:
-        LOG.debug('no hp port found for lag_id %s',
-                  rec_dict['lag_id'])
-
+        LOG.error('no physical switch found for id: %s', switch_id)
