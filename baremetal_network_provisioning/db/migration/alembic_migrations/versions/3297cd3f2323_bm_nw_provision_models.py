@@ -14,11 +14,9 @@
 #
 
 """bm network provisioning
-
 Revision ID: 3297cd3f2323
 Revises: start_bm_nw_provisioning
 Create Date: 2015-07-06 00:25:06.980102
-
 """
 
 # revision identifiers, used by Alembic.
@@ -66,16 +64,6 @@ def upgrade():
                                             ondelete='CASCADE'),
                     sa.PrimaryKeyConstraint('switch_port_id'))
 
-    op.create_table('bnp_physical_switch_ports',
-                    sa.Column('id', sa.String(36), nullable=False),
-                    sa.Column('switch_id', sa.String(36), nullable=False),
-                    sa.Column('interface_name', sa.String(255),
-                              nullable=False),
-                    sa.Column('ifindex', sa.String(255), nullable=False),
-                    sa.Column('port_status', sa.String(16), nullable=False),
-                    sa.PrimaryKeyConstraint('id'),
-                    sa.UniqueConstraint('switch_id', 'interface_name'))
-
     op.create_table('bnp_physical_switches',
                     sa.Column('id', sa.String(36), nullable=False),
                     sa.Column('ip_address', sa.String(64), nullable=False),
@@ -92,11 +80,21 @@ def upgrade():
                     sa.Column('priv_protocol', sa.String(16), nullable=True),
                     sa.Column('priv_key', sa.String(255), nullable=True),
                     sa.Column('security_level', sa.String(16), nullable=True),
-                    sa.ForeignKeyConstraint(
-                        ['id'],
-                        ['bnp_physical_switch_ports.switch_id'],
-                        ondelete='CASCADE'),
                     sa.PrimaryKeyConstraint('id'))
+
+    op.create_table('bnp_physical_switch_ports',
+                    sa.Column('id', sa.String(36), nullable=False),
+                    sa.Column('switch_id', sa.String(36), nullable=False),
+                    sa.Column('interface_name', sa.String(255),
+                              nullable=False),
+                    sa.Column('ifindex', sa.String(255), nullable=False),
+                    sa.Column('port_status', sa.String(16), nullable=False),
+                    sa.PrimaryKeyConstraint('id'),
+                    sa.UniqueConstraint('switch_id', 'interface_name'),
+                    sa.ForeignKeyConstraint(
+                        ['switch_id'],
+                        ['bnp_physical_switches.id'],
+                        ondelete='CASCADE'))
 
     op.create_table('bnp_switch_port_mappings',
                     sa.Column('neutron_port_id', sa.String(36),
@@ -104,7 +102,11 @@ def upgrade():
                     sa.Column('switch_port_id', sa.String(36),
                               nullable=False),
                     sa.Column('switch_id', sa.String(36), nullable=False),
-                    sa.UniqueConstraint('neutron_port_id', 'switch_port_id'))
+                    sa.UniqueConstraint('neutron_port_id', 'switch_port_id'),
+                    sa.ForeignKeyConstraint(
+                        ['switch_port_id'],
+                        ['bnp_physical_switch_ports.id'],
+                        ondelete='CASCADE'))
 
     op.create_table('bnp_neutron_ports',
                     sa.Column('neutron_port_id', sa.String(36),

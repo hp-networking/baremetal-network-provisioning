@@ -57,7 +57,12 @@ class BNPPhysicalSwitchPort(model_base.BASEV2, models_v2.HasId):
     ifindex = sa.Column(sa.String(255), nullable=False)
     port_status = sa.Column(sa.String(16), nullable=False)
     sa.PrimaryKeyConstraint('id')
-    sa.UniqueConstraint('switch_id', 'interface_name')
+    __table_args__ = (sa.PrimaryKeyConstraint('id'),
+                      sa.UniqueConstraint('switch_id',
+                                          'interface_name'),)
+    sa.ForeignKeyConstraint(['switch_id'],
+                            ['bnp_physical_switches.id'],
+                            ondelete='CASCADE')
 
 
 class BNPPhysicalSwitch(model_base.BASEV2, models_v2.HasId):
@@ -75,10 +80,7 @@ class BNPPhysicalSwitch(model_base.BASEV2, models_v2.HasId):
     priv_protocol = sa.Column(sa.String(16), nullable=True)
     priv_key = sa.Column(sa.String(255), nullable=True)
     security_level = sa.Column(sa.String(16), nullable=True)
-    sa.PrimaryKeyConstraint('id')
-    sa.ForeignKeyConstraint(['id'],
-                            ['bnp_physical_switchports.switch_id'],
-                            ondelete='CASCADE')
+    __table_args__ = (sa.PrimaryKeyConstraint('id'),)
 
 
 class BNPSwitchPortMapping(model_base.BASEV2):
@@ -87,10 +89,14 @@ class BNPSwitchPortMapping(model_base.BASEV2):
     neutron_port_id = sa.Column(sa.String(36), nullable=False)
     switch_port_id = sa.Column(sa.String(255), nullable=False)
     switch_id = sa.Column(sa.String(255), nullable=False)
-    sa.UniqueConstraint('neutron_port_id', 'switch_port_id')
+    __table_args__ = (sa.UniqueConstraint('neutron_port_id',
+                                          'switch_port_id'),)
+    sa.ForeignKeyConstraint(['switch_port_id'],
+                            ['bnp_physical_switch_ports.id'],
+                            ondelete='CASCADE')
 
 
-class BNPNeutronPorts(model_base.BASEV2):
+class BNPNeutronPort(model_base.BASEV2):
     """Define neutron port properties."""
     __tablename__ = "bnp_neutron_ports"
     neutron_port_id = sa.Column(sa.String(36), nullable=False)
@@ -98,7 +104,7 @@ class BNPNeutronPorts(model_base.BASEV2):
     access_type = sa.Column(sa.String(16), nullable=False)
     segmentation_id = sa.Column(sa.Integer, nullable=False)
     bind_status = sa.Column(sa.Boolean(), nullable=True)
-    sa.PrimaryKeyConstraint('neutron_port_id')
+    __table_args__ = (sa.PrimaryKeyConstraint('neutron_port_id'),)
     sa.ForeignKeyConstraint(['neutron_port_id'],
                             ['bnp_switch_port_mappings.neutron_port_id'],
                             ondelete='CASCADE')
