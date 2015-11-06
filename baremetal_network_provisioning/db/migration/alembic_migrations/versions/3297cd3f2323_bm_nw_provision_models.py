@@ -14,11 +14,9 @@
 #
 
 """bm network provisioning
-
 Revision ID: 3297cd3f2323
 Revises: start_bm_nw_provisioning
 Create Date: 2015-07-06 00:25:06.980102
-
 """
 
 # revision identifiers, used by Alembic.
@@ -66,17 +64,7 @@ def upgrade():
                                             ondelete='CASCADE'),
                     sa.PrimaryKeyConstraint('switch_port_id'))
 
-    op.create_table('bnpphysicalswitchports',
-                    sa.Column('id', sa.String(36), nullable=False),
-                    sa.Column('switch_id', sa.String(36), nullable=False),
-                    sa.Column('interface_name', sa.String(255),
-                              nullable=False),
-                    sa.Column('ifindex', sa.String(255), nullable=False),
-                    sa.Column('port_status', sa.String(16), nullable=False),
-                    sa.PrimaryKeyConstraint('id'),
-                    sa.UniqueConstraint('switch_id', 'interface_name'))
-
-    op.create_table('bnpphysicalswitchs',
+    op.create_table('bnp_physical_switches',
                     sa.Column('id', sa.String(36), nullable=False),
                     sa.Column('ip_address', sa.String(64), nullable=False),
                     sa.Column('mac_address', sa.String(32), nullable=True),
@@ -84,31 +72,51 @@ def upgrade():
                     sa.Column('access_protocol', sa.String(16),
                               nullable=False),
                     sa.Column('vendor', sa.String(16), nullable=False),
+                    sa.Column('write_community',
+                              sa.String(255), nullable=True),
                     sa.Column('security_name', sa.String(255), nullable=True),
                     sa.Column('auth_protocol', sa.String(16), nullable=True),
                     sa.Column('auth_key', sa.String(255), nullable=True),
                     sa.Column('priv_protocol', sa.String(16), nullable=True),
                     sa.Column('priv_key', sa.String(255), nullable=True),
                     sa.Column('security_level', sa.String(16), nullable=True),
-                    sa.ForeignKeyConstraint(
-                        ['id'],
-                        ['bnpphysicalswitchports.switch_id'],
-                        ondelete='CASCADE'),
                     sa.PrimaryKeyConstraint('id'))
 
-    op.create_table('bnpswitchportmappings',
+    op.create_table('bnp_physical_switch_ports',
+                    sa.Column('id', sa.String(36), nullable=False),
+                    sa.Column('switch_id', sa.String(36), nullable=False),
+                    sa.Column('interface_name', sa.String(255),
+                              nullable=False),
+                    sa.Column('ifindex', sa.String(255), nullable=False),
+                    sa.Column('port_status', sa.String(16), nullable=False),
+                    sa.PrimaryKeyConstraint('id'),
+                    sa.UniqueConstraint('switch_id', 'interface_name'),
+                    sa.ForeignKeyConstraint(
+                        ['switch_id'],
+                        ['bnp_physical_switches.id'],
+                        ondelete='CASCADE'))
+
+    op.create_table('bnp_switch_port_mappings',
                     sa.Column('neutron_port_id', sa.String(36),
                               nullable=False),
                     sa.Column('switch_port_id', sa.String(36),
                               nullable=False),
                     sa.Column('switch_id', sa.String(36), nullable=False),
-                    sa.UniqueConstraint('neutron_port_id', 'switch_port_id'))
+                    sa.UniqueConstraint('neutron_port_id', 'switch_port_id'),
+                    sa.ForeignKeyConstraint(
+                        ['switch_port_id'],
+                        ['bnp_physical_switch_ports.id'],
+                        ondelete='CASCADE'))
 
-    op.create_table('bnpneutronports',
+    op.create_table('bnp_neutron_ports',
                     sa.Column('neutron_port_id', sa.String(36),
                               nullable=False),
                     sa.Column('lag_id', sa.String(36), nullable=True),
                     sa.Column('access_type', sa.String(16), nullable=False),
                     sa.Column('segmentation_id', sa.Integer, nullable=False),
                     sa.Column('bind_status', sa.Boolean(), nullable=True),
-                    sa.PrimaryKeyConstraint('neutron_port_id'))
+                    sa.PrimaryKeyConstraint('neutron_port_id'),
+                    sa.ForeignKeyConstraint(
+                        ['neutron_port_id'],
+                        ['bnp_switch_port_mappings.neutron_port_id'],
+                        ondelete='CASCADE'))
