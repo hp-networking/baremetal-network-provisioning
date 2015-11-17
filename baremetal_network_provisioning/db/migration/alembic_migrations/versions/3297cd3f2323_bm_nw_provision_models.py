@@ -14,11 +14,9 @@
 #
 
 """bm network provisioning
-
 Revision ID: 3297cd3f2323
 Revises: start_bm_nw_provisioning
 Create Date: 2015-07-06 00:25:06.980102
-
 """
 
 # revision identifiers, used by Alembic.
@@ -104,7 +102,11 @@ def upgrade():
                     sa.Column('switch_port_id', sa.String(36),
                               nullable=False),
                     sa.Column('switch_id', sa.String(36), nullable=False),
-                    sa.UniqueConstraint('neutron_port_id', 'switch_port_id'))
+                    sa.UniqueConstraint('neutron_port_id', 'switch_port_id'),
+                    sa.ForeignKeyConstraint(
+                        ['switch_port_id'],
+                        ['bnp_physical_switch_ports.id'],
+                        ondelete='CASCADE'))
 
     op.create_table('bnp_neutron_ports',
                     sa.Column('neutron_port_id', sa.String(36),
