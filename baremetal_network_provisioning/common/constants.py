@@ -36,3 +36,12 @@ OID_PORTS = '1.3.6.1.2.1.2.2.1.1'
 OID_IF_INDEX = '1.3.6.1.2.1.2.2.1.2'
 OID_IF_TYPE = '1.3.6.1.2.1.2.2.1.3'
 OID_PORT_STATUS = '1.3.6.1.2.1.2.2.1.8'
+
+Port_status = {'1': 'up',
+               '2': 'down',
+               '3': 'testing',
+               '4': 'unknown',
+               '5': 'dormant',
+               '6': 'notPresent',
+               '7': 'lowerLayerDown'}
+

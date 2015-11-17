@@ -130,10 +130,8 @@ class BNPSwitchController(wsgi.Controller):
         for key, value in access_parameters.iteritems():
             body[key] = value
         switch = self._update_dict(body, switch_dict)
-        # Call the SNMP Discovery driver here
         snmp_client = discovery_driver.SNMPDiscoveryDriver(switch_dict)
         bnp_switch = snmp_client.discover_switch()
-        LOG.debug("========== BNP SWITCH = %s", bnp_switch)
         if bnp_switch.get('mac_addr'):
             switch['mac_address'] = bnp_switch.get('mac_addr')
             switch['status'] = 'ENABLED'
