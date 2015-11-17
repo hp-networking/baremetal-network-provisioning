@@ -18,6 +18,8 @@
 
 from neutron.common import exceptions
 
+from webob import exc
+
 
 class HPNetProvisioningConfigError(exceptions.NeutronException):
     message = _('%(msg)s')
@@ -33,3 +35,19 @@ class SslCertificateValidationError(exceptions.NeutronException):
 
 class ConnectionFailed(exceptions.NeutronException):
     message = _(" Connection has failed: %(msg)s")
+
+
+class BadRequest(exc.HTTPBadRequest):
+
+    code = 400
+    explanation = "Invalid %(resource)s request: %(reason)s"
+
+    def __init__(self, **kwargs):
+        self.explanation = self.explanation % (kwargs)
+        super(BadRequest, self).__init__()
+
+
+class NotFound(BadRequest):
+    code = 404
+    title = "Not Found"
+    explanation = "%(resource)s not found"

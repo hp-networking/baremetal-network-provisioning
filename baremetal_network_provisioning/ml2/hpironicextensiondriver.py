@@ -21,7 +21,7 @@ LOG = logging.getLogger(__name__)
 
 
 class HPIronicExtensionDriver(api.ExtensionDriver):
-    _supported_extension_aliases = ["switch"]
+    _supported_extension_aliases = 'switch'
 
     def initialize(self):
         LOG.info(_("HPIronicExtensionDriver initialization complete"))
