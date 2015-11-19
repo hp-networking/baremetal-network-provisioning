@@ -273,14 +273,16 @@ def add_bnp_phys_switch(context, switch):
             priv_key=switch['priv_key'],
             security_level=switch['security_level'])
         session.add(phy_switch)
+    return phy_switch
 
 
 def add_bnp_phys_switch_port(context, port):
     """Add physical switch port."""
     session = context.session
     with session.begin(subtransactions=True):
+        uuid = uuidutils.generate_uuid()
         switch_port = models.BNPPhysicalSwitchPort(
-            id=port['id'],
+            id=uuid,
             switch_id=port['switch_id'],
             interface_name=port['interface_name'],
             ifindex=port['ifindex'],

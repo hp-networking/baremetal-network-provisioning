@@ -80,7 +80,7 @@ class BNPPhysicalSwitch(model_base.BASEV2, models_v2.HasId):
     priv_protocol = sa.Column(sa.String(16), nullable=True)
     priv_key = sa.Column(sa.String(255), nullable=True)
     security_level = sa.Column(sa.String(16), nullable=True)
-    __table_args__ = (sa.PrimaryKeyConstraint('id'),)
+    __table_args__ = (sa.PrimaryKeyConstraint('id', 'ip_address'),)
 
 
 class BNPSwitchPortMapping(model_base.BASEV2):
@@ -89,8 +89,8 @@ class BNPSwitchPortMapping(model_base.BASEV2):
     neutron_port_id = sa.Column(sa.String(36), nullable=False)
     switch_port_id = sa.Column(sa.String(255), nullable=False)
     switch_id = sa.Column(sa.String(255), nullable=False)
-    __table_args__ = (sa.UniqueConstraint('neutron_port_id',
-                                          'switch_port_id'),)
+    __table_args__ = (sa.PrimaryKeyConstraint('neutron_port_id',
+                                              'switch_port_id'),)
     sa.ForeignKeyConstraint(['switch_port_id'],
                             ['bnp_physical_switch_ports.id'],
                             ondelete='CASCADE')
