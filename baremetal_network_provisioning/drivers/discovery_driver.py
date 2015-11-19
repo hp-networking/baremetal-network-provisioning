@@ -31,8 +31,8 @@ class SNMPDiscoveryDriver(object):
 
     def get_mac_addr(self):
         oid = constants.OID_MAC_ADDRESS
-        varBinds = self.client.get(oid)
-        for name, val in varBinds:
+        var_binds = self.client.get(oid)
+        for name, val in var_binds:
             mac = val.prettyPrint().zfill(12)
             mac = mac[2:]
             mac_addr = '-'.join([mac[i:i + 4] for i in range(0, 12, 4)])
@@ -44,15 +44,15 @@ class SNMPDiscoveryDriver(object):
                 constants.OID_IF_INDEX,
                 constants.OID_IF_TYPE,
                 constants.OID_PORT_STATUS]
-        varBinds = self.client.get_bulk(*oids)
+        var_binds = self.client.get_bulk(*oids)
         ports_dict = []
-        for varBindTableRow in varBinds:
-            ifIndex = (varBindTableRow[0][1]).prettyPrint()
-            port_name = (varBindTableRow[1][1]).prettyPrint()
-            if_type = (varBindTableRow[2][1]).prettyPrint()
-            if if_type == '6':
+        for var_bind_table_row in var_binds:
+            if_index = (var_bind_table_row[0][1]).prettyPrint()
+            port_name = (var_bind_table_row[1][1]).prettyPrint()
+            if_type = (var_bind_table_row[2][1]).prettyPrint()
+            if if_type == constants.PHY_PORT_TYPE:
                 ports_dict.append(
-                    {'ifindex': ifIndex,
+                    {'ifindex': if_index,
                      'interface_name': port_name,
-                     'port_status': varBindTableRow[3][1].prettyPrint()})
+                     'port_status': var_bind_table_row[3][1].prettyPrint()})
         return ports_dict

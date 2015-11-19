@@ -14,8 +14,8 @@
 # limitations under the License.
 
 from baremetal_network_provisioning.common import constants
+from baremetal_network_provisioning.common import exceptions
 
-from ironic.common import exception
 from oslo_log import log as logging
 from pysnmp.entity.rfc3413.oneliner import cmdgen
 from pysnmp import error as snmp_error
@@ -38,24 +38,22 @@ Priv_protocol = {None: cmdgen.usmNoPrivProtocol,
 
 
 class SNMPClient(object):
+
     """SNMP client object.
 
     """
-
     def __init__(self, ip_address, access_protocol,
                  write_community=None, security_name=None,
                  auth_protocol=None, auth_key=None,
                  priv_protocol=None, priv_key=None):
         self.ip_address = ip_address
         self.access_protocol = access_protocol
+        self.auth_protocol = Auth_protocol[auth_protocol]
+        self.auth_key = auth_key
+        self.priv_protocol = Priv_protocol[priv_protocol]
+        self.priv_key = priv_key
         if self.access_protocol == constants.SNMP_V3:
             self.security_name = security_name
-            if auth_protocol:
-                self.auth_protocol = Auth_protocol[auth_protocol]
-                self.auth_key = auth_key
-            if priv_protocol:
-                self.priv_protocol = Priv_protocol[priv_protocol]
-                self.priv_key = priv_key
         else:
             self.write_community = write_community
         self.cmd_gen = cmdgen.CommandGenerator()
@@ -91,17 +89,17 @@ class SNMPClient(object):
                                           self._get_transport(),
                                           oid)
         except snmp_error.PySnmpError as e:
-            raise exception.SNMPFailure(operation="GET", error=e)
+            raise exceptions.SNMPFailure(operation="GET", error=e)
 
         error_indication, error_status, error_index, var_binds = results
 
         if error_indication:
-            raise exception.SNMPFailure(operation="GET",
-                                        error=error_indication)
+            raise exceptions.SNMPFailure(operation="GET",
+                                         error=error_indication)
 
         if error_status:
-            raise exception.SNMPFailure(operation="GET",
-                                        error=error_status.prettyPrint())
+            raise exceptions.SNMPFailure(operation="GET",
+                                         error=error_status.prettyPrint())
 
         return var_binds
 
@@ -113,17 +111,17 @@ class SNMPClient(object):
                                            *oids
                                            )
         except snmp_error.PySnmpError as e:
-            raise exception.SNMPFailure(operation="GET", error=e)
+            raise exceptions.SNMPFailure(operation="GET_BULK", error=e)
 
         error_indication, error_status, error_index, var_binds = results
 
         if error_indication:
-            raise exception.SNMPFailure(operation="GET",
-                                        error=error_indication)
+            raise exceptions.SNMPFailure(operation="GET_BULK",
+                                         error=error_indication)
 
         if error_status:
-            raise exception.SNMPFailure(operation="GET",
-                                        error=error_status.prettyPrint())
+            raise exceptions.SNMPFailure(operation="GET_BULK",
+                                         error=error_status.prettyPrint())
 
         return var_binds
 
@@ -132,12 +130,12 @@ def get_client(snmp_info):
     """Create and return an SNMP client object.
 
     """
-    return SNMPClient(snmp_info["ip_address"],
-                      snmp_info["access_protocol"],
-                      snmp_info.get("write_community"),
-                      security_name=snmp_info['security_name'],
-                      auth_protocol=snmp_info['auth_protocol'],
-                      auth_key=snmp_info['auth_key'],
-                      priv_protocol=snmp_info['priv_protocol'],
-                      priv_key=snmp_info['priv_key']
+    return SNMPClient(snmp_info['ip_address'],
+                      snmp_info['access_protocol'],
+                      snmp_info['write_community'],
+                      snmp_info['security_name'],
+                      snmp_info['auth_protocol'],
+                      snmp_info['auth_key'],
+                      snmp_info['priv_protocol'],
+                      snmp_info['priv_key']
                       )
