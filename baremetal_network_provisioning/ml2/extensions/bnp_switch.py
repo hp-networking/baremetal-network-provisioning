@@ -14,6 +14,7 @@
 #    under the License.from oslo.config import cfg
 
 from simplejson import scanner as json_scanner
+import webob.exc
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes
@@ -21,7 +22,7 @@ from neutron import context
 from neutron import wsgi
 
 from baremetal_network_provisioning.common import constants as const
-from baremetal_network_provisioning.common import exceptions as exc
+from baremetal_network_provisioning.common import validators
 from baremetal_network_provisioning.db import bm_nw_provision_db as db
 from baremetal_network_provisioning.drivers import discovery_driver
 
@@ -31,11 +32,11 @@ LOG = logging.getLogger(__name__)
 
 
 RESOURCE_ATTRIBUTE_MAP = {
-    'switches': {
+    'bnp-switches': {
         'id': {'allow_post': False, 'allow_put': False,
                'is_visible': True},
         'ip_address': {'allow_post': True, 'allow_put': False,
-                       'validate': {'type:string': None},
+                       'validate': {'type:ip_address': None},
                        'is_visible': True, 'default': ''},
         'mac_address': {'allow_post': True, 'allow_put': False,
                         'validate': {'type:string': None},
@@ -52,17 +53,7 @@ RESOURCE_ATTRIBUTE_MAP = {
     },
 }
 
-
-def validator_func(data, valid_values=None):
-    """Validate the access parameters."""
-    if not data:
-        # Access parameters must be provided.
-        msg = _("Cannot create a switch from the given input.")
-        return msg
-    if type(data) is not dict:
-        msg = _("Given details is not in the form of a dictionary.")
-        return msg
-
+validator_func = validators.access_parameter_validator
 attributes.validators['type:access_dict'] = validator_func
 
 
@@ -75,66 +66,62 @@ class BNPSwitchController(wsgi.Controller):
     def index(self, request):
         switches = db.get_all_bnp_phys_switches(self._dbcontext)
         switches_dict = {
-            'switches': [switch.__dict__ for switch in switches]}
+            'bnp-switches': [switch.__dict__ for switch in switches]}
         return switches_dict
 
     def show(self, request, id):
         switch = db.get_bnp_phys_switch(self._dbcontext, id)
         if not switch:
-            raise exc.NotFound(
+            raise webob.exc.HTTPNotFound(
                 resource="switch %s" % (id))
         switch_dict = switch.__dict__
         switch_dict['ports'] = []
-        # Get a list of Ironic ports
+        # Get a list of bounded baremetal ports
         return switch_dict
 
     def delete(self, request, id):
         switch = db.get_bnp_phys_switch(self._dbcontext, id)
         if not switch:
-            raise exc.NotFound(
-                resource="switch %s" % (id))
+            raise webob.exc.HTTPNotFound(
+                _("Switch %s does not exist") % id)
         db.delete_bnp_phys_switch(self._dbcontext, id)
 
     def create(self, request):
         try:
             body = request.json_body
         except json_scanner.JSONDecodeError:
-            raise exc.BadRequest(
-                resource="switch",
-                reason="invalid JSON body")
+            raise webob.exc.HTTPBadRequest(
+                _("Invalid JSON body"))
         try:
             body = body.pop("switch")
         except KeyError:
-            raise exc.BadRequest(
-                resource="switch",
-                reason="'switch' not found in request body")
+            raise webob.exc.HTTPBadRequest(
+                _("'switch' not found in request body"))
         keys = body.keys()
         key_list = ['ip_address', 'vendor',
                     'access_protocol', 'access_parameters']
         for key in key_list:
             if key not in keys:
-                raise exc.BadRequest(
-                    resource="switch",
-                    reason="'Key %s' not found in request body" % key)
+                raise webob.exc.HTTPBadRequest(
+                    _("'Key %s' not found in request body") % key)
         if body['access_protocol'].lower() not in const.SUPPORTED_PROTOCOLS:
-            raise exc.BadRequest(
-                resource="switch",
-                reason="'Protocol %s' is not supported" % body[
-                    'access_protocol'])
+            raise webob.exc.HTTPBadRequest(
+                _("'access protocol %s' is not supported") %
+                body['access_protocol'])
         access_parameters = body.pop("access_parameters")
-        if body['access_protocol'].lower() == 'snmpv3':
-            self._validate_snmpv3_parameters(access_parameters)
+        if body['access_protocol'].lower() == const.SNMP_V3:
+            validators.validate_snmpv3_parameters(access_parameters)
         else:
-            self._validate_snmp_parameters(access_parameters)
+            validators.validate_snmp_parameters(access_parameters)
         switch_dict = self._create_switch_dict()
         for key, value in access_parameters.iteritems():
             body[key] = value
         switch = self._update_dict(body, switch_dict)
-        snmp_client = discovery_driver.SNMPDiscoveryDriver(switch_dict)
-        bnp_switch = snmp_client.discover_switch()
+        snmp_driver = discovery_driver.SNMPDiscoveryDriver(switch_dict)
+        bnp_switch = snmp_driver.discover_switch()
         if bnp_switch.get('mac_addr'):
             switch['mac_address'] = bnp_switch.get('mac_addr')
-            switch['status'] = 'ENABLED'
+            switch['status'] = const.Switch_status.get('enable')
         db_switch = db.add_bnp_phys_switch(self._dbcontext, switch)
         if bnp_switch.get('ports'):
             self._add_physical_port(db_switch.get('id'),
@@ -148,61 +135,23 @@ class BNPSwitchController(wsgi.Controller):
             port['port_status'] = status
             db.add_bnp_phys_switch_port(self._dbcontext, port)
 
-    def _validate_snmp_parameters(self, access_parameters):
-        if not access_parameters.get('write_community'):
-            raise exc.BadRequest(
-                resource="switch",
-                reason="'write_community' not found in request body")
-
-    def _validate_snmpv3_parameters(self, access_parameters):
-        if not access_parameters.get('security_name'):
-            raise exc.BadRequest(
-                resource="switch",
-                reason="'security_name' not found in request body")
-        if access_parameters.get('auth_protocol'):
-            if access_parameters.get('auth_protocol').lower(
-            ) not in const.SUPPORTED_AUTH_PROTOCOLS:
-                raise exc.BadRequest(
-                    resource="switch",
-                    reason="Auth Protocol '%s' is not supported" %
-                    access_parameters['auth_protocol'])
-            elif not access_parameters.get('auth_key'):
-                raise exc.BadRequest(
-                    resource="switch",
-                    reason="Auth Key is required for Auth Protocol %s" %
-                    access_parameters['auth_protocol'])
-        if access_parameters.get('priv_protocol'):
-            if access_parameters.get('priv_protocol').lower(
-            ) not in const.SUPPORTED_PRIV_PROTOCOLS:
-                raise exc.BadRequest(
-                    resource="switch",
-                    reason="Priv Protocol '%s' is not supported" %
-                    access_parameters['priv_protocol'])
-            elif not access_parameters.get('priv_key'):
-                raise exc.BadRequest(
-                    resource="switch",
-                    reason="Priv Key is required for Priv Protocol %s" %
-                    access_parameters['priv_protocol'])
-
     def update(self, request, id):
         try:
             body = request.json_body
         except json_scanner.JSONDecodeError:
-            raise exc.BadRequest(
-                resource="switch",
-                reason="invalid JSON body")
+            raise webob.exc.HTTPBadRequest(
+                _("Invalid JSON body"))
         try:
             body = body.pop("switch")
         except KeyError:
-            raise exc.BadRequest(
-                resource="switch",
-                reason="'switch' not found in request body")
+            raise webob.exc.HTTPBadRequest(
+                _("'switch' not found in request body"))
         access_parameters = body.pop("access_parameters")
         for key, value in access_parameters.iteritems():
             body[key] = value
         phys_switch = db.get_bnp_phys_switch(self._dbcontext, id)
         switch_dict = self._update_dict(body, phys_switch.__dict__)
-        if body['access_protocol'] in ['snmpv1', 'snmpv2']:
+        if body['access_protocol'] in [const.SNMP_V1, const.SNMP_V2C]:
             switch = db.update_bnp_phys_switch_snmpv2(self._dbcontext,
                                                       id, switch_dict)
         else:
@@ -220,7 +169,7 @@ class BNPSwitchController(wsgi.Controller):
         switch_dict = {
             'ip_address': None,
             'mac_address': None,
-            'status': 'CREATED',
+            'status': const.Switch_status.get('create'),
             'access_protocol': None,
             'vendor': None,
             'write_community': None,
@@ -233,15 +182,15 @@ class BNPSwitchController(wsgi.Controller):
         return switch_dict
 
 
-class Switch(extensions.ExtensionDescriptor):
+class Bnp_switch(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_name(cls):
-        return "Switch"
+        return "Bnp-Switch"
 
     @classmethod
     def get_alias(cls):
-        return "switch"
+        return "bnp-switch"
 
     @classmethod
     def get_description(cls):
@@ -253,7 +202,7 @@ class Switch(extensions.ExtensionDescriptor):
 
     def get_resources(self):
         resources = []
-        sresource = extensions.ResourceExtension("switches",
+        sresource = extensions.ResourceExtension("bnp-switches",
                                                  BNPSwitchController())
         resources.append(sresource)
         return resources

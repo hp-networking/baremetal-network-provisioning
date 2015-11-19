@@ -37,17 +37,10 @@ class ConnectionFailed(exceptions.NeutronException):
     message = _(" Connection has failed: %(msg)s")
 
 
-class BadRequest(exc.HTTPBadRequest):
-
-    code = 400
-    explanation = "Invalid %(resource)s request: %(reason)s"
+class SNMPFailure(exc.HTTPBadRequest):
 
     def __init__(self, **kwargs):
         self.explanation = self.explanation % (kwargs)
-        super(BadRequest, self).__init__()
+        super(SNMPFailure, self).__init__()
 
-
-class NotFound(BadRequest):
-    code = 404
-    title = "Not Found"
-    explanation = "%(resource)s not found"
+    explanation = ("SNMP operation '%(operation)s' failed: %(error)s")

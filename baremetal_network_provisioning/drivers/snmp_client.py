@@ -38,10 +38,10 @@ Priv_protocol = {None: cmdgen.usmNoPrivProtocol,
 
 
 class SNMPClient(object):
-
     """SNMP client object.
 
     """
+
     def __init__(self, ip_address, access_protocol,
                  write_community=None, security_name=None,
                  auth_protocol=None, auth_key=None,
