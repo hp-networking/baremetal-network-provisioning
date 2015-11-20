@@ -273,6 +273,7 @@ def add_bnp_phys_switch(context, switch):
             priv_key=switch['priv_key'],
             security_level=switch['security_level'])
         session.add(phy_switch)
+    return phy_switch
 
 
 def add_bnp_phys_switch_port(context, port):
@@ -378,37 +379,40 @@ def get_all_bnp_phys_switches(context):
     return switches
 
 
-def update_bnp_phys_switch_status(context, switch_id, switch):
+def update_bnp_phys_switch_status(context, switch_id, sw_status):
     """Update physical switch status."""
     try:
         with context.session.begin(subtransactions=True):
             (context.session.query(models.BNPPhysicalSwitch).filter_by(
                 id=switch_id).update(
-                    {'status': switch['status']},
+                    {'status': sw_status},
                     synchronize_session=False))
     except exc.NoResultFound:
         LOG.error('no physical switch found for id: %s', switch_id)
 
 
-def update_bnp_phys_switch_snmpv2(context, switch_id, switch):
-    """Update physical switch with snmpv2 params."""
+def update_bnp_phys_swport_status(context, swid, port_name, port_status):
+    """Update physical switch port status by switch id."""
     try:
         with context.session.begin(subtransactions=True):
-            (context.session.query(models.BNPPhysicalSwitch).filter_by(
-                id=switch_id).update(
-                    {'write_community': switch['write_community']},
+            (context.session.query(models.BNPPhysicalSwitchPort).filter_by(
+                switch_id=swid, interface_name=port_name).update(
+                    {'status': port_status},
                     synchronize_session=False))
     except exc.NoResultFound:
-        LOG.error('no physical switch found for id: %s', switch_id)
+        LOG.error('no phy switch port found for swid: %s port_name',
+                  swid, port_name)
 
 
-def update_bnp_phys_switch_snmpv3(context, switch_id, switch):
-    """Update physical switch with snmpv3 params."""
+def update_bnp_phys_switch_access_params(context, switch_id, switch):
+    """Update physical switch with access params."""
     try:
         with context.session.begin(subtransactions=True):
             (context.session.query(models.BNPPhysicalSwitch).filter_by(
                 id=switch_id).update(
-                    {'security_name': switch['security_name'],
+                    {'access_protocol': switch['access_protocol'],
+                     'write_community': switch['write_community'],
+                     'security_name': switch['security_name'],
                      'auth_protocol': switch['auth_protocol'],
                      'auth_key': switch['auth_key'],
                      'priv_protocol': switch['priv_protocol'],
