@@ -273,6 +273,7 @@ def add_bnp_phys_switch(context, switch):
             priv_key=switch['priv_key'],
             security_level=switch['security_level'])
         session.add(phy_switch)
+    return phy_switch
 
 
 def add_bnp_phys_switch_port(context, port):

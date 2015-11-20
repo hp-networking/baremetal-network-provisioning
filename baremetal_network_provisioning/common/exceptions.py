@@ -18,6 +18,8 @@
 
 from neutron.common import exceptions
 
+from webob import exc
+
 
 class HPNetProvisioningConfigError(exceptions.NeutronException):
     message = _('%(msg)s')
@@ -33,3 +35,12 @@ class SslCertificateValidationError(exceptions.NeutronException):
 
 class ConnectionFailed(exceptions.NeutronException):
     message = _(" Connection has failed: %(msg)s")
+
+
+class SNMPFailure(exc.HTTPBadRequest):
+
+    def __init__(self, **kwargs):
+        self.explanation = self.explanation % (kwargs)
+        super(SNMPFailure, self).__init__()
+
+    explanation = ("SNMP operation '%(operation)s' failed: %(error)s")
