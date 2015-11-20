@@ -279,8 +279,9 @@ def add_bnp_phys_switch_port(context, port):
     """Add physical switch port."""
     session = context.session
     with session.begin(subtransactions=True):
+        uuid = uuidutils.generate_uuid()
         switch_port = models.BNPPhysicalSwitchPort(
-            id=port['id'],
+            id=uuid,
             switch_id=port['switch_id'],
             interface_name=port['interface_name'],
             ifindex=port['ifindex'],
@@ -347,11 +348,14 @@ def get_bnp_switch_port_map_by_switchid(context, switchid):
 
 def delete_bnp_phys_switch(context, switch_id):
     """Delete physical switch that matches switch_id."""
-    session = context.session
-    with session.begin(subtransactions=True):
-        if switch_id:
-            session.query(models.BNPPhysicalSwitch).filter_by(
-                id=switch_id).delete()
+    try:
+        session = context.session
+        with session.begin(subtransactions=True):
+            if switch_id:
+                session.query(models.BNPPhysicalSwitch).filter_by(
+                    id=switch_id).delete()
+    except exc.NoResultFound:
+        LOG.error('no switch found for switch id: %s', switch_id)
 
 
 def delete_bnp_neutron_port(context, nport_id):

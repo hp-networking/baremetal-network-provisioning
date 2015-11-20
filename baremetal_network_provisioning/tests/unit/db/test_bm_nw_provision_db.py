@@ -192,3 +192,97 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
         result = db.get_ext_lag_id_by_lag_id(
             self.ctx, {'id': "lag1234"})
         self.assertEqual('extlag123', result.external_lag_id)
+
+# non SDN starts here
+    def _get_bnp_phys_switch_dict(self):
+        """Get a phy switch dict."""
+        switch_dict = {'id': "1234",
+                       'ip_address': "1.1.1.1",
+                       'mac_address': "A:B:C:D",
+                       'status': "enable",
+                       'access_protocol': "snmpv2c",
+                       'vendor': "HPE",
+                       'write_community': "public",
+                       'security_name': "xyz",
+                       'auth_protocol': "md5",
+                       'auth_key': "abc",
+                       'priv_protocol': "des",
+                       'priv_key': "abc",
+                       'security_level': "authPriv"}
+        return switch_dict
+
+    def _get_bnp_phys_switchport_dict(self):
+        """Get phy switch port dict."""
+        swport_dict = {'id': "345",
+                       'switch_id': "123",
+                       'interface_name': "Tengig1/0/1",
+                       'ifindex': "12345",
+                       'port_status': "UP"}
+        return swport_dict
+
+    def _get_bnp_neutron_port_dict(self):
+        """Get neutron port dict."""
+        nport_dict = {'neutron_port_id': "1234",
+                      'lag_id': "50",
+                      'access_type': "access",
+                      'segmentation_id': 100,
+                      'bind_status': True}
+        return nport_dict
+
+    def _get_bnp_switch_port_map_dict(self):
+        """Get neutron port dict."""
+        port_map = {'neutron_port_id': "1234",
+                    'switch_port_id': "5678",
+                    'switch_id': "3456"}
+        return port_map
+
+    def test_add_bnp_phys_switch(self):
+        """Test add_bnp_phys_switch method."""
+        sw_dict = self._get_bnp_phys_switch_dict()
+        db.add_bnp_phys_switch(self.ctx, sw_dict)
+        count = self.ctx.session.query(models.BNPPhysicalSwitch).count()
+        self.assertEqual(1, count)
+
+    def test_add_bnp_phys_switch_port(self):
+        """Test add_bnp_phys_switch_port method."""
+        port_dict = self._get_bnp_phys_switchport_dict()
+        db.add_bnp_phys_switch_port(self.ctx, port_dict)
+        count = self.ctx.session.query(models.BNPPhysicalSwitchPort).count()
+        self.assertEqual(1, count)
+
+    def test_add_bnp_neutron_port(self):
+        """Test add_bnp_neutron_port method."""
+        port_dict = self._get_bnp_neutron_port_dict()
+        db.add_bnp_neutron_port(self.ctx, port_dict)
+        count = self.ctx.session.query(models.BNPNeutronPort).count()
+        self.assertEqual(1, count)
+
+    def test_add_bnp_switch_port_map(self):
+        """Test add_bnp_switch_port_map method."""
+        port_map = self._get_bnp_switch_port_map_dict()
+        db.add_bnp_switch_port_map(self.ctx, port_map)
+        count = self.ctx.session.query(models.BNPSwitchPortMapping).count()
+        self.assertEqual(1, count)
+
+    def test_delete_bnp_neutron_port(self):
+        """Test delete_bnp_neutron_port method."""
+        port_dict = self._get_bnp_neutron_port_dict()
+        db.add_bnp_neutron_port(self.ctx, port_dict)
+        db.delete_bnp_neutron_port(self.ctx, port_dict['neutron_port_id'])
+        count = self.ctx.session.query(models.BNPNeutronPort).count()
+        self.assertEqual(0, count)
+
+    '''def test_delete_bnp_phys_switch(self):
+        """Test delete_bnp_phys_switch method."""
+        sw_dict = self._get_bnp_phys_switch_dict()
+        db.add_bnp_phys_switch(self.ctx, sw_dict)
+        db.delete_bnp_phys_switch(self.ctx, sw_dict['id'])
+        count = self.ctx.session.query(models.BNPPhysicalSwitch).count()
+        self.assertEqual(0, count)'''
+
+    '''def test_get_bnp_phys_switch(self):
+        """Test get_bnp_phys_switch method."""
+        sw_dict = self._get_bnp_phys_switch_dict()
+        db.add_bnp_phys_switch(self.ctx, sw_dict)
+        result = db.get_bnp_phys_switch(self.ctx, sw_dict['id'])
+        self.assertEqual(result['id'], sw_dict['id'])'''
