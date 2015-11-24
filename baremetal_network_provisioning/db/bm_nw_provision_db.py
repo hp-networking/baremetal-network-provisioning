@@ -325,15 +325,48 @@ def get_bnp_phys_switch(context, switch_id):
     return switch
 
 
-def get_bnp_phys_switch_by_mac(context, mac):
-    """Get physical switch that matches mac address."""
+def get_bnp_phys_port(context, sw_id, port_name):
+    """Get physical port that matches id and interface_name."""
     try:
-        query = context.session.query(models.BNPPhysicalSwitch)
-        switch = query.filter_by(mac_address=mac).one()
+        query = context.session.query(models.BNPPhysicalSwitchPort)
+        port = query.filter_by(switch_id=sw_id, interface_name=port_name).one()
     except exc.NoResultFound:
-        LOG.error('no physical switch found with mac address: %s', mac)
+        LOG.error('no physical port found with id: %s', sw_id)
         return
-    return switch
+    return port
+
+
+def get_bnp_phys_port_by_id(context, bnp_port_id):
+    """Get physical port that matches id."""
+    try:
+        query = context.session.query(models.BNPPhysicalSwitchPort)
+        port = query.filter_by(id=bnp_port_id).one()
+    except exc.NoResultFound:
+        LOG.error('no physical port found with id: %s', bnp_port_id)
+        return
+    return port
+
+
+def get_bnp_neutron_port(context, neutron_port_id):
+    """Get bnp neutron port that matches neutron_port_id."""
+    try:
+        query = context.session.query(models.BNPNeutronPort)
+        port_map = query.filter_by(neutron_port_id=neutron_port_id).one()
+    except exc.NoResultFound:
+        LOG.error('no port map found with id: %s', port_map)
+        return
+    return port_map
+
+
+def get_bnp_neutron_port_by_seg_id(context, segmentation_id):
+    """Get bnp neutron port that matches seg_id."""
+    try:
+        query = context.session.query(models.BNPNeutronPort)
+        port_map = query.filter_by(segmentation_id=segmentation_id).all()
+    except exc.NoResultFound:
+        LOG.error('no port map found with id: %s', segmentation_id)
+        return
+    return port_map
 
 
 def get_bnp_switch_port_map_by_switchid(context, switchid):
@@ -345,6 +378,38 @@ def get_bnp_switch_port_map_by_switchid(context, switchid):
         LOG.error('no switch port mapping found for switch: %s', switchid)
         return
     return port_map
+
+
+def get_bnp_switch_port_mappings(context, neutron_port_id):
+    """Get switch port map by switch_id."""
+    try:
+        query = context.session.query(models.BNPSwitchPortMapping)
+        port_map = query.filter_by(neutron_port_id=neutron_port_id).all()
+    except exc.NoResultFound:
+        LOG.error('no switch port mapping found for switch: %s',
+                  neutron_port_id)
+        return
+    return port_map
+
+
+def get_bnp_phys_switch_by_mac(context, mac):
+    """Get physical switch that matches mac address."""
+    try:
+        query = context.session.query(models.BNPPhysicalSwitch)
+        switch = query.filter_by(mac_address=mac).one()
+    except exc.NoResultFound:
+        LOG.error('no physical switch found with mac address: %s', mac)
+        return
+    return switch
+
+
+def delete_bnp_switch_port_mappings(context, neutron_port_id):
+    """Delete mappings that matches neutron_port_id."""
+    session = context.session
+    with session.begin(subtransactions=True):
+        if neutron_port_id:
+            session.query(models.BNPSwitchPortMapping).filter_by(
+                neutron_port_id=neutron_port_id).delete()
 
 
 def delete_bnp_phys_switch(context, switch_id):
