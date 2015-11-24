@@ -404,20 +404,20 @@ def update_bnp_phys_swport_status(context, swid, port_name, port_status):
                   swid, port_name)
 
 
-def update_bnp_phys_switch_access_params(context, switch_id, switch):
+def update_bnp_phys_switch_access_params(context, switch_id, params):
     """Update physical switch with access params."""
     try:
         with context.session.begin(subtransactions=True):
             (context.session.query(models.BNPPhysicalSwitch).filter_by(
                 id=switch_id).update(
-                    {'access_protocol': switch['access_protocol'],
-                     'write_community': switch['write_community'],
-                     'security_name': switch['security_name'],
-                     'auth_protocol': switch['auth_protocol'],
-                     'auth_key': switch['auth_key'],
-                     'priv_protocol': switch['priv_protocol'],
-                     'priv_key': switch['priv_key'],
-                     'security_level': switch['security_level']},
+                    {'access_protocol': params['access_protocol'],
+                     'write_community': params['write_community'],
+                     'security_name': params['security_name'],
+                     'auth_protocol': params['auth_protocol'],
+                     'auth_key': params['auth_key'],
+                     'priv_protocol': params['priv_protocol'],
+                     'priv_key': params['priv_key'],
+                     'security_level': params['security_level']},
                     synchronize_session=False))
     except exc.NoResultFound:
         LOG.error('no physical switch found for id: %s', switch_id)
