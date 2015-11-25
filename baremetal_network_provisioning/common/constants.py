@@ -38,14 +38,14 @@ OID_IF_INDEX = '1.3.6.1.2.1.2.2.1.2'
 OID_IF_TYPE = '1.3.6.1.2.1.2.2.1.3'
 OID_PORT_STATUS = '1.3.6.1.2.1.2.2.1.8'
 
-Port_status = {'1': 'up',
-               '2': 'down',
-               '3': 'testing',
-               '4': 'unknown',
-               '5': 'dormant',
-               '6': 'notPresent',
-               '7': 'lowerLayerDown'}
+PORT_STATUS = {'1': 'UP',
+               '2': 'DOWN',
+               '3': 'TESTING',
+               '4': 'UNKNOWN',
+               '5': 'DORMANT',
+               '6': 'NOTPRESENT',
+               '7': 'LOWERLAYERDOWN'}
 
-Switch_status = {'create': 'CREATED',
+SWITCH_STATUS = {'create': 'CREATED',
                  'enable': 'ENABLED',
                  'disable': 'DISABLED'}
