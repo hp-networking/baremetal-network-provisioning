@@ -46,7 +46,22 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
     def create_port(self, port):
         """create_port ."""
         LOG.info(_LI('create_port called from back-end mechanism driver'))
-        self._create_port(port)
+        switchports = port['port']['switchports']
+        for switchport in switchports:
+            switch_mac_id = switchport['switch_id']
+            port_id = switchport['port_id']
+            bnp_switch = db.get_bnp_phys_switch_by_mac(self.context,
+                                                       switch_mac_id)
+            phys_port = db.get_bnp_phys_port(self.context,
+                                             bnp_switch.id,
+                                             port_id)
+            # check for port and switch level existence
+            if not bnp_switch:
+                LOG.error(_LE("No physical switch found '%s' "), switch_mac_id)
+                self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
+            if not phys_port:
+                LOG.error(_LE("No physical port found for '%s' "), phys_port)
+                self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
 
     def bind_port_to_segment(self, port):
         """bind_port_to_segment ."""
@@ -66,7 +81,7 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
                 self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
             switchport['ifindex'] = phys_port.ifindex
         credentials_dict = port.get('port')
-        cred_dict = self._get_credentials_dict(bnp_switch, 'create_port')
+        cred_dict = self._get_credentials_dict(bnp_switch)
         credentials_dict['credentials'] = cred_dict
         try:
             self.protocol_driver.set_isolation(port)
@@ -89,29 +104,21 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
 
     def update_port(self, port):
         """update_port ."""
-        port_id = port['port']['id']
-        bnp_sw_map = db.get_bnp_switch_port_mappings(self.context, port_id)
-        if not bnp_sw_map:
-            # We are creating the switch ports because initial ironic
-            # port-create will not supply local link information for tenant .
-            # networks . Later ironic port-update , the local link information
-            # value will be supplied.
-            self._create_port(port)
+        # TODO(selva) yet to implement!
+        pass
 
     def delete_port(self, port_id):
         """delete_port ."""
-        try:
-            port_map = db.get_bnp_neutron_port(self.context, port_id)
-        except Exception:
-            LOG.error(_LE("No neutron port is associated with the phys port"))
-            return
+        port_map = db.get_bnp_neutron_port(self.context, port_id)
         is_last_port_in_vlan = False
+        if not port_map:
+            self._raise_ml2_error(wexc.HTTPNotFound, 'delete_port')
         seg_id = port_map.segmentation_id
         bnp_sw_map = db.get_bnp_switch_port_mappings(self.context, port_id)
         switch_port_id = bnp_sw_map[0].switch_port_id
         bnp_switch = db.get_bnp_phys_switch(self.context,
                                             bnp_sw_map[0].switch_id)
-        cred_dict = self._get_credentials_dict(bnp_switch, 'delete_port')
+        cred_dict = self._get_credentials_dict(bnp_switch)
         phys_port = db.get_bnp_phys_port_by_id(self.context,
                                                switch_port_id)
         result = db.get_bnp_neutron_port_by_seg_id(self.context, seg_id)
@@ -149,9 +156,9 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
         base.FAULT_MAP.update({ml2_exc.MechanismDriverError: err_type})
         raise ml2_exc.MechanismDriverError(method=method_name)
 
-    def _get_credentials_dict(self, bnp_switch, funcn_name):
+    def _get_credentials_dict(self, bnp_switch):
         if not bnp_switch:
-            self._raise_ml2_error(wexc.HTTPNotFound, funcn_name)
+            self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
         creds_dict = {}
         creds_dict['ip_address'] = bnp_switch.ip_address
         creds_dict['write_community'] = bnp_switch.write_community
