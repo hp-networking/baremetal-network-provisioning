@@ -166,6 +166,7 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
 
     def _create_port(self, port):
         switchports = port['port']['switchports']
+        LOG.debug(_LE("_create_port switch: %s"), port)
         for switchport in switchports:
             switch_mac_id = switchport['switch_id']
             port_id = switchport['port_id']
