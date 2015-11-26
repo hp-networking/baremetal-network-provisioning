@@ -20,3 +20,32 @@ BIND_IGNORE = 'bind_ignore'
 BIND_SUCCESS = 'bind_success'
 BIND_FAILURE = 'bind_failure'
 HP_VIF_TYPE = 'hp-ironic'
+
+SUPPORTED_PROTOCOLS = ['snmpv1', 'snmpv2c', 'snmpv3']
+SUPPORTED_AUTH_PROTOCOLS = [None, 'md5', 'sha', 'sha1']
+SUPPORTED_PRIV_PROTOCOLS = [None, 'des', '3des', 'aes',
+                            'des56', 'aes128', 'aes192', 'aes256']
+
+SNMP_V1 = 'snmpv1'
+SNMP_V2C = 'snmpv2c'
+SNMP_V3 = 'snmpv3'
+SNMP_PORT = 161
+PHY_PORT_TYPE = '6'
+
+OID_MAC_ADDRESS = '1.0.8802.1.1.2.1.3.2.0'
+OID_PORTS = '1.3.6.1.2.1.2.2.1.1'
+OID_IF_INDEX = '1.3.6.1.2.1.2.2.1.2'
+OID_IF_TYPE = '1.3.6.1.2.1.2.2.1.3'
+OID_PORT_STATUS = '1.3.6.1.2.1.2.2.1.8'
+
+PORT_STATUS = {'1': 'UP',
+               '2': 'DOWN',
+               '3': 'TESTING',
+               '4': 'UNKNOWN',
+               '5': 'DORMANT',
+               '6': 'NOTPRESENT',
+               '7': 'LOWERLAYERDOWN'}
+
+SWITCH_STATUS = {'create': 'CREATED',
+                 'enable': 'ENABLED',
+                 'disable': 'DISABLED'}

@@ -13,18 +13,46 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from baremetal_network_provisioning.common import constants
+from baremetal_network_provisioning.drivers import snmp_client
 
-class DiscoveryDriver(object):
 
-    """Driver for All family of switches to get the switch and port
+class SNMPDiscoveryDriver(object):
 
-    information.
+    def __init__(self, snmp_info):
+        self.snmp_info = snmp_info
+        self.client = snmp_client.get_client(snmp_info)
 
-    """
+    def discover_switch(self):
+        mac_addr = self.get_mac_addr()
+        ports_dict = self.get_ports_info()
+        switch = {'mac_addr': mac_addr, 'ports': ports_dict}
+        return switch
 
-    def initialize(self):
-        pass
+    def get_mac_addr(self):
+        oid = constants.OID_MAC_ADDRESS
+        var_binds = self.client.get(oid)
+        for name, val in var_binds:
+            mac = val.prettyPrint().zfill(12)
+            mac = mac[2:]
+            mac_addr = '-'.join([mac[i:i + 4] for i in range(0, 12, 4)])
+            return mac_addr
 
-    def discover_switch(self, switch_info):
-        """discovery the switch port information for the given switch."""
-        pass
+    def get_ports_info(self):
+
+        oids = [constants.OID_PORTS,
+                constants.OID_IF_INDEX,
+                constants.OID_IF_TYPE,
+                constants.OID_PORT_STATUS]
+        var_binds = self.client.get_bulk(*oids)
+        ports_dict = []
+        for var_bind_table_row in var_binds:
+            if_index = (var_bind_table_row[0][1]).prettyPrint()
+            port_name = (var_bind_table_row[1][1]).prettyPrint()
+            if_type = (var_bind_table_row[2][1]).prettyPrint()
+            if if_type == constants.PHY_PORT_TYPE:
+                ports_dict.append(
+                    {'ifindex': if_index,
+                     'interface_name': port_name,
+                     'port_status': var_bind_table_row[3][1].prettyPrint()})
+        return ports_dict
