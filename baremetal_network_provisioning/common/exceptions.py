@@ -43,4 +43,6 @@ class SNMPFailure(exc.HTTPBadRequest):
         self.explanation = self.explanation % (kwargs)
         super(SNMPFailure, self).__init__()
 
-    explanation = ("SNMP operation '%(operation)s' failed: %(error)s")
+    explanation = ("SNMP operation '%(operation)s'"
+                   "failed: Either device is not reacheable"
+                   " or invalid credentials")

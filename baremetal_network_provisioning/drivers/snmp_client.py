@@ -16,11 +16,23 @@
 from baremetal_network_provisioning.common import constants
 from baremetal_network_provisioning.common import exceptions
 
+from oslo_config import cfg
 from oslo_log import log as logging
 from pysnmp.entity.rfc3413.oneliner import cmdgen
 from pysnmp import error as snmp_error
 
 LOG = logging.getLogger(__name__)
+
+hp_opts = [
+    cfg.IntOpt('snmp_retries',
+               default=3,
+               help=_("Number of retries to be done")),
+    cfg.IntOpt('snmp_timeout',
+               default=3,
+               help=_("Timeout in seconds to wait for SNMP request"
+                      "completion.")),
+]
+cfg.CONF.register_opts(hp_opts, "default")
 
 
 Auth_protocol = {None: cmdgen.usmNoAuthProtocol,
@@ -46,14 +58,17 @@ class SNMPClient(object):
                  write_community=None, security_name=None,
                  auth_protocol=None, auth_key=None,
                  priv_protocol=None, priv_key=None):
+        self.conf = cfg.CONF
         self.ip_address = ip_address
         self.access_protocol = access_protocol
-        self.auth_protocol = Auth_protocol[auth_protocol]
-        self.auth_key = auth_key
-        self.priv_protocol = Priv_protocol[priv_protocol]
-        self.priv_key = priv_key
+        self.timeout = self.conf.default.get('snmp_timeout')
+        self.retries = self.conf.default.get('snmp_retries')
         if self.access_protocol == constants.SNMP_V3:
             self.security_name = security_name
+            self.auth_protocol = Auth_protocol[auth_protocol]
+            self.auth_key = auth_key
+            self.priv_protocol = Priv_protocol[priv_protocol]
+            self.priv_key = priv_key
         else:
             self.write_community = write_community
         self.cmd_gen = cmdgen.CommandGenerator()
@@ -78,7 +93,9 @@ class SNMPClient(object):
 
         """
         return cmdgen.UdpTransportTarget(
-            (self.ip_address, constants.SNMP_PORT), timeout=1, retries=5)
+            (self.ip_address, constants.SNMP_PORT),
+            timeout=self.timeout,
+            retries=self.retries)
 
     def get(self, oid):
         """Use PySNMP to perform an SNMP GET operation on a single object.

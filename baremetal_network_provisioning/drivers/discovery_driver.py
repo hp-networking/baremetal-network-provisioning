@@ -35,7 +35,7 @@ class SNMPDiscoveryDriver(object):
         for name, val in var_binds:
             mac = val.prettyPrint().zfill(12)
             mac = mac[2:]
-            mac_addr = '-'.join([mac[i:i + 4] for i in range(0, 12, 4)])
+            mac_addr = ':'.join([mac[i:i + 2] for i in range(0, 12, 2)])
             return mac_addr
 
     def get_ports_info(self):
