@@ -196,8 +196,7 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
 # non SDN starts here
     def _get_bnp_phys_switch_dict(self):
         """Get a phy switch dict."""
-        switch_dict = {'id': "1234",
-                       'ip_address': "1.1.1.1",
+        switch_dict = {'ip_address': "1.1.1.1",
                        'mac_address': "A:B:C:D",
                        'status': "enable",
                        'access_protocol': "snmpv2c",
@@ -213,8 +212,7 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
 
     def _get_bnp_phys_switchport_dict(self):
         """Get phy switch port dict."""
-        swport_dict = {'id': "345",
-                       'switch_id': "123",
+        swport_dict = {'switch_id': "123",
                        'interface_name': "Tengig1/0/1",
                        'ifindex': "12345",
                        'port_status': "UP"}
@@ -272,17 +270,42 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
         count = self.ctx.session.query(models.BNPNeutronPort).count()
         self.assertEqual(0, count)
 
-    '''def test_delete_bnp_phys_switch(self):
+    def test_delete_bnp_phys_switch(self):
         """Test delete_bnp_phys_switch method."""
         sw_dict = self._get_bnp_phys_switch_dict()
         db.add_bnp_phys_switch(self.ctx, sw_dict)
-        db.delete_bnp_phys_switch(self.ctx, sw_dict['id'])
+        switch = db.get_bnp_phys_switch_by_mac(self.ctx,
+                                               sw_dict['mac_address'])
+        db.delete_bnp_phys_switch(self.ctx, switch['id'])
         count = self.ctx.session.query(models.BNPPhysicalSwitch).count()
-        self.assertEqual(0, count)'''
+        self.assertEqual(0, count)
 
-    '''def test_get_bnp_phys_switch(self):
+    def test_get_bnp_phys_switch(self):
         """Test get_bnp_phys_switch method."""
         sw_dict = self._get_bnp_phys_switch_dict()
         db.add_bnp_phys_switch(self.ctx, sw_dict)
-        result = db.get_bnp_phys_switch(self.ctx, sw_dict['id'])
-        self.assertEqual(result['id'], sw_dict['id'])'''
+        sw_mac = db.get_bnp_phys_switch_by_mac(self.ctx,
+                                               sw_dict['mac_address'])
+        sw_ip = db.get_bnp_phys_switch_by_ip(self.ctx, sw_dict['ip_address'])
+        sw = db.get_bnp_phys_switch(self.ctx, sw_mac['id'])
+        self.assertEqual(sw['id'], sw_mac['id'])
+        self.assertEqual(sw['id'], sw_ip['id'])
+
+    def test_get_all_bnp_phys_switches(self):
+        """Test get_all__bnp_phys_switches method."""
+        sw_dict = self._get_bnp_phys_switch_dict()
+        db.add_bnp_phys_switch(self.ctx, sw_dict)
+        switches = db.get_all_bnp_phys_switches(self.ctx)
+        self.assertEqual(1, len(switches))
+
+    def test_update_bnp_phys_swport_status(self):
+        """Test update_bnp_phys_swport_status method."""
+        port_dict = self._get_bnp_phys_switchport_dict()
+        db.add_bnp_phys_switch_port(self.ctx, port_dict)
+        db.update_bnp_phys_swport_status(self.ctx,
+                                         port_dict['switch_id'],
+                                         port_dict['interface_name'],
+                                         "DOWN")
+        port_updt = self.ctx.session.query(models.BNPPhysicalSwitchPort).all()
+        self.assertNotEqual(port_dict['port_status'],
+                            port_updt[0]['port_status'])
