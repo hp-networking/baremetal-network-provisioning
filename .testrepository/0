@@ -1,0 +1,856 @@
+time: 2015-11-30 06:13:43.139927Z
+tags: worker-1
+test: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_add_bnp_neutron_port
+time: 2015-11-30 06:13:43.508127Z
+successful: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_add_bnp_neutron_port [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+A6
+2015-11-29 22:13:43,225  WARNING [oslo_config.cfg] Option "verbose" from group "DEFAULT" is deprecated for removal.  Its value may be silently ignored in the future.
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-1
+time: 2015-11-30 06:13:43.149307Z
+tags: worker-0
+test: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_add_bnp_phys_switch
+time: 2015-11-30 06:13:43.516213Z
+successful: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_add_bnp_phys_switch [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+A6
+2015-11-29 22:13:43,232  WARNING [oslo_config.cfg] Option "verbose" from group "DEFAULT" is deprecated for removal.  Its value may be silently ignored in the future.
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-0
+time: 2015-11-30 06:13:43.510299Z
+tags: worker-1
+test: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_add_bnp_phys_switch_port
+time: 2015-11-30 06:13:43.539662Z
+successful: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_add_bnp_phys_switch_port [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-1
+time: 2015-11-30 06:13:43.518524Z
+tags: worker-0
+test: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_add_hp_ironic_switch_port_mapping
+time: 2015-11-30 06:13:43.551610Z
+successful: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_add_hp_ironic_switch_port_mapping [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-0
+time: 2015-11-30 06:13:43.541668Z
+tags: worker-1
+test: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_add_bnp_switch_port_map
+time: 2015-11-30 06:13:43.572098Z
+successful: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_add_bnp_switch_port_map [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-1
+time: 2015-11-30 06:13:43.553121Z
+tags: worker-0
+test: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_add_hp_switch_lag_port
+time: 2015-11-30 06:13:43.581229Z
+successful: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_add_hp_switch_lag_port [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-0
+time: 2015-11-30 06:13:43.574150Z
+tags: worker-1
+test: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_delete_bnp_phys_switch
+time: 2015-11-30 06:13:43.609376Z
+successful: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_delete_bnp_phys_switch [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-1
+time: 2015-11-30 06:13:43.582738Z
+tags: worker-0
+test: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_add_hp_switch_port
+time: 2015-11-30 06:13:43.611259Z
+successful: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_add_hp_switch_port [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-0
+time: 2015-11-30 06:13:43.613123Z
+tags: worker-0
+test: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_delete_bnp_neutron_port
+time: 2015-11-30 06:13:43.643190Z
+successful: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_delete_bnp_neutron_port [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-0
+time: 2015-11-30 06:13:43.611576Z
+tags: worker-1
+test: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_delete_hp_switch_port
+time: 2015-11-30 06:13:43.646666Z
+successful: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_delete_hp_switch_port [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-1
+time: 2015-11-30 06:13:43.645026Z
+tags: worker-0
+test: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_delete_hp_ironic_switch_port_mapping
+time: 2015-11-30 06:13:43.676609Z
+successful: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_delete_hp_ironic_switch_port_mapping [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-0
+time: 2015-11-30 06:13:43.648634Z
+tags: worker-1
+test: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_get_all_bnp_phys_switches
+time: 2015-11-30 06:13:43.676039Z
+successful: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_get_all_bnp_phys_switches [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-1
+time: 2015-11-30 06:13:43.678410Z
+tags: worker-0
+test: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_delete_hp_switch_lag_port
+time: 2015-11-30 06:13:43.708264Z
+successful: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_delete_hp_switch_lag_port [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-0
+time: 2015-11-30 06:13:43.678316Z
+tags: worker-1
+test: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_get_bnp_phys_switch
+time: 2015-11-30 06:13:43.710595Z
+successful: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_get_bnp_phys_switch [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-1
+time: 2015-11-30 06:13:43.709889Z
+tags: worker-0
+test: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_get_ext_lag_id_by_id
+time: 2015-11-30 06:13:43.736241Z
+successful: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_get_ext_lag_id_by_id [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-0
+time: 2015-11-30 06:13:43.712533Z
+tags: worker-1
+test: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_get_hp_ironic_swport_map_by_id
+time: 2015-11-30 06:13:43.743075Z
+successful: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_get_hp_ironic_swport_map_by_id [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-1
+time: 2015-11-30 06:13:43.737961Z
+tags: worker-0
+test: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_get_hp_switch_lag_port_by_id
+time: 2015-11-30 06:13:43.764050Z
+successful: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_get_hp_switch_lag_port_by_id [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-0
+time: 2015-11-30 06:13:43.745047Z
+tags: worker-1
+test: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_update_bnp_phys_swport_status
+time: 2015-11-30 06:13:43.773827Z
+successful: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_update_bnp_phys_swport_status [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-1
+time: 2015-11-30 06:13:43.765730Z
+tags: worker-0
+test: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_get_hp_switch_port_by_id
+time: 2015-11-30 06:13:43.792365Z
+successful: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_get_hp_switch_port_by_id [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-0
+time: 2015-11-30 06:13:43.775783Z
+tags: worker-1
+test: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_update_hp_ironic_swport_map_with_seg_id
+time: 2015-11-30 06:13:43.807516Z
+successful: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_update_hp_ironic_swport_map_with_seg_id [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-1
+time: 2015-11-30 06:13:43.794016Z
+tags: worker-0
+test: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_get_hp_switch_port_by_switchid_portname
+time: 2015-11-30 06:13:43.821428Z
+successful: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_get_hp_switch_port_by_switchid_portname [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-0
+time: 2015-11-30 06:13:43.809519Z
+tags: worker-1
+test: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_update_hp_swport_with_lag_id
+time: 2015-11-30 06:13:43.839148Z
+successful: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_update_hp_swport_with_lag_id [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-1
+time: 2015-11-30 06:13:43.841138Z
+tags: worker-1
+test: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_bind__lag_port_to_segment_success
+time: 2015-11-30 06:13:43.851206Z
+successful: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_bind__lag_port_to_segment_success [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+C4
+baremetal_network_provisioning/tests/unit/ml2/test_hp_network_provisioning_driver.py:182: DeprecationWarning: With-statements now directly support multiple context managers
+  return_value=None)):
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-1
+time: 2015-11-30 06:13:43.823147Z
+tags: worker-0
+test: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_update_hp_ironic_swport_map_with_lag_id
+time: 2015-11-30 06:13:43.852292Z
+successful: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_update_hp_ironic_swport_map_with_lag_id [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-0
+time: 2015-11-30 06:13:43.853256Z
+tags: worker-1
+test: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_bind_port_to_segment_with_failure
+time: 2015-11-30 06:13:43.864198Z
+successful: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_bind_port_to_segment_with_failure [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-1
+time: 2015-11-30 06:13:43.866142Z
+tags: worker-1
+test: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_create_port_with_200_ok
+time: 2015-11-30 06:13:43.878827Z
+successful: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_create_port_with_200_ok [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+94
+2015-11-29 22:13:43,877     INFO [baremetal_network_provisioning.ml2.hp_network_provisioning_driver] response from SDN controller <Response [200]> 
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+C3
+baremetal_network_provisioning/tests/unit/ml2/test_hp_network_provisioning_driver.py:60: DeprecationWarning: With-statements now directly support multiple context managers
+  return_value=None)):
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-1
+time: 2015-11-30 06:13:43.854410Z
+tags: worker-0
+test: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_update_hp_switch_lag_port
+time: 2015-11-30 06:13:43.881388Z
+successful: baremetal_network_provisioning.tests.unit.db.test_bm_nw_provision_db.NetworkProvisionDBTestCase.test_update_hp_switch_lag_port [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-0
+time: 2015-11-30 06:13:43.882937Z
+tags: worker-0
+test: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_bind_port_to_segment_success
+time: 2015-11-30 06:13:43.893368Z
+successful: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_bind_port_to_segment_success [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+C4
+baremetal_network_provisioning/tests/unit/ml2/test_hp_network_provisioning_driver.py:168: DeprecationWarning: With-statements now directly support multiple context managers
+  return_value=None)):
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-0
+time: 2015-11-30 06:13:43.880841Z
+tags: worker-1
+test: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_create_port_with_exception
+time: 2015-11-30 06:13:43.895837Z
+successful: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_create_port_with_exception [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+75
+2015-11-29 22:13:43,893    ERROR [baremetal_network_provisioning.ml2.hp_network_provisioning_driver]  Bad request : 
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+C7
+baremetal_network_provisioning/tests/unit/ml2/test_hp_network_provisioning_driver.py:93: DeprecationWarning: With-statements now directly support multiple context managers
+  side_effect=Exception)):
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-1
+time: 2015-11-30 06:13:43.894902Z
+tags: worker-0
+test: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_bind_port_to_segment_with_connection_failed
+time: 2015-11-30 06:13:43.904396Z
+successful: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_bind_port_to_segment_with_connection_failed [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-0
+time: 2015-11-30 06:13:43.897737Z
+tags: worker-1
+test: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_create_port_with_invalidurl
+time: 2015-11-30 06:13:43.911883Z
+successful: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_create_port_with_invalidurl [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+75
+2015-11-29 22:13:43,910    ERROR [baremetal_network_provisioning.ml2.hp_network_provisioning_driver]  Invalid URL : 
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+C8
+baremetal_network_provisioning/tests/unit/ml2/test_hp_network_provisioning_driver.py:153: DeprecationWarning: With-statements now directly support multiple context managers
+  return_value="subnet")):
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-1
+time: 2015-11-30 06:13:43.905977Z
+tags: worker-0
+test: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_create_lag_port_with_200_ok
+time: 2015-11-30 06:13:43.920816Z
+successful: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_create_lag_port_with_200_ok [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+128
+2015-11-29 22:13:43,917     INFO [baremetal_network_provisioning.ml2.hp_network_provisioning_driver] response from SDN controller <Response [200]> 
+2015-11-29 22:13:43,919     INFO [baremetal_network_provisioning.ml2.hp_network_provisioning_driver] response from SDN controller <Response [200]> 
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+C3
+baremetal_network_provisioning/tests/unit/ml2/test_hp_network_provisioning_driver.py:80: DeprecationWarning: With-statements now directly support multiple context managers
+  return_value=None)):
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-0
+time: 2015-11-30 06:13:43.913799Z
+tags: worker-1
+test: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_create_port_with_timeout
+time: 2015-11-30 06:13:43.927089Z
+successful: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_create_port_with_timeout [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+8D
+2015-11-29 22:13:43,925    ERROR [baremetal_network_provisioning.ml2.hp_network_provisioning_driver]  Request timed out in SDN controller : 
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+C8
+baremetal_network_provisioning/tests/unit/ml2/test_hp_network_provisioning_driver.py:108: DeprecationWarning: With-statements now directly support multiple context managers
+  return_value="subnet")):
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-1
+time: 2015-11-30 06:13:43.922361Z
+tags: worker-0
+test: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_create_port_with_httperror
+time: 2015-11-30 06:13:43.934357Z
+successful: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_create_port_with_httperror [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+73
+2015-11-29 22:13:43,932    ERROR [baremetal_network_provisioning.ml2.hp_network_provisioning_driver]  HTTPError : 
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+C8
+baremetal_network_provisioning/tests/unit/ml2/test_hp_network_provisioning_driver.py:138: DeprecationWarning: With-statements now directly support multiple context managers
+  return_value="subnet")):
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-0
+time: 2015-11-30 06:13:43.929022Z
+tags: worker-1
+test: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_delete_lag_port
+time: 2015-11-30 06:13:43.941359Z
+successful: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_delete_lag_port [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+C4
+baremetal_network_provisioning/tests/unit/ml2/test_hp_network_provisioning_driver.py:248: DeprecationWarning: With-statements now directly support multiple context managers
+  return_value=None)):
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-1
+time: 2015-11-30 06:13:43.936046Z
+tags: worker-0
+test: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_create_port_with_sslerror
+time: 2015-11-30 06:13:43.948066Z
+successful: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_create_port_with_sslerror [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+84
+2015-11-29 22:13:43,946    ERROR [baremetal_network_provisioning.ml2.hp_network_provisioning_driver]  SSLError to SDN controller : 
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+C8
+baremetal_network_provisioning/tests/unit/ml2/test_hp_network_provisioning_driver.py:123: DeprecationWarning: With-statements now directly support multiple context managers
+  return_value="subnet")):
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-0
+time: 2015-11-30 06:13:43.943324Z
+tags: worker-1
+test: baremetal_network_provisioning.tests.unit.ml2.test_mechanism_hp.TestHPMechDriver.test__construct_port
+time: 2015-11-30 06:13:43.954062Z
+successful: baremetal_network_provisioning.tests.unit.ml2.test_mechanism_hp.TestHPMechDriver.test__construct_port [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-1
+time: 2015-11-30 06:13:43.949657Z
+tags: worker-0
+test: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_delete_port
+time: 2015-11-30 06:13:43.959706Z
+successful: baremetal_network_provisioning.tests.unit.ml2.test_hp_network_provisioning_driver.TestHPNetworkProvisioningDriver.test_delete_port [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+C4
+baremetal_network_provisioning/tests/unit/ml2/test_hp_network_provisioning_driver.py:228: DeprecationWarning: With-statements now directly support multiple context managers
+  return_value=None)):
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-0
+time: 2015-11-30 06:13:43.955957Z
+tags: worker-1
+test: baremetal_network_provisioning.tests.unit.ml2.test_mechanism_hp.TestHPMechDriver.test__get_binding_profile
+time: 2015-11-30 06:13:43.966383Z
+successful: baremetal_network_provisioning.tests.unit.ml2.test_mechanism_hp.TestHPMechDriver.test__get_binding_profile [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-1
+time: 2015-11-30 06:13:43.961279Z
+tags: worker-0
+test: baremetal_network_provisioning.tests.unit.ml2.test_mechanism_hp.TestHPMechDriver.test__get_vnic_type
+time: 2015-11-30 06:13:43.970390Z
+successful: baremetal_network_provisioning.tests.unit.ml2.test_mechanism_hp.TestHPMechDriver.test__get_vnic_type [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-0
+time: 2015-11-30 06:13:43.968285Z
+tags: worker-1
+test: baremetal_network_provisioning.tests.unit.ml2.test_mechanism_hp.TestHPMechDriver.test_delete_port_precommit
+time: 2015-11-30 06:13:43.979876Z
+successful: baremetal_network_provisioning.tests.unit.ml2.test_mechanism_hp.TestHPMechDriver.test_delete_port_precommit [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+B0
+baremetal_network_provisioning/tests/unit/ml2/test_mechanism_hp.py:122: DeprecationWarning: With-statements now directly support multiple context managers
+  return_value=None)
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-1
+time: 2015-11-30 06:13:43.972086Z
+tags: worker-0
+test: baremetal_network_provisioning.tests.unit.ml2.test_mechanism_hp.TestHPMechDriver.test_create_port_precommit
+time: 2015-11-30 06:13:43.982151Z
+successful: baremetal_network_provisioning.tests.unit.ml2.test_mechanism_hp.TestHPMechDriver.test_create_port_precommit [ multipart
+Content-Type: text/plain;charset="utf8"
+pythonlogging:''
+0
+Content-Type: text/plain;charset="utf8"
+pythonlogging:'neutron.api.extensions'
+0
+Content-Type: text/plain;charset="utf8"
+stderr
+AF
+baremetal_network_provisioning/tests/unit/ml2/test_mechanism_hp.py:93: DeprecationWarning: With-statements now directly support multiple context managers
+  return_value=None)
+0
+Content-Type: text/plain;charset="utf8"
+stdout
+0
+]
+tags: -worker-0
