@@ -56,7 +56,6 @@ class BNPPhysicalSwitchPort(model_base.BASEV2, models_v2.HasId):
     interface_name = sa.Column(sa.String(255), nullable=False)
     ifindex = sa.Column(sa.String(255), nullable=False)
     port_status = sa.Column(sa.String(16), nullable=False)
-    sa.PrimaryKeyConstraint('id')
     __table_args__ = (sa.PrimaryKeyConstraint('id'),
                       sa.UniqueConstraint('switch_id',
                                           'interface_name'),)
