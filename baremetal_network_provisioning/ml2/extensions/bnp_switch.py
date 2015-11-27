@@ -121,7 +121,7 @@ class BNPSwitchController(wsgi.Controller):
         bnp_switch = snmp_driver.discover_switch()
         if bnp_switch.get('mac_addr'):
             switch['mac_address'] = bnp_switch.get('mac_addr')
-            switch['status'] = const.Switch_status.get('enable')
+            switch['status'] = const.SWITCH_STATUS.get('enable')
         db_switch = db.add_bnp_phys_switch(self._dbcontext, switch)
         if bnp_switch.get('ports'):
             self._add_physical_port(db_switch.get('id'),
@@ -131,7 +131,7 @@ class BNPSwitchController(wsgi.Controller):
     def _add_physical_port(self, switch_id, ports):
         for port in ports:
             port['switch_id'] = switch_id
-            status = const.Port_status.get(port['port_status'])
+            status = const.PORT_STATUS.get(port['port_status'])
             port['port_status'] = status
             db.add_bnp_phys_switch_port(self._dbcontext, port)
 
@@ -169,7 +169,7 @@ class BNPSwitchController(wsgi.Controller):
         switch_dict = {
             'ip_address': None,
             'mac_address': None,
-            'status': const.Switch_status.get('create'),
+            'status': const.SWITCH_STATUS.get('create'),
             'access_protocol': None,
             'vendor': None,
             'write_community': None,
