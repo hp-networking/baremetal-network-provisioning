@@ -16,6 +16,8 @@
 
 import webob.exc
 
+from simplejson import scanner as json_scanner
+
 from baremetal_network_provisioning.common import constants as const
 
 
@@ -30,13 +32,42 @@ def access_parameter_validator(data, valid_values=None):
         return msg
 
 
+def validate_request(request):
+    """ Validate if the request is in proper format. """
+    try:
+        body = request.json_body
+    except json_scanner.JSONDecodeError:
+        raise webob.exc.HTTPBadRequest(
+            _("Invalid JSON body"))
+    try:
+        body = body.pop("switch")
+    except KeyError:
+        raise webob.exc.HTTPBadRequest(
+            _("'switch' not found in request body"))
+    return body
+
+
+def validate_access_parameters(body):
+    if body['access_protocol'].lower() not in const.SUPPORTED_PROTOCOLS:
+        raise webob.exc.HTTPBadRequest(
+            _("'access protocol %s' is not supported") % body[
+            'access_protocol'])
+    access_parameters = body.get("access_parameters")
+    if body['access_protocol'].lower() == const.SNMP_V3:
+        validate_snmpv3_parameters(access_parameters)
+    else:
+        validate_snmp_parameters(access_parameters)
+
+
 def validate_snmp_parameters(access_parameters):
+    """Validate SNMP v1 and v2c parameters. """
     if not access_parameters.get('write_community'):
         raise webob.exc.HTTPBadRequest(
             _("'write_community' not found in request body"))
 
 
 def validate_snmpv3_parameters(access_parameters):
+    """Validate SNMP v3 parameters. """
     if not access_parameters.get('security_name'):
         raise webob.exc.HTTPBadRequest(
             _("'security_name' not found in request body"))
@@ -50,6 +81,10 @@ def validate_snmpv3_parameters(access_parameters):
             raise webob.exc.HTTPBadRequest(
                 _("'auth_key' is required for auth_protocol %s") %
                 access_parameters['auth_protocol'])
+        elif len(access_parameters.get('auth_key')) <= 8:
+            raise webob.exc.HTTPBadRequest(
+                _("'auth_key %s' should be more than 8 characters %s") %
+                access_parameters['auth_key'])
     if access_parameters.get('priv_protocol'):
         if access_parameters.get('priv_protocol').lower(
         ) not in const.SUPPORTED_PRIV_PROTOCOLS:
@@ -60,3 +95,7 @@ def validate_snmpv3_parameters(access_parameters):
             raise webob.exc.HTTPBadRequest(
                 _("'priv_key' is required for priv_protocol %s") %
                 access_parameters['priv_protocol'])
+        elif len(access_parameters.get('priv_key')) <= 8:
+            raise webob.exc.HTTPBadRequest(
+                _("'priv_key %s' should be more than 8 characters %s") %
+                access_parameters['priv_key'])
