@@ -26,7 +26,7 @@ class SNMPDiscoveryDriver(object):
     def discover_switch(self):
         mac_addr = self.get_mac_addr()
         ports_dict = self.get_ports_info()
-        switch = {'mac_address': mac_addr, 'ports': ports_dict}
+        switch = {'mac_addr': mac_addr, 'ports': ports_dict}
         return switch
 
     def get_mac_addr(self):
