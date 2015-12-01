@@ -80,7 +80,7 @@ def upgrade():
                     sa.Column('priv_protocol', sa.String(16), nullable=True),
                     sa.Column('priv_key', sa.String(255), nullable=True),
                     sa.Column('security_level', sa.String(16), nullable=True),
-                    sa.PrimaryKeyConstraint('id'))
+                    sa.PrimaryKeyConstraint('id', 'ip_address'))
 
     op.create_table('bnp_physical_switch_ports',
                     sa.Column('id', sa.String(36), nullable=False),
@@ -102,7 +102,8 @@ def upgrade():
                     sa.Column('switch_port_id', sa.String(36),
                               nullable=False),
                     sa.Column('switch_id', sa.String(36), nullable=False),
-                    sa.UniqueConstraint('neutron_port_id', 'switch_port_id'),
+                    sa.PrimaryKeyConstraint('neutron_port_id',
+                                            'switch_port_id'),
                     sa.ForeignKeyConstraint(
                         ['switch_port_id'],
                         ['bnp_physical_switch_ports.id'],
