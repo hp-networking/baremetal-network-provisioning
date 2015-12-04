@@ -34,7 +34,7 @@ hp_opts = [
     cfg.StrOpt('base_url',
                help=_("Base HTTP URL of  SDN controller")),
     cfg.StrOpt('auth_token',
-               default='AuroraSdnToken37',
+               default='password',
                help=_("Authentication token for SDN controller")),
     cfg.StrOpt('ca_cert',
                default=None,
