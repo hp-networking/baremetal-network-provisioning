@@ -95,7 +95,7 @@ class BNPSwitchController(wsgi.Controller):
         port_status_dict = {}
         if not switch:
             raise webob.exc.HTTPNotFound(
-                resource="switch %s" % (id))
+                _("Switch %s does not exist") % id)
         switch_list = self._switch_to_show(switch)
         switch_dict = switch_list[0]
         bounded_ports = db.get_bnp_switch_port_map_by_switchid(

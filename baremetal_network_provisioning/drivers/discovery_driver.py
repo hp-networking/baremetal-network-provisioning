@@ -14,7 +14,7 @@
 # limitations under the License.
 
 from baremetal_network_provisioning.common import constants
-from baremetal_network_provisioning.drivers import snmp_client
+from baremetal_network_provisioning.common import snmp_client
 
 
 class SNMPDiscoveryDriver(object):

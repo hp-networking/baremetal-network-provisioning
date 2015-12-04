@@ -15,9 +15,9 @@
 
 from baremetal_network_provisioning.common import constants
 from baremetal_network_provisioning.common import exceptions
+from baremetal_network_provisioning.common import snmp_client
 from baremetal_network_provisioning.drivers import (port_provisioning_driver
                                                     as driver)
-from baremetal_network_provisioning.drivers import snmp_client
 
 from neutron.i18n import _LE
 from neutron.i18n import _LI
