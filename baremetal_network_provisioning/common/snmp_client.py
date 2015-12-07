@@ -26,18 +26,6 @@ from pysnmp.proto import rfc1902
 
 LOG = logging.getLogger(__name__)
 
-hp_opts = [
-    cfg.IntOpt('snmp_retries',
-               default=3,
-               help=_("Number of retries to be done")),
-    cfg.IntOpt('snmp_timeout',
-               default=3,
-               help=_("Timeout in seconds to wait for SNMP request"
-                      "completion.")),
-]
-cfg.CONF.register_opts(hp_opts, "default")
-
-
 Auth_protocol = {None: cmdgen.usmNoAuthProtocol,
                  'md5': cmdgen.usmHMACMD5AuthProtocol,
                  'sha': cmdgen.usmHMACSHAAuthProtocol}
@@ -64,8 +52,8 @@ class SNMPClient(object):
         self.conf = cfg.CONF
         self.ip_address = ip_address
         self.access_protocol = access_protocol
-        self.timeout = self.conf.default.get('snmp_timeout')
-        self.retries = self.conf.default.get('snmp_retries')
+        self.timeout = self.conf.snmp_timeout
+        self.retries = self.conf.snmp_retries
         if self.access_protocol == constants.SNMP_V3:
             self.security_name = security_name
             self.auth_protocol = Auth_protocol[auth_protocol]
