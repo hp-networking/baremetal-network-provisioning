@@ -49,11 +49,10 @@ class SNMPClient(object):
                  write_community=None, security_name=None,
                  auth_protocol=None, auth_key=None,
                  priv_protocol=None, priv_key=None):
-        self.conf = cfg.CONF
         self.ip_address = ip_address
         self.access_protocol = access_protocol
-        self.timeout = self.conf.snmp_timeout
-        self.retries = self.conf.snmp_retries
+        self.timeout = cfg.CONF.default.snmp_timeout
+        self.retries = cfg.CONF.default.snmp_retries
         if self.access_protocol == constants.SNMP_V3:
             self.security_name = security_name
             self.auth_protocol = Auth_protocol[auth_protocol]
