@@ -34,7 +34,7 @@ RESOURCE_ATTRIBUTE_MAP = {
     'bnp-switches': {
         'id': {'allow_post': False, 'allow_put': False,
                'is_visible': True},
-        'ip_address': {'allow_post': False, 'allow_put': False,
+        'ip_address': {'allow_post': True, 'allow_put': False,
                        'validate': {'type:ip_address': None},
                        'is_visible': True, 'default': ''},
         'mac_address': {'allow_post': True, 'allow_put': False,
@@ -48,7 +48,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                             'is_visible': True},
         'vendor': {'allow_post': True, 'allow_put': False,
                    'validate': {'type:string': None},
-                   'is_vidible': True}
+                   'is_visible': True}
     },
 }
 
@@ -119,7 +119,7 @@ class BNPSwitchController(wsgi.Controller):
         if switch.__dict__.get(
            'status') == const.SWITCH_STATUS['enable']:
             raise webob.exc.HTTPBadRequest(
-                _("Disable the switch '%s' to delete") % id)
+                _("Disable the switch %s to delete") % id)
         db.delete_bnp_phys_switch(context, id)
         return "Switch %s is successfully deleted" % id
 
@@ -133,13 +133,13 @@ class BNPSwitchController(wsgi.Controller):
         for key in key_list:
             if key not in keys:
                 raise webob.exc.HTTPBadRequest(
-                    _("'Key %s' not found in request body") % key)
+                    _("Key %s not found in request body") % key)
         ip_address = body['ip_address']
         bnp_switch = db.get_bnp_phys_switch_by_ip(context,
                                                   ip_address)
         if bnp_switch:
             raise webob.exc.HTTPBadRequest(
-                _("Switch with 'ip_address %s' is already present") %
+                _("Switch with ip_address %s is already present") %
                 ip_address)
         validators.validate_access_parameters(body)
         access_parameters = body.pop("access_parameters")
@@ -179,7 +179,7 @@ class BNPSwitchController(wsgi.Controller):
                 protocol = body['access_protocol']
                 if protocol.lower() not in const.SUPPORTED_PROTOCOLS:
                     raise webob.exc.HTTPBadRequest(
-                        _("'access protocol %s' is not supported") % body[
+                        _("access protocol %s is not supported") % body[
                             'access_protocol'])
             else:
                 protocol = phys_switch.__dict__.get('access_protocol')
@@ -193,18 +193,20 @@ class BNPSwitchController(wsgi.Controller):
             for key, value in access_parameters.iteritems():
                 body[key] = value
         switch_dict = self._update_dict(body, phys_switch.__dict__)
+        switch_to_show = self._switch_to_show(switch_dict)
+        switch = switch_to_show[0]
         if 'enable' in body.keys():
             if body['enable'] is False:
                 if body.get('rediscover', None):
                     raise webob.exc.HTTPBadRequest(
                         _("Rediscovery of Switch %d is not supported"
-                          "when 'Enable=False'") % id)
+                          "when Enable=False") % id)
                 switch_status = const.SWITCH_STATUS['disable']
                 db.update_bnp_phys_switch_status(context,
                                                  id, switch_status)
                 db.update_bnp_phys_switch_access_params(context, id,
                                                         switch_dict)
-                return "Switch %s is successfully updated" % id
+                return switch
             elif phys_switch.__dict__['status'] == const.SWITCH_STATUS[
                     'enable'] and body['enable'] is True:
                 raise webob.exc.HTTPBadRequest(
@@ -220,7 +222,7 @@ class BNPSwitchController(wsgi.Controller):
         db.update_bnp_phys_switch_access_params(context, id, switch_dict)
         if bnp_switch.get('ports'):
             self._add_physical_port(context, id, bnp_switch.get('ports'))
-        return "Switch %s is successfully updated" % id
+        return switch
 
     def _discover_switch(self, switch):
         snmp_driver = discovery_driver.SNMPDiscoveryDriver(switch)
