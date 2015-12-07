@@ -23,11 +23,29 @@ from neutron.i18n import _LE
 from neutron.i18n import _LI
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 
+from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
 
 from baremetal_network_provisioning.common import constants
 LOG = logging.getLogger(__name__)
+hp_opts = [
+    cfg.IntOpt('snmp_retries',
+               default=5,
+               help=_("Number of retries to be done")),
+    cfg.IntOpt('snmp_timeout',
+               default=3,
+               help=_("Timeout in seconds to wait for SNMP request"
+                      "completion.")),
+    cfg.StrOpt('bnp_sync_enable',
+               default=True,
+               help=_("Enable sync between neutron and "
+                      "switch databases.")),
+    cfg.StrOpt('bnp_sync_interval',
+               default=60,
+               help=_("Interval at which polling thread sync "
+                      "databases."))]
+cfg.CONF.register_opts(hp_opts, "default")
 
 
 class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
