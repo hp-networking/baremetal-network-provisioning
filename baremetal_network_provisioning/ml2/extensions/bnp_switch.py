@@ -134,6 +134,10 @@ class BNPSwitchController(wsgi.Controller):
             if key not in keys:
                 raise webob.exc.HTTPBadRequest(
                     _("Key %s not found in request body") % key)
+        if body['vendor'] not in const.SUPPORTED_VENDORS:
+            raise webob.exc.HTTPBadRequest(
+                _("Switch with vendor %s is not supported") %
+                body['vendor'])
         ip_address = body['ip_address']
         bnp_switch = db.get_bnp_phys_switch_by_ip(context,
                                                   ip_address)
