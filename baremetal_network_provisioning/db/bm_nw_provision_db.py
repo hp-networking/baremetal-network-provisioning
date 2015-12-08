@@ -499,3 +499,23 @@ def update_bnp_phys_switch_access_params(context, switch_id, params):
                     synchronize_session=False))
     except exc.NoResultFound:
         LOG.error(_LE("no physical switch found for id: %s"), switch_id)
+
+
+def delete_bnp_phys_switch_ports_by_switchid(context, id):
+    """Delete the switch ports of a switch."""
+    session = context.session
+    with session.begin(subtransactions=True):
+        session.query(models.BNPPhysicalSwitchPort).filter_by(
+            switch_id=id).delete()
+
+
+def get_bnp_phys_switch_port_by_id(context, id):
+    """Get physical switch port by id."""
+    try:
+        query = context.session.query(models.BNPPhysicalSwitchPort)
+        switch_port = query.filter_by(
+            id=id).one()
+    except exc.NoResultFound:
+        LOG.debug('no physical switch port found for %s', id)
+        return
+    return switch_port

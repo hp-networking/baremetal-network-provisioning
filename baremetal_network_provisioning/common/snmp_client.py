@@ -18,13 +18,13 @@ from baremetal_network_provisioning.common import exceptions
 
 import struct
 
+from oslo_config import cfg
 from oslo_log import log as logging
 from pysnmp.entity.rfc3413.oneliner import cmdgen
 from pysnmp import error as snmp_error
 from pysnmp.proto import rfc1902
 
 LOG = logging.getLogger(__name__)
-
 
 Auth_protocol = {None: cmdgen.usmNoAuthProtocol,
                  'md5': cmdgen.usmHMACMD5AuthProtocol,
@@ -51,12 +51,14 @@ class SNMPClient(object):
                  priv_protocol=None, priv_key=None):
         self.ip_address = ip_address
         self.access_protocol = access_protocol
-        self.auth_protocol = Auth_protocol[auth_protocol]
-        self.auth_key = auth_key
-        self.priv_protocol = Priv_protocol[priv_protocol]
-        self.priv_key = priv_key
+        self.timeout = cfg.CONF.default.snmp_timeout
+        self.retries = cfg.CONF.default.snmp_retries
         if self.access_protocol == constants.SNMP_V3:
             self.security_name = security_name
+            self.auth_protocol = Auth_protocol[auth_protocol]
+            self.auth_key = auth_key
+            self.priv_protocol = Priv_protocol[priv_protocol]
+            self.priv_key = priv_key
         else:
             self.write_community = write_community
         self.cmd_gen = cmdgen.CommandGenerator()
@@ -81,7 +83,9 @@ class SNMPClient(object):
 
         """
         return cmdgen.UdpTransportTarget(
-            (self.ip_address, constants.SNMP_PORT), timeout=1, retries=5)
+            (self.ip_address, constants.SNMP_PORT),
+            timeout=self.timeout,
+            retries=self.retries)
 
     def get(self, oid):
         """Use PySNMP to perform an SNMP GET operation on a single object.

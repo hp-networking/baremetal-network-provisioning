@@ -14,7 +14,7 @@
 # limitations under the License.
 
 from baremetal_network_provisioning.common import constants
-from baremetal_network_provisioning.drivers import snmp_client
+from baremetal_network_provisioning.common import snmp_client
 
 
 class SNMPDiscoveryDriver(object):
@@ -26,7 +26,7 @@ class SNMPDiscoveryDriver(object):
     def discover_switch(self):
         mac_addr = self.get_mac_addr()
         ports_dict = self.get_ports_info()
-        switch = {'mac_addr': mac_addr, 'ports': ports_dict}
+        switch = {'mac_address': mac_addr, 'ports': ports_dict}
         return switch
 
     def get_mac_addr(self):

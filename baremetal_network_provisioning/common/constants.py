@@ -26,11 +26,14 @@ SUPPORTED_AUTH_PROTOCOLS = [None, 'md5', 'sha', 'sha1']
 SUPPORTED_PRIV_PROTOCOLS = [None, 'des', '3des', 'aes',
                             'des56', 'aes128', 'aes192', 'aes256']
 
+SUPPORTED_VENDORS = ['hp']
+
 SNMP_V1 = 'snmpv1'
 SNMP_V2C = 'snmpv2c'
 SNMP_V3 = 'snmpv3'
 SNMP_PORT = 161
 PHY_PORT_TYPE = '6'
+SNMP_NO_SUCH_INSTANCE = 'No Such'
 
 OID_MAC_ADDRESS = '1.0.8802.1.1.2.1.3.2.0'
 OID_PORTS = '1.3.6.1.2.1.2.2.1.1'

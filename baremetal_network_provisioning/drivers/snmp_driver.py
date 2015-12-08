@@ -15,9 +15,9 @@
 
 from baremetal_network_provisioning.common import constants
 from baremetal_network_provisioning.common import exceptions
+from baremetal_network_provisioning.common import snmp_client
 from baremetal_network_provisioning.drivers import (port_provisioning_driver
                                                     as driver)
-from baremetal_network_provisioning.drivers import snmp_client
 
 from neutron.i18n import _LE
 from neutron.i18n import _LI
@@ -42,7 +42,15 @@ class SNMPDriver(driver.PortProvisioningDriver):
             vlan_oid = constants.OID_VLAN_CREATE + '.' + str(seg_id)
             egress_oid = constants.OID_VLAN_EGRESS_PORT + '.' + str(seg_id)
             snmp_response = self._snmp_get(client, vlan_oid)
-            if not snmp_response:
+            no_such_instance_exists = False
+            if snmp_response:
+                for oid, val in snmp_response:
+                    value = val.prettyPrint()
+                    if constants.SNMP_NO_SUCH_INSTANCE in value:
+                        # Fixed for pysnmp versioning issue
+                        no_such_instance_exists = True
+                        break
+            if not snmp_response or no_such_instance_exists:
                 client.set(vlan_oid, client.get_rfc1902_integer(4))
             nibble_byte = self._get_device_nibble_map(client, egress_oid)
             ifindex = self._get_ifindex_for_port(port)
