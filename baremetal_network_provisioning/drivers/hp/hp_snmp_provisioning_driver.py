@@ -84,13 +84,13 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
                     port_status = snmp_drv.get_port_status(swport['ifindex'])
                 except Exception as e:
                     LOG.error(_LE("Exception: %s"), e)
-                    if swport['port_status'] != 'UNKNOWN' :
+                    if swport['port_status'] != 'UNKNOWN':
                         db.update_bnp_phys_swport_status(
                             self.context, swport['switch_id'],
                             swport['interface_name'], 'UNKNOWN')
                 else:
                     status = constants.PORT_STATUS.get(str(port_status))
-                    if swport['port_status'] != status :
+                    if swport['port_status'] != status:
                         db.update_bnp_phys_swport_status(
                             self.context, swport['switch_id'],
                             swport['interface_name'], status)
@@ -170,7 +170,7 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
                                             bnp_sw_map[0].switch_id)
         cred_dict = self._get_credentials_dict(bnp_switch, 'delete_port')
         phys_port = db.get_bnp_phys_switch_port_by_id(self.context,
-                                               switch_port_id)
+                                                      switch_port_id)
         result = db.get_bnp_neutron_port_by_seg_id(self.context, seg_id)
         if not result:
             LOG.error(_LE("No neutron port is associated with the phys port"))
