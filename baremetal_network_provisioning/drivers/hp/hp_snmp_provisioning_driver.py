@@ -73,22 +73,27 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
         """Sync switch database periodically."""
         LOG.info(_LI('BMNP start thread....'))
         while True:
-            switches = db.get_all_bnp_phys_switches(self.context)
-            # search for ports participating in provisioning and update
-            for switch in switches:
-                snmp_drv = discovery_driver.SNMPDiscoveryDriver(switch)
-                portmaps = db.get_bnp_switch_port_map_by_switchid(self.context,
-                                                                  switch['id'])
-                for portmap in portmaps:
-                    swport = db.get_bnp_phys_port_by_id(
-                        self.context, portmap['switch_port_id'])
+            portmaps = db.get_all_bnp_swport_mappings(self.context)
+            for portmap in portmaps:
+                swport = db.get_bnp_phys_switch_port_by_id(
+                    self.context, portmap['switch_port_id'])
+                switch = db.get_bnp_phys_switch(self.context,
+                                                portmap['switch_id'])
+                try:
+                    snmp_drv = discovery_driver.SNMPDiscoveryDriver(switch)
                     port_status = snmp_drv.get_port_status(swport['ifindex'])
+                except Exception as e:
+                    LOG.error(_LE("Exception: %s"), e)
+                    if swport['port_status'] != 'UNKNOWN' :
+                        db.update_bnp_phys_swport_status(
+                            self.context, swport['switch_id'],
+                            swport['interface_name'], 'UNKNOWN')
+                else:
                     status = constants.PORT_STATUS.get(str(port_status))
-                    LOG.info(_LI('BMNP got port_status: %s'), status)
-                    db.update_bnp_phys_swport_status(self.context,
-                                                     swport['switch_id'],
-                                                     swport['interface_name'],
-                                                     status)
+                    if swport['port_status'] != status :
+                        db.update_bnp_phys_swport_status(
+                            self.context, swport['switch_id'],
+                            swport['interface_name'], status)
             eventlet.sleep(self.bnp_sync_interval)
 
     def start_snmp_polling(self):
@@ -164,7 +169,7 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
         bnp_switch = db.get_bnp_phys_switch(self.context,
                                             bnp_sw_map[0].switch_id)
         cred_dict = self._get_credentials_dict(bnp_switch, 'delete_port')
-        phys_port = db.get_bnp_phys_port_by_id(self.context,
+        phys_port = db.get_bnp_phys_switch_port_by_id(self.context,
                                                switch_port_id)
         result = db.get_bnp_neutron_port_by_seg_id(self.context, seg_id)
         if not result:

@@ -348,17 +348,6 @@ def get_bnp_phys_switch_by_ip(context, ip_addr):
     return switch
 
 
-def get_bnp_phys_port_by_id(context, bnp_port_id):
-    """Get physical port that matches id."""
-    try:
-        query = context.session.query(models.BNPPhysicalSwitchPort)
-        port = query.filter_by(id=bnp_port_id).one()
-    except exc.NoResultFound:
-        LOG.error(_LE('no physical port found with id: %s'), bnp_port_id)
-        return
-    return port
-
-
 def get_bnp_neutron_port(context, neutron_port_id):
     """Get bnp neutron port that matches neutron_port_id."""
     try:
@@ -454,6 +443,17 @@ def get_all_bnp_phys_switches(context):
         LOG.error(_LE("no physical switch found"))
         return
     return switches
+
+
+def get_all_bnp_swport_mappings(context):
+    """Get all switch port mappings."""
+    try:
+        query = context.session.query(models.BNPSwitchPortMapping)
+        swport_map = query.all()
+    except exc.NoResultFound:
+        LOG.error(_LE("no switch port mapping found"))
+        return
+    return swport_map
 
 
 def update_bnp_phys_switch_status(context, sw_id, sw_status):
