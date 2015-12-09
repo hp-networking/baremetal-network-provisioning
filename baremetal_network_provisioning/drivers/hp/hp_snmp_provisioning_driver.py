@@ -21,6 +21,7 @@ import eventlet
 import webob.exc as wexc
 
 from neutron.api.v2 import base
+from neutron.common import constants as n_const
 from neutron import context as neutron_context
 from neutron.i18n import _LE
 from neutron.i18n import _LI
@@ -62,12 +63,12 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
         self.bnp_sync_enable = self.conf.default.bnp_sync_enable
         self.bnp_sync_interval = float(
             self.conf.default.get('bnp_sync_interval'))
-        if self.bnp_sync_enable:
-            self.start_snmp_polling()
         # TODO(selva) need to check how we can load dynamically
         drvr = 'baremetal_network_provisioning.drivers.snmp_driver.SNMPDriver'
         self.context = neutron_context.get_admin_context()
         self._load_drivers(drvr)
+        if self.bnp_sync_enable:
+            self.start_snmp_polling()
 
     def _snmp_sync_thread(self):
         """Sync switch database periodically."""
@@ -84,16 +85,25 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
                     port_status = snmp_drv.get_port_status(swport['ifindex'])
                 except Exception as e:
                     LOG.error(_LE("Exception: %s"), e)
-                    if swport['port_status'] != 'UNKNOWN':
-                        db.update_bnp_phys_swport_status(
-                            self.context, swport['switch_id'],
-                            swport['interface_name'], 'UNKNOWN')
+                    db.update_bnp_phys_swport_status(
+                        self.context, swport['switch_id'],
+                        swport['interface_name'], 'UNKNOWN')
+                    db.set_port_status(self.context, 
+                                       portmap['neutron_port_id'],
+                                       n_const.PORT_STATUS_ERROR)
                 else:
                     status = constants.PORT_STATUS.get(str(port_status))
-                    if swport['port_status'] != status:
-                        db.update_bnp_phys_swport_status(
-                            self.context, swport['switch_id'],
-                            swport['interface_name'], status)
+                    db.update_bnp_phys_swport_status(
+                        self.context, swport['switch_id'],
+                        swport['interface_name'], status)
+                    if status is 'UP':
+                        db.set_port_status(self.context,
+                                           portmap['neutron_port_id'],
+                                           n_const.PORT_STATUS_ACTIVE)
+                    else:
+                        db.set_port_status(self.context,
+                                           portmap['neutron_port_id'],
+                                           n_const.PORT_STATUS_DOWN)
             eventlet.sleep(self.bnp_sync_interval)
 
     def start_snmp_polling(self):

@@ -19,6 +19,7 @@ from sqlalchemy.orm import exc
 
 from baremetal_network_provisioning.db import bm_nw_provision_models as models
 
+from neutron.common import exceptions as n_exc
 from neutron.db import models_v2
 from neutron.i18n import _LE
 
@@ -519,3 +520,13 @@ def get_bnp_phys_switch_port_by_id(context, id):
         LOG.debug('no physical switch port found for %s', id)
         return
     return switch_port
+
+
+def set_port_status(context, port_id, status):
+    try:
+        with context.session.begin(subtransactions=True):
+            (context.session.query(models_v2.Port).filter_by(
+                id=port_id).update({'status': status},
+                synchronize_session=False))
+    except exc.NoResultFound:
+        raise n_exc.PortNotFound(port_id=port_id)
