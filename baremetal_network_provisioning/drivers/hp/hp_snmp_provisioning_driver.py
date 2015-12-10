@@ -40,11 +40,11 @@ hp_opts = [
                default=3,
                help=_("Timeout in seconds to wait for SNMP request"
                       "completion.")),
-    cfg.StrOpt('bnp_sync_enable',
-               default=True,
-               help=_("Enable sync between neutron and "
-                      "switch databases.")),
-    cfg.StrOpt('bnp_sync_interval',
+    cfg.BoolOpt('bnp_sync_enable',
+                default=False,
+                help=_("Enable sync between neutron and "
+                       "switch databases.")),
+    cfg.IntOpt('bnp_sync_interval',
                default=60,
                help=_("Interval at which polling thread sync "
                       "databases."))]
@@ -72,7 +72,8 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
 
     def _snmp_sync_thread(self):
         """Sync switch database periodically."""
-        LOG.info(_LI('BMNP start thread....'))
+        LOG.info(_LI('BMNP start snmp polling thread with interval:%s'),
+                 self.bnp_sync_interval)
         while True:
             portmaps = db.get_all_bnp_swport_mappings(self.context)
             for portmap in portmaps:
