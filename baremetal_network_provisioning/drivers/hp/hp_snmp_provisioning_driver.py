@@ -88,7 +88,7 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
                     db.update_bnp_phys_swport_status(
                         self.context, swport['switch_id'],
                         swport['interface_name'], 'UNKNOWN')
-                    db.set_port_status(self.context, 
+                    db.set_port_status(self.context,
                                        portmap['neutron_port_id'],
                                        n_const.PORT_STATUS_ERROR)
                 else:

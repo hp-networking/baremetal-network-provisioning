@@ -527,6 +527,6 @@ def set_port_status(context, port_id, status):
         with context.session.begin(subtransactions=True):
             (context.session.query(models_v2.Port).filter_by(
                 id=port_id).update({'status': status},
-                synchronize_session=False))
+                                   synchronize_session=False))
     except exc.NoResultFound:
         raise n_exc.PortNotFound(port_id=port_id)
