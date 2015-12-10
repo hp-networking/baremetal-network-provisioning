@@ -17,12 +17,14 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
 
+from neutron.api import extensions as neutron_extensions
 from neutron.common import constants as n_const
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants
 from neutron.plugins.ml2 import driver_api as api
 
 from baremetal_network_provisioning.common import constants as hp_const
+from baremetal_network_provisioning.ml2 import extensions
 
 
 LOG = logging.getLogger(__name__)
@@ -47,6 +49,7 @@ class HPMechanismDriver(api.MechanismDriver):
         self._load_drivers()
         self.vif_type = hp_const.HP_VIF_TYPE
         self.vif_details = {portbindings.CAP_PORT_FILTER: True}
+        neutron_extensions.append_api_extensions_path(extensions.__path__)
 
     def _load_drivers(self):
         """Loads back end network provision driver from configuration."""

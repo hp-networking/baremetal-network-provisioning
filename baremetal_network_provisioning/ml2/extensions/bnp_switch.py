@@ -219,7 +219,7 @@ class BNPSwitchController(wsgi.Controller):
            'enable'] and body.get('rediscover', None):
             raise webob.exc.HTTPBadRequest(
                 _("Disable the switch %d to update") % id)
-        bnp_switch = self._discover_switch(switch_dict)
+        self._discover_switch(switch_dict)
         switch_status = const.SWITCH_STATUS['enable']
         switch['status'] = switch_status
         db.update_bnp_phys_switch_status(context, id, switch_status)
