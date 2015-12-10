@@ -44,7 +44,7 @@ hp_opts = [
                 default=False,
                 help=_("Enable sync between neutron and "
                        "switch databases.")),
-    cfg.IntOpt('bnp_sync_interval',
+    cfg.FloatOpt('bnp_sync_interval',
                default=60,
                help=_("Interval at which polling thread sync "
                       "databases."))]
