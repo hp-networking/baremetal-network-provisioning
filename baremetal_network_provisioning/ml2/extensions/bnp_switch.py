@@ -121,7 +121,6 @@ class BNPSwitchController(wsgi.Controller):
             raise webob.exc.HTTPBadRequest(
                 _("Disable the switch %s to delete") % id)
         db.delete_bnp_phys_switch(context, id)
-        return "Switch %s is successfully deleted" % id
 
     def create(self, request):
         context = request.context
@@ -142,7 +141,7 @@ class BNPSwitchController(wsgi.Controller):
         bnp_switch = db.get_bnp_phys_switch_by_ip(context,
                                                   ip_address)
         if bnp_switch:
-            raise webob.exc.HTTPBadRequest(
+            raise webob.exc.HTTPConflict(
                 _("Switch with ip_address %s is already present") %
                 ip_address)
         validators.validate_access_parameters(body)
@@ -196,16 +195,17 @@ class BNPSwitchController(wsgi.Controller):
             access_parameters = body.pop("access_parameters")
             for key, value in access_parameters.iteritems():
                 body[key] = value
-        switch_dict = self._update_dict(body, phys_switch.__dict__)
+        switch_dict = self._update_dict(body, dict(phys_switch))
         switch_to_show = self._switch_to_show(switch_dict)
         switch = switch_to_show[0]
         if 'enable' in body.keys():
             if body['enable'] is False:
                 if body.get('rediscover', None):
                     raise webob.exc.HTTPBadRequest(
-                        _("Rediscovery of Switch %d is not supported"
+                        _("Rediscovery of Switch %s is not supported"
                           "when Enable=False") % id)
                 switch_status = const.SWITCH_STATUS['disable']
+                switch['status'] = switch_status
                 db.update_bnp_phys_switch_status(context,
                                                  id, switch_status)
                 db.update_bnp_phys_switch_access_params(context, id,
@@ -219,13 +219,11 @@ class BNPSwitchController(wsgi.Controller):
            'enable'] and body.get('rediscover', None):
             raise webob.exc.HTTPBadRequest(
                 _("Disable the switch %d to update") % id)
-        bnp_switch = self._discover_switch(switch_dict)
+        self._discover_switch(switch_dict)
         switch_status = const.SWITCH_STATUS['enable']
+        switch['status'] = switch_status
         db.update_bnp_phys_switch_status(context, id, switch_status)
-        db.delete_bnp_phys_switch_ports_by_switchid(context, id)
         db.update_bnp_phys_switch_access_params(context, id, switch_dict)
-        if bnp_switch.get('ports'):
-            self._add_physical_port(context, id, bnp_switch.get('ports'))
         return switch
 
     def _discover_switch(self, switch):
@@ -270,7 +268,8 @@ class Bnp_switch(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_description(cls):
-        return ("Bare metal connected Physical switch.")
+        return ("Abstraction for physical switch ports discovery"
+                "for bare metal instance network provisioning")
 
     @classmethod
     def get_updated(cls):

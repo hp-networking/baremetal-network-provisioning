@@ -13,7 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neutron.api import extensions as neutron_extensions
 from neutron.plugins.ml2 import driver_api as api
+
+from baremetal_network_provisioning.ml2 import extensions
 
 from oslo_log import log as logging
 
@@ -24,6 +27,7 @@ class HPIronicExtensionDriver(api.ExtensionDriver):
     _supported_extension_aliases = 'bnp-switch'
 
     def initialize(self):
+        neutron_extensions.append_api_extensions_path(extensions.__path__)
         LOG.info(_("HPIronicExtensionDriver initialization complete"))
 
     @property
