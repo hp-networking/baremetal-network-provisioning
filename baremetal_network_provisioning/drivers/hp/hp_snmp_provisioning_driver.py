@@ -12,12 +12,16 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from baremetal_network_provisioning.common import constants
 from baremetal_network_provisioning.db import bm_nw_provision_db as db
+from baremetal_network_provisioning.drivers import discovery_driver
 from baremetal_network_provisioning.ml2 import network_provisioning_api as api
 
+import eventlet
 import webob.exc as wexc
 
 from neutron.api.v2 import base
+from neutron.common import constants as n_const
 from neutron import context as neutron_context
 from neutron.i18n import _LE
 from neutron.i18n import _LI
@@ -27,7 +31,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
 
-from baremetal_network_provisioning.common import constants
 LOG = logging.getLogger(__name__)
 hp_opts = [
     cfg.IntOpt('snmp_retries',
@@ -37,11 +40,11 @@ hp_opts = [
                default=3,
                help=_("Timeout in seconds to wait for SNMP request"
                       "completion.")),
-    cfg.StrOpt('bnp_sync_enable',
-               default=True,
-               help=_("Enable sync between neutron and "
-                      "switch databases.")),
-    cfg.StrOpt('bnp_sync_interval',
+    cfg.BoolOpt('bnp_sync_enable',
+                default=False,
+                help=_("Enable sync between neutron and "
+                       "switch databases.")),
+    cfg.FloatOpt('bnp_sync_interval',
                default=60,
                help=_("Interval at which polling thread sync "
                       "databases."))]
@@ -56,10 +59,57 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
 
     def __init__(self):
         """initialize the snmp driver."""
+        self.conf = cfg.CONF
+        self.bnp_sync_enable = self.conf.default.bnp_sync_enable
+        self.bnp_sync_interval = float(
+            self.conf.default.get('bnp_sync_interval'))
         # TODO(selva) need to check how we can load dynamically
         drvr = 'baremetal_network_provisioning.drivers.snmp_driver.SNMPDriver'
         self.context = neutron_context.get_admin_context()
         self._load_drivers(drvr)
+        if self.bnp_sync_enable:
+            self.start_snmp_polling()
+
+    def _snmp_sync_thread(self):
+        """Sync switch database periodically."""
+        LOG.info(_LI('BMNP start snmp polling thread with interval:%s'),
+                 self.bnp_sync_interval)
+        while True:
+            portmaps = db.get_all_bnp_swport_mappings(self.context)
+            for portmap in portmaps:
+                swport = db.get_bnp_phys_switch_port_by_id(
+                    self.context, portmap['switch_port_id'])
+                switch = db.get_bnp_phys_switch(self.context,
+                                                portmap['switch_id'])
+                try:
+                    snmp_drv = discovery_driver.SNMPDiscoveryDriver(switch)
+                    port_status = snmp_drv.get_port_status(swport['ifindex'])
+                except Exception as e:
+                    LOG.error(_LE("Exception: %s"), e)
+                    db.update_bnp_phys_swport_status(
+                        self.context, swport['switch_id'],
+                        swport['interface_name'], 'UNKNOWN')
+                    db.set_port_status(self.context,
+                                       portmap['neutron_port_id'],
+                                       n_const.PORT_STATUS_ERROR)
+                else:
+                    status = constants.PORT_STATUS.get(str(port_status))
+                    db.update_bnp_phys_swport_status(
+                        self.context, swport['switch_id'],
+                        swport['interface_name'], status)
+                    if status is 'UP':
+                        db.set_port_status(self.context,
+                                           portmap['neutron_port_id'],
+                                           n_const.PORT_STATUS_ACTIVE)
+                    else:
+                        db.set_port_status(self.context,
+                                           portmap['neutron_port_id'],
+                                           n_const.PORT_STATUS_DOWN)
+            eventlet.sleep(self.bnp_sync_interval)
+
+    def start_snmp_polling(self):
+        """Spawn a thread to poll the switch db."""
+        eventlet.spawn(self._snmp_sync_thread)
 
     def create_port(self, port):
         """create_port ."""
@@ -130,8 +180,8 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
         bnp_switch = db.get_bnp_phys_switch(self.context,
                                             bnp_sw_map[0].switch_id)
         cred_dict = self._get_credentials_dict(bnp_switch, 'delete_port')
-        phys_port = db.get_bnp_phys_port_by_id(self.context,
-                                               switch_port_id)
+        phys_port = db.get_bnp_phys_switch_port_by_id(self.context,
+                                                      switch_port_id)
         result = db.get_bnp_neutron_port_by_seg_id(self.context, seg_id)
         if not result:
             LOG.error(_LE("No neutron port is associated with the phys port"))
