@@ -141,7 +141,7 @@ class BNPSwitchController(wsgi.Controller):
         bnp_switch = db.get_bnp_phys_switch_by_ip(context,
                                                   ip_address)
         if bnp_switch:
-            raise webob.exc.HTTPBadRequest(
+            raise webob.exc.HTTPConflict(
                 _("Switch with ip_address %s is already present") %
                 ip_address)
         validators.validate_access_parameters(body)
