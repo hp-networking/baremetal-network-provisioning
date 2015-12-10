@@ -271,7 +271,8 @@ class Bnp_switch(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_description(cls):
-        return ("Bare metal connected Physical switch.")
+        return ("Abstraction for physical switch ports discovery"
+                "for bare metal instance network provisioning")
 
     @classmethod
     def get_updated(cls):
