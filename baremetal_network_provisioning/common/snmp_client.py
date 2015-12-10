@@ -16,24 +16,15 @@
 from baremetal_network_provisioning.common import constants
 from baremetal_network_provisioning.common import exceptions
 
+import struct
+
 from oslo_config import cfg
 from oslo_log import log as logging
 from pysnmp.entity.rfc3413.oneliner import cmdgen
 from pysnmp import error as snmp_error
+from pysnmp.proto import rfc1902
 
 LOG = logging.getLogger(__name__)
-
-hp_opts = [
-    cfg.IntOpt('snmp_retries',
-               default=3,
-               help=_("Number of retries to be done")),
-    cfg.IntOpt('snmp_timeout',
-               default=3,
-               help=_("Timeout in seconds to wait for SNMP request"
-                      "completion.")),
-]
-cfg.CONF.register_opts(hp_opts, "default")
-
 
 Auth_protocol = {None: cmdgen.usmNoAuthProtocol,
                  'md5': cmdgen.usmHMACMD5AuthProtocol,
@@ -61,8 +52,8 @@ class SNMPClient(object):
         self.conf = cfg.CONF
         self.ip_address = ip_address
         self.access_protocol = access_protocol
-        self.timeout = self.conf.default.get('snmp_timeout')
-        self.retries = self.conf.default.get('snmp_retries')
+        self.timeout = cfg.CONF.default.snmp_timeout
+        self.retries = cfg.CONF.default.snmp_retries
         if self.access_protocol == constants.SNMP_V3:
             self.security_name = security_name
             self.auth_protocol = Auth_protocol[auth_protocol]
@@ -141,6 +132,75 @@ class SNMPClient(object):
                                          error=error_status.prettyPrint())
 
         return var_binds
+
+    def set(self, oid, value):
+        """Use PySNMP to perform an SNMP SET operation on a single object.
+
+        :param oid: The OID of the object to set.
+        :param value: The value of the object to set.
+        :raises: SNMPFailure if an SNMP request fails.
+        """
+        try:
+            # oid = tuple(map(string.atoi, string.split(oid, '.')[1:]))
+            results = self.cmd_gen.setCmd(self._get_auth(),
+                                          self._get_transport(),
+                                          (oid, value))
+        except Exception as e:
+            raise exceptions.SNMPFailure(operation="SET", error=e)
+        except snmp_error.PySnmpError as e:
+            raise exceptions.SNMPFailure(operation="SET", error=e)
+
+        error_indication, error_status, error_index, var_binds = results
+        if error_indication:
+            # SNMP engine-level error.
+            raise exceptions.SNMPFailure(operation="SET",
+                                         error=error_indication)
+
+        if error_status:
+            # SNMP PDU error.
+            raise exceptions.SNMPFailure(operation="SET",
+                                         error=error_status.prettyPrint())
+
+    def get_rfc1902_integer(self, value):
+        return rfc1902.Integer32(value)
+
+    def get_rfc1902_octet_string(self, value):
+        return rfc1902.OctetString(value)
+
+    def get_bit_map_for_add(self, val, egress_byte):
+        ifindex = val
+        byte_index = int(ifindex) / 8
+        bit_index = int(ifindex) % 8
+        target_byte = egress_byte[byte_index]
+        mask = 0x80
+        if bit_index >= 1:
+            mask = ((mask & 0xFF) >> (bit_index - 1))
+            target_byte = int('%x' % ord(target_byte), base=16)
+            target_byte = ((target_byte) | mask)
+            egress_byte = list(egress_byte)
+            hex_repr = []
+            while target_byte:
+                hex_repr.append(struct.pack('B', target_byte & 255))
+                target_byte >>= 8
+        egress_byte[byte_index] = hex_repr[0]
+        return egress_byte
+
+    def get_bit_map_for_del(self, val, egress_byte):
+        ifindex = val
+        byte_index = int(ifindex) / 8
+        bitindex = int(ifindex) % 8
+        target_byte = egress_byte[byte_index]
+        mask = 0x80
+        if bitindex > 1:
+            mask = ((mask & 0xFF) >> (bitindex - 1))
+        mask = ~ mask
+        target_byte = int('%x' % ord(target_byte), base=16)
+        target_byte = ((target_byte) & mask)
+        egress_byte = list(egress_byte)
+        hex_repr = []
+        hex_repr.append(struct.pack('B', target_byte & 255))
+        egress_byte[byte_index] = hex_repr[0]
+        return egress_byte
 
 
 def get_client(snmp_info):

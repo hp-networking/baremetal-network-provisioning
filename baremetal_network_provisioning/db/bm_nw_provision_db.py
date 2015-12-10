@@ -20,6 +20,7 @@ from sqlalchemy.orm import exc
 from baremetal_network_provisioning.db import bm_nw_provision_models as models
 
 from neutron.db import models_v2
+from neutron.i18n import _LE
 
 
 LOG = logging.getLogger(__name__)
@@ -320,20 +321,64 @@ def get_bnp_phys_switch(context, switch_id):
         query = context.session.query(models.BNPPhysicalSwitch)
         switch = query.filter_by(id=switch_id).one()
     except exc.NoResultFound:
-        LOG.error('no physical switch found with id: %s', switch_id)
+        LOG.error(_LE("no physical switch found with id: %s"), switch_id)
         return
     return switch
 
 
-def get_bnp_phys_switch_by_mac(context, mac):
-    """Get physical switch that matches mac address."""
+def get_bnp_phys_port(context, sw_id, port_name):
+    """Get physical port that matches id and interface_name."""
+    try:
+        query = context.session.query(models.BNPPhysicalSwitchPort)
+        port = query.filter_by(switch_id=sw_id, interface_name=port_name).one()
+    except exc.NoResultFound:
+        LOG.error(_LE("no physical switch found with mac address: %s"), port)
+        return
+    return port
+
+
+def get_bnp_phys_switch_by_ip(context, ip_addr):
+    """Get physical switch that matches ip address."""
     try:
         query = context.session.query(models.BNPPhysicalSwitch)
-        switch = query.filter_by(mac_address=mac).one()
+        switch = query.filter_by(ip_address=ip_addr).one()
     except exc.NoResultFound:
-        LOG.error('no physical switch found with mac address: %s', mac)
+        LOG.error(_LE("no physical switch found with ip address: %s"), ip_addr)
         return
     return switch
+
+
+def get_bnp_phys_port_by_id(context, bnp_port_id):
+    """Get physical port that matches id."""
+    try:
+        query = context.session.query(models.BNPPhysicalSwitchPort)
+        port = query.filter_by(id=bnp_port_id).one()
+    except exc.NoResultFound:
+        LOG.error(_LE('no physical port found with id: %s'), bnp_port_id)
+        return
+    return port
+
+
+def get_bnp_neutron_port(context, neutron_port_id):
+    """Get bnp neutron port that matches neutron_port_id."""
+    try:
+        query = context.session.query(models.BNPNeutronPort)
+        port_map = query.filter_by(neutron_port_id=neutron_port_id).one()
+    except exc.NoResultFound:
+        LOG.error(_LE('no port map found with id: %s'), port_map)
+        return
+    return port_map
+
+
+def get_bnp_neutron_port_by_seg_id(context, segmentation_id):
+    """Get bnp neutron port that matches seg_id."""
+    try:
+        query = context.session.query(models.BNPNeutronPort)
+        port_map = query.filter_by(segmentation_id=segmentation_id).all()
+    except exc.NoResultFound:
+        LOG.error(_LE('no port map found with id: %s'), segmentation_id)
+        return
+    return port_map
 
 
 def get_bnp_switch_port_map_by_switchid(context, switchid):
@@ -342,18 +387,53 @@ def get_bnp_switch_port_map_by_switchid(context, switchid):
         query = context.session.query(models.BNPSwitchPortMapping)
         port_map = query.filter_by(switch_id=switchid).all()
     except exc.NoResultFound:
-        LOG.error('no switch port mapping found for switch: %s', switchid)
+        LOG.error(_LE("no switch port mapping found for switch: %s"), switchid)
         return
     return port_map
 
 
-def delete_bnp_phys_switch(context, switch_id):
-    """Delete physical switch that matches switch_id."""
+def get_bnp_switch_port_mappings(context, neutron_port_id):
+    """Get switch port map by switch_id."""
+    try:
+        query = context.session.query(models.BNPSwitchPortMapping)
+        port_map = query.filter_by(neutron_port_id=neutron_port_id).all()
+    except exc.NoResultFound:
+        LOG.error(_LE("no switch port mapping found for switch: %s"),
+                  neutron_port_id)
+        return
+    return port_map
+
+
+def get_bnp_phys_switch_by_mac(context, mac):
+    """Get physical switch that matches mac address."""
+    try:
+        query = context.session.query(models.BNPPhysicalSwitch)
+        switch = query.filter_by(mac_address=mac).one()
+    except exc.NoResultFound:
+        LOG.error(_LE('no physical switch found with mac address: %s'), mac)
+        return
+    return switch
+
+
+def delete_bnp_switch_port_mappings(context, neutron_port_id):
+    """Delete mappings that matches neutron_port_id."""
     session = context.session
     with session.begin(subtransactions=True):
-        if switch_id:
-            session.query(models.BNPPhysicalSwitch).filter_by(
-                id=switch_id).delete()
+        if neutron_port_id:
+            session.query(models.BNPSwitchPortMapping).filter_by(
+                neutron_port_id=neutron_port_id).delete()
+
+
+def delete_bnp_phys_switch(context, switch_id):
+    """Delete physical switch that matches switch_id."""
+    try:
+        session = context.session
+        with session.begin(subtransactions=True):
+            if switch_id:
+                session.query(models.BNPPhysicalSwitch).filter_by(
+                    id=switch_id).delete()
+    except exc.NoResultFound:
+        LOG.error(_LE("no switch found for switch id: %s"), switch_id)
 
 
 def delete_bnp_neutron_port(context, nport_id):
@@ -371,47 +451,71 @@ def get_all_bnp_phys_switches(context):
         query = context.session.query(models.BNPPhysicalSwitch)
         switches = query.all()
     except exc.NoResultFound:
-        LOG.error('no physical switch found')
+        LOG.error(_LE("no physical switch found"))
         return
     return switches
 
 
-def update_bnp_phys_switch_status(context, switch_id, switch):
+def update_bnp_phys_switch_status(context, sw_id, sw_status):
     """Update physical switch status."""
     try:
         with context.session.begin(subtransactions=True):
             (context.session.query(models.BNPPhysicalSwitch).filter_by(
-                id=switch_id).update(
-                    {'status': switch['status']},
+                id=sw_id).update(
+                    {'status': sw_status},
                     synchronize_session=False))
     except exc.NoResultFound:
-        LOG.error('no physical switch found for id: %s', switch_id)
+        LOG.error(_LE("no physical switch found for id: %s"), sw_id)
 
 
-def update_bnp_phys_switch_snmpv2(context, switch_id, switch):
-    """Update physical switch with snmpv2 params."""
+def update_bnp_phys_swport_status(context, swid, port_name, port_status):
+    """Update physical switch port status by switch id."""
+    try:
+        with context.session.begin(subtransactions=True):
+            (context.session.query(models.BNPPhysicalSwitchPort).filter_by(
+                switch_id=swid, interface_name=port_name).update(
+                    {'port_status': port_status},
+                    synchronize_session=False))
+    except exc.NoResultFound:
+        LOG.error(_LE("no phy switch port found for "
+                      "%(switch_id)s %(port_name)s"),
+                  {'switch_id': swid, 'port_name': port_name})
+
+
+def update_bnp_phys_switch_access_params(context, switch_id, params):
+    """Update physical switch with access params."""
     try:
         with context.session.begin(subtransactions=True):
             (context.session.query(models.BNPPhysicalSwitch).filter_by(
                 id=switch_id).update(
-                    {'write_community': switch['write_community']},
+                    {'access_protocol': params['access_protocol'],
+                     'write_community': params['write_community'],
+                     'security_name': params['security_name'],
+                     'auth_protocol': params['auth_protocol'],
+                     'auth_key': params['auth_key'],
+                     'priv_protocol': params['priv_protocol'],
+                     'priv_key': params['priv_key'],
+                     'security_level': params['security_level']},
                     synchronize_session=False))
     except exc.NoResultFound:
-        LOG.error('no physical switch found for id: %s', switch_id)
+        LOG.error(_LE("no physical switch found for id: %s"), switch_id)
 
 
-def update_bnp_phys_switch_snmpv3(context, switch_id, switch):
-    """Update physical switch with snmpv3 params."""
+def delete_bnp_phys_switch_ports_by_switchid(context, id):
+    """Delete the switch ports of a switch."""
+    session = context.session
+    with session.begin(subtransactions=True):
+        session.query(models.BNPPhysicalSwitchPort).filter_by(
+            switch_id=id).delete()
+
+
+def get_bnp_phys_switch_port_by_id(context, id):
+    """Get physical switch port by id."""
     try:
-        with context.session.begin(subtransactions=True):
-            (context.session.query(models.BNPPhysicalSwitch).filter_by(
-                id=switch_id).update(
-                    {'security_name': switch['security_name'],
-                     'auth_protocol': switch['auth_protocol'],
-                     'auth_key': switch['auth_key'],
-                     'priv_protocol': switch['priv_protocol'],
-                     'priv_key': switch['priv_key'],
-                     'security_level': switch['security_level']},
-                    synchronize_session=False))
+        query = context.session.query(models.BNPPhysicalSwitchPort)
+        switch_port = query.filter_by(
+            id=id).one()
     except exc.NoResultFound:
-        LOG.error('no physical switch found for id: %s', switch_id)
+        LOG.debug('no physical switch port found for %s', id)
+        return
+    return switch_port
