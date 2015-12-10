@@ -223,10 +223,7 @@ class BNPSwitchController(wsgi.Controller):
         switch_status = const.SWITCH_STATUS['enable']
         switch['status'] = switch_status
         db.update_bnp_phys_switch_status(context, id, switch_status)
-        db.delete_bnp_phys_switch_ports_by_switchid(context, id)
         db.update_bnp_phys_switch_access_params(context, id, switch_dict)
-        if bnp_switch.get('ports'):
-            self._add_physical_port(context, id, bnp_switch.get('ports'))
         return switch
 
     def _discover_switch(self, switch):
