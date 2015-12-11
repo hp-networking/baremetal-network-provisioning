@@ -45,9 +45,9 @@ hp_opts = [
                 help=_("Enable sync between neutron and "
                        "switch databases.")),
     cfg.FloatOpt('bnp_sync_interval',
-               default=60,
-               help=_("Interval at which polling thread sync "
-                      "databases."))]
+                 default=60,
+                 help=_("Interval at which polling thread sync "
+                        "databases."))]
 cfg.CONF.register_opts(hp_opts, "default")
 
 
@@ -72,13 +72,16 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
 
     def _snmp_sync_thread(self):
         """Sync switch database periodically."""
-        LOG.info(_LI('BMNP start snmp polling thread with interval:%s'),
+        LOG.info(_LI('Start snmp polling thread with interval:%s'),
                  self.bnp_sync_interval)
         while True:
+            # Get new context
+            self.context = neutron_context.get_admin_context()
             portmaps = db.get_all_bnp_swport_mappings(self.context)
             for portmap in portmaps:
                 swport = db.get_bnp_phys_switch_port_by_id(
                     self.context, portmap['switch_port_id'])
+                old_status = swport['port_status']
                 switch = db.get_bnp_phys_switch(self.context,
                                                 portmap['switch_id'])
                 try:
@@ -86,25 +89,29 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
                     port_status = snmp_drv.get_port_status(swport['ifindex'])
                 except Exception as e:
                     LOG.error(_LE("Exception: %s"), e)
-                    db.update_bnp_phys_swport_status(
-                        self.context, swport['switch_id'],
-                        swport['interface_name'], 'UNKNOWN')
-                    db.set_port_status(self.context,
-                                       portmap['neutron_port_id'],
-                                       n_const.PORT_STATUS_ERROR)
+                    if old_status != 'UNKNOWN':
+                        LOG.info(_LI("Update port status to UNKNOWN."))
+                        db.update_bnp_phys_swport_status(
+                            self.context, swport['switch_id'],
+                            swport['interface_name'], 'UNKNOWN')
+                        db.set_port_status(self.context,
+                                           portmap['neutron_port_id'],
+                                           n_const.PORT_STATUS_ERROR)
                 else:
-                    status = constants.PORT_STATUS.get(str(port_status))
-                    db.update_bnp_phys_swport_status(
-                        self.context, swport['switch_id'],
-                        swport['interface_name'], status)
-                    if status is 'UP':
-                        db.set_port_status(self.context,
-                                           portmap['neutron_port_id'],
-                                           n_const.PORT_STATUS_ACTIVE)
-                    else:
-                        db.set_port_status(self.context,
-                                           portmap['neutron_port_id'],
-                                           n_const.PORT_STATUS_DOWN)
+                    new_status = constants.PORT_STATUS.get(str(port_status))
+                    if new_status != old_status:
+                        LOG.info(_LI('Update port status to %s'), new_status)
+                        db.update_bnp_phys_swport_status(
+                            self.context, swport['switch_id'],
+                            swport['interface_name'], new_status)
+                        if new_status == 'UP':
+                            db.set_port_status(self.context,
+                                               portmap['neutron_port_id'],
+                                               n_const.PORT_STATUS_ACTIVE)
+                        else:
+                            db.set_port_status(self.context,
+                                               portmap['neutron_port_id'],
+                                               n_const.PORT_STATUS_DOWN)
             eventlet.sleep(self.bnp_sync_interval)
 
     def start_snmp_polling(self):
