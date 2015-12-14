@@ -69,32 +69,32 @@ def validate_snmpv3_parameters(access_parameters):
     """Validate SNMP v3 parameters."""
     if not access_parameters.get('security_name'):
         raise webob.exc.HTTPBadRequest(
-            _("'security_name' not found in request body"))
+            _("security_name not found in request body"))
     if access_parameters.get('auth_protocol'):
         if access_parameters.get('auth_protocol').lower(
         ) not in const.SUPPORTED_AUTH_PROTOCOLS:
             raise webob.exc.HTTPBadRequest(
-                _("auth_protocol '%s' is not supported") %
+                _("auth_protocol %s is not supported") %
                 access_parameters['auth_protocol'])
         elif not access_parameters.get('auth_key'):
             raise webob.exc.HTTPBadRequest(
-                _("'auth_key' is required for auth_protocol %s") %
+                _("auth_key is required for auth_protocol %s") %
                 access_parameters['auth_protocol'])
-        elif len(access_parameters.get('auth_key')) <= 8:
+        elif len(access_parameters.get('auth_key')) < 8:
             raise webob.exc.HTTPBadRequest(
-                _("'auth_key %s' should be more than 8 characters") %
-                access_parameters['auth_key'])
+                _("auth_key %s should be equal or more than"
+                  "8 characters") % access_parameters['auth_key'])
     if access_parameters.get('priv_protocol'):
         if access_parameters.get('priv_protocol').lower(
         ) not in const.SUPPORTED_PRIV_PROTOCOLS:
             raise webob.exc.HTTPBadRequest(
-                _("priv_protocol '%s' is not supported") %
+                _("priv_protocol %s is not supported") %
                 access_parameters['priv_protocol'])
         elif not access_parameters.get('priv_key'):
             raise webob.exc.HTTPBadRequest(
-                _("'priv_key' is required for priv_protocol %s") %
+                _("priv_key is required for priv_protocol %s") %
                 access_parameters['priv_protocol'])
-        elif len(access_parameters.get('priv_key')) <= 8:
+        elif len(access_parameters.get('priv_key')) < 8:
             raise webob.exc.HTTPBadRequest(
-                _("'priv_key %s' should be more than 8 characters") %
-                access_parameters['priv_key'])
+                _("'priv_key %s' should be equal or more than"
+                  "8 characters") % access_parameters['priv_key'])
