@@ -17,6 +17,8 @@ import webob.exc
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes
+from neutron.api.v2 import base
+from neutron.api.v2 import resource
 from neutron.common import exceptions as n_exc
 from neutron import wsgi
 
@@ -65,7 +67,7 @@ class BNPSwitchController(wsgi.Controller):
         if not context.is_admin:
             raise n_exc.AdminRequired(reason=reason)
 
-    def index(self, request):
+    def index(self, request, **kwargs):
         context = request.context
         switches = db.get_all_bnp_phys_switches(context)
         switches = self._switch_to_show(switches)
@@ -89,7 +91,7 @@ class BNPSwitchController(wsgi.Controller):
             switch_list.append(switch)
         return switch_list
 
-    def show(self, request, id):
+    def show(self, request, id, **kwargs):
         context = request.context
         switch = db.get_bnp_phys_switch(context, id)
         port_status_dict = {}
@@ -109,7 +111,7 @@ class BNPSwitchController(wsgi.Controller):
         switch_dict['ports'] = port_status_dict
         return switch_dict
 
-    def delete(self, request, id):
+    def delete(self, request, id, **kwargs):
         context = request.context
         self._check_admin(context)
         switch = db.get_bnp_phys_switch(context, id)
@@ -122,7 +124,7 @@ class BNPSwitchController(wsgi.Controller):
                 _("Disable the switch %s to delete") % id)
         db.delete_bnp_phys_switch(context, id)
 
-    def create(self, request):
+    def create(self, request, **kwargs):
         context = request.context
         self._check_admin(context)
         body = validators.validate_request(request)
@@ -169,7 +171,7 @@ class BNPSwitchController(wsgi.Controller):
             port['port_status'] = status
             db.add_bnp_phys_switch_port(context, port)
 
-    def update(self, request, id):
+    def update(self, request, id, **kwargs):
         context = request.context
         self._check_admin(context)
         body = validators.validate_request(request)
@@ -276,11 +278,12 @@ class Bnp_switch(extensions.ExtensionDescriptor):
         return "2015-10-11T00:00:00-00:00"
 
     def get_resources(self):
-        resources = []
-        sresource = extensions.ResourceExtension("bnp-switches",
-                                                 BNPSwitchController())
-        resources.append(sresource)
-        return resources
+        exts = []
+        controller = resource.Resource(BNPSwitchController(),
+                                       base.FAULT_MAP)
+        exts.append(extensions.ResourceExtension(
+            'bnp-switches', controller))
+        return exts
 
     def get_extended_resources(self, version):
         if version == "2.0":
