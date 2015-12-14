@@ -118,8 +118,7 @@ class BNPSwitchController(wsgi.Controller):
         if not switch:
             raise webob.exc.HTTPNotFound(
                 _("Switch %s does not exist") % id)
-        if switch.__dict__.get(
-           'status') == const.SWITCH_STATUS['enable']:
+        if switch['status'] == const.SWITCH_STATUS['enable']:
             raise webob.exc.HTTPBadRequest(
                 _("Disable the switch %s to delete") % id)
         db.delete_bnp_phys_switch(context, id)
@@ -187,7 +186,7 @@ class BNPSwitchController(wsgi.Controller):
                         _("access protocol %s is not supported") % body[
                             'access_protocol'])
             else:
-                protocol = phys_switch.__dict__.get('access_protocol')
+                protocol = phys_switch['access_protocol']
             if protocol.lower() == const.SNMP_V3:
                 validators.validate_snmpv3_parameters(
                     body['access_parameters'])
@@ -213,11 +212,11 @@ class BNPSwitchController(wsgi.Controller):
                 db.update_bnp_phys_switch_access_params(context, id,
                                                         switch_dict)
                 return switch
-            elif phys_switch.__dict__['status'] == const.SWITCH_STATUS[
+            elif phys_switch['status'] == const.SWITCH_STATUS[
                     'enable'] and body['enable'] is True:
                 raise webob.exc.HTTPBadRequest(
                     _("Disable the switch %s to update") % id)
-        if phys_switch.__dict__['status'] == const.SWITCH_STATUS[
+        if phys_switch['status'] == const.SWITCH_STATUS[
            'enable'] and body.get('rediscover', None):
             raise webob.exc.HTTPBadRequest(
                 _("Disable the switch %d to update") % id)

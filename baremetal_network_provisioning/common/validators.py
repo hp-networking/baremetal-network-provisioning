@@ -39,7 +39,7 @@ def validate_request(request):
         raise webob.exc.HTTPBadRequest(
             _("Invalid JSON body"))
     try:
-        body = body.pop("switch")
+        body = body.pop('bnp_switch')
     except KeyError:
         raise webob.exc.HTTPBadRequest(
             _("'switch' not found in request body"))
