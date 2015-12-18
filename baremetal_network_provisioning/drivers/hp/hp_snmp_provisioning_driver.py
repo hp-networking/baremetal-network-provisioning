@@ -91,7 +91,7 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
                     db.update_bnp_phys_swport_status(
                         self.context, swport['switch_id'],
                         swport['interface_name'], 'UNKNOWN')
-                    db.set_port_status(self.context, 
+                    db.set_port_status(self.context,
                                        portmap['neutron_port_id'],
                                        n_const.PORT_STATUS_ERROR)
             else:
@@ -111,7 +111,6 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
                                            portmap['neutron_port_id'],
                                            n_const.PORT_STATUS_DOWN)
 
-
     def start_snmp_polling(self):
         """Spawn a thread to poll the switch db."""
         try:
@@ -122,7 +121,6 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
                       "interval %s", self.bnp_sync_interval)
         except Exception:
             LOG.error(_LE("Cann't start BNP SNMP polling"))
-
 
     def create_port(self, port):
         """create_port ."""
