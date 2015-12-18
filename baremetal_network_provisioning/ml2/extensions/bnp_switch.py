@@ -80,7 +80,7 @@ class BNPSwitchController(wsgi.Controller):
             return {'bnp_switches': switch_list}
         switches = db.get_all_bnp_phys_switches(context)
         switches = self._switch_to_show(switches)
-        switches_dict = {'bnp-switches': switches}
+        switches_dict = {'bnp_switches': switches}
         return switches_dict
 
     def _switch_to_show(self, switches):
@@ -118,7 +118,7 @@ class BNPSwitchController(wsgi.Controller):
                 port_status_dict[switch_port[
                     'interface_name']] = switch_port['port_status']
         switch_dict['ports'] = port_status_dict
-        return switch_dict
+        return {'bnp_switch': switch_dict}
 
     def delete(self, request, id, **kwargs):
         context = request.context
@@ -170,7 +170,7 @@ class BNPSwitchController(wsgi.Controller):
         if bnp_switch.get('ports'):
             self._add_physical_port(context, db_switch.get('id'),
                                     bnp_switch.get('ports'))
-        return dict(db_switch)
+        return {'bnp_switch': dict(db_switch)}
 
     def _add_physical_port(self, context, switch_id, ports):
         for port in ports:
