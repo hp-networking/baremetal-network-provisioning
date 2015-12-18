@@ -24,6 +24,7 @@ from neutron.common import constants as n_const
 from neutron import context as neutron_context
 from neutron.i18n import _LE
 from neutron.i18n import _LI
+from neutron.i18n import _LW
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 
 from oslo_config import cfg
@@ -69,6 +70,8 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
         self._load_drivers(drvr)
         if self.bnp_sync_enable:
             self.start_snmp_polling()
+        else:
+            LOG.info(_LI("BNP SNMP polling is disabled"))
 
     def monitor_port_status(self):
         """Sync switch database periodically."""
@@ -96,6 +99,7 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
                                        n_const.PORT_STATUS_ERROR)
             else:
                 new_status = constants.PORT_STATUS.get(str(port_status))
+                LOG.debug("BNP SNMP polling: new port status %s", new_status)
                 if new_status != old_status:
                     LOG.info(_LI('BNP SNMP polling: Update port status to %s'),
                              new_status)
@@ -114,13 +118,17 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
     def start_snmp_polling(self):
         """Spawn a thread to poll the switch db."""
         try:
-            poll_thread = loopingcall.FixedIntervalLoopingCall(
-                self.monitor_port_status)
-            poll_thread.start(interval=self.bnp_sync_interval)
-            LOG.debug("Successfully started BNP SNMP polling thread with "
-                      "interval %s", self.bnp_sync_interval)
-        except Exception:
-            LOG.error(_LE("Cann't start BNP SNMP polling"))
+            if self.bnp_sync_interval < 0:
+                LOG.warning(_LW("Disabling BNP SNMP polling because its"
+                                " interval is negative"))
+            else:
+                poll_thread = loopingcall.FixedIntervalLoopingCall(
+                    self.monitor_port_status)
+                poll_thread.start(interval=self.bnp_sync_interval)
+                LOG.debug("Successfully started BNP SNMP polling thread with "
+                          "interval %s", self.bnp_sync_interval)
+        except Exception as e:
+            LOG.error(_LE("Can't start BNP SNMP polling: %s"), e)
 
     def create_port(self, port):
         """create_port ."""
