@@ -27,6 +27,8 @@ from baremetal_network_provisioning.common import validators
 from baremetal_network_provisioning.db import bm_nw_provision_db as db
 from baremetal_network_provisioning.drivers import discovery_driver
 
+from cgi import parse_qs
+
 from oslo_log import log as logging
 
 LOG = logging.getLogger(__name__)
@@ -69,6 +71,13 @@ class BNPSwitchController(wsgi.Controller):
 
     def index(self, request, **kwargs):
         context = request.context
+        environ = request.environ
+        if environ.get('QUERY_STRING'):
+            data = parse_qs(environ['QUERY_STRING'])
+            id = data.get('id')
+            switch = db.get_bnp_phys_switch(context, id[0])
+            switch_list = self._switch_to_show(switch)
+            return {'bnp_switches': switch_list}
         switches = db.get_all_bnp_phys_switches(context)
         switches = self._switch_to_show(switches)
         switches_dict = {'bnp-switches': switches}
@@ -200,11 +209,12 @@ class BNPSwitchController(wsgi.Controller):
         switch_to_show = self._switch_to_show(switch_dict)
         switch = switch_to_show[0]
         if 'enable' in body.keys():
-            if body['enable'] is False:
+            enable = attributes.convert_to_boolean(body['enable'])
+            if not enable:
                 if body.get('rediscover', None):
                     raise webob.exc.HTTPBadRequest(
                         _("Rediscovery of Switch %s is not supported"
-                          "when Enable=False") % id)
+                          "when enable=False") % id)
                 switch_status = const.SWITCH_STATUS['disable']
                 switch['status'] = switch_status
                 db.update_bnp_phys_switch_status(context,
@@ -213,7 +223,7 @@ class BNPSwitchController(wsgi.Controller):
                                                         switch_dict)
                 return switch
             elif phys_switch['status'] == const.SWITCH_STATUS[
-                    'enable'] and body['enable'] is True:
+                    'enable'] and enable:
                 raise webob.exc.HTTPBadRequest(
                     _("Disable the switch %s to update") % id)
         if phys_switch['status'] == const.SWITCH_STATUS[
