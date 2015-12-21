@@ -17,13 +17,16 @@ import webob.exc
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes
-from neutron.common import exceptions as n_exc
+from neutron.api.v2 import base
+from neutron.api.v2 import resource
 from neutron import wsgi
 
 from baremetal_network_provisioning.common import constants as const
 from baremetal_network_provisioning.common import validators
 from baremetal_network_provisioning.db import bm_nw_provision_db as db
 from baremetal_network_provisioning.drivers import discovery_driver
+
+from cgi import parse_qs
 
 from oslo_log import log as logging
 
@@ -63,13 +66,21 @@ class BNPSwitchController(wsgi.Controller):
     def _check_admin(self, context):
         reason = _("Only admin can configure Bnp-switch")
         if not context.is_admin:
-            raise n_exc.AdminRequired(reason=reason)
+            raise webob.exc.HTTPForbidden(reason)
 
-    def index(self, request):
+    def index(self, request, **kwargs):
         context = request.context
+        # PHANI TO DO - Find a better approach
+        environ = request.environ
+        if environ.get('QUERY_STRING'):
+            data = parse_qs(environ['QUERY_STRING'])
+            id = data.get('id')
+            switch = db.get_bnp_phys_switch(context, id[0])
+            switch_list = self._switch_to_show(switch)
+            return {'bnp_switches': switch_list}
         switches = db.get_all_bnp_phys_switches(context)
         switches = self._switch_to_show(switches)
-        switches_dict = {'bnp-switches': switches}
+        switches_dict = {'bnp_switches': switches}
         return switches_dict
 
     def _switch_to_show(self, switches):
@@ -89,7 +100,7 @@ class BNPSwitchController(wsgi.Controller):
             switch_list.append(switch)
         return switch_list
 
-    def show(self, request, id):
+    def show(self, request, id, **kwargs):
         context = request.context
         switch = db.get_bnp_phys_switch(context, id)
         port_status_dict = {}
@@ -107,22 +118,21 @@ class BNPSwitchController(wsgi.Controller):
                 port_status_dict[switch_port[
                     'interface_name']] = switch_port['port_status']
         switch_dict['ports'] = port_status_dict
-        return switch_dict
+        return {const.BNP_SWITCH_RESOURCE_NAME: switch_dict}
 
-    def delete(self, request, id):
+    def delete(self, request, id, **kwargs):
         context = request.context
         self._check_admin(context)
         switch = db.get_bnp_phys_switch(context, id)
         if not switch:
             raise webob.exc.HTTPNotFound(
                 _("Switch %s does not exist") % id)
-        if switch.__dict__.get(
-           'status') == const.SWITCH_STATUS['enable']:
+        if switch['status'] == const.SWITCH_STATUS['enable']:
             raise webob.exc.HTTPBadRequest(
                 _("Disable the switch %s to delete") % id)
         db.delete_bnp_phys_switch(context, id)
 
-    def create(self, request):
+    def create(self, request, **kwargs):
         context = request.context
         self._check_admin(context)
         body = validators.validate_request(request)
@@ -160,7 +170,7 @@ class BNPSwitchController(wsgi.Controller):
         if bnp_switch.get('ports'):
             self._add_physical_port(context, db_switch.get('id'),
                                     bnp_switch.get('ports'))
-        return dict(db_switch)
+        return {const.BNP_SWITCH_RESOURCE_NAME: dict(db_switch)}
 
     def _add_physical_port(self, context, switch_id, ports):
         for port in ports:
@@ -169,7 +179,7 @@ class BNPSwitchController(wsgi.Controller):
             port['port_status'] = status
             db.add_bnp_phys_switch_port(context, port)
 
-    def update(self, request, id):
+    def update(self, request, id, **kwargs):
         context = request.context
         self._check_admin(context)
         body = validators.validate_request(request)
@@ -185,7 +195,7 @@ class BNPSwitchController(wsgi.Controller):
                         _("access protocol %s is not supported") % body[
                             'access_protocol'])
             else:
-                protocol = phys_switch.__dict__.get('access_protocol')
+                protocol = phys_switch['access_protocol']
             if protocol.lower() == const.SNMP_V3:
                 validators.validate_snmpv3_parameters(
                     body['access_parameters'])
@@ -199,11 +209,12 @@ class BNPSwitchController(wsgi.Controller):
         switch_to_show = self._switch_to_show(switch_dict)
         switch = switch_to_show[0]
         if 'enable' in body.keys():
-            if body['enable'] is False:
+            enable = attributes.convert_to_boolean(body['enable'])
+            if not enable:
                 if body.get('rediscover', None):
                     raise webob.exc.HTTPBadRequest(
                         _("Rediscovery of Switch %s is not supported"
-                          "when Enable=False") % id)
+                          "when enable=False") % id)
                 switch_status = const.SWITCH_STATUS['disable']
                 switch['status'] = switch_status
                 db.update_bnp_phys_switch_status(context,
@@ -211,14 +222,14 @@ class BNPSwitchController(wsgi.Controller):
                 db.update_bnp_phys_switch_access_params(context, id,
                                                         switch_dict)
                 return switch
-            elif phys_switch.__dict__['status'] == const.SWITCH_STATUS[
-                    'enable'] and body['enable'] is True:
+            elif phys_switch['status'] == const.SWITCH_STATUS[
+                    'enable'] and enable:
                 raise webob.exc.HTTPBadRequest(
                     _("Disable the switch %s to update") % id)
-        if phys_switch.__dict__['status'] == const.SWITCH_STATUS[
+        if phys_switch['status'] == const.SWITCH_STATUS[
            'enable'] and body.get('rediscover', None):
             raise webob.exc.HTTPBadRequest(
-                _("Disable the switch %d to update") % id)
+                _("Disable the switch %s to update") % id)
         self._discover_switch(switch_dict)
         switch_status = const.SWITCH_STATUS['enable']
         switch['status'] = switch_status
@@ -269,18 +280,19 @@ class Bnp_switch(extensions.ExtensionDescriptor):
     @classmethod
     def get_description(cls):
         return ("Abstraction for physical switch ports discovery"
-                "for bare metal instance network provisioning")
+                " for bare metal instance network provisioning")
 
     @classmethod
     def get_updated(cls):
         return "2015-10-11T00:00:00-00:00"
 
     def get_resources(self):
-        resources = []
-        sresource = extensions.ResourceExtension("bnp-switches",
-                                                 BNPSwitchController())
-        resources.append(sresource)
-        return resources
+        exts = []
+        controller = resource.Resource(BNPSwitchController(),
+                                       base.FAULT_MAP)
+        exts.append(extensions.ResourceExtension(
+            'bnp-switches', controller))
+        return exts
 
     def get_extended_resources(self, version):
         if version == "2.0":

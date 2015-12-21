@@ -14,6 +14,8 @@
 # under the License.
 # service type constants:
 
+BNP_SWITCH_RESOURCE_NAME = 'bnp_switch'
+
 TRUNK = 'trunk'
 ACCESS = 'access'
 BIND_IGNORE = 'bind_ignore'
