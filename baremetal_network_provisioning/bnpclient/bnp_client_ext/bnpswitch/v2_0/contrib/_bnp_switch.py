@@ -17,13 +17,15 @@ from neutronclient.common import extension
 from neutronclient.common import utils
 from neutronclient.i18n import _
 
+from baremetal_network_provisioning.common import constants as const
+
 meta = ('write_community=write,security_name=name,'
         'auth_protocol=auth,priv_protocol=priv,'
         'auth_key=key,priv_key=key,security_level=level1')
 
 
 class BnpSwitch(extension.NeutronClientExtension):
-    resource = 'bnp_switch'
+    resource = const.BNP_SWITCH_RESOURCE_NAME
     resource_plural = '%ses' % resource
     path = 'bnp-switches'
     object_path = '/%s' % path
@@ -39,23 +41,23 @@ class BnpSwitchCreate(extension.ClientExtensionCreate, BnpSwitch):
     def add_known_arguments(self, parser):
         parser.add_argument(
             'ip_address',
-            help=_('IP of the Switch'))
+            help=_('IP Address of the Physical Switch'))
         parser.add_argument(
             'vendor',
-            help=_('Vendor of the Switch'))
+            help=_('Vendor of the Physical Switch'))
         parser.add_argument(
             'access_protocol',
-            help=_('Protocol with which the Switch will be connected'))
+            help=_('Protocol for accessing the Physical Switch'))
         parser.add_argument(
             '--access_parameters',
             metavar=meta, action='append', dest='access_parameters',
             type=utils.str2dict,
-            help=_('SNMP Credentials of the Switch'))
+            help=_('Protocol access credentials of the Physical Switch'))
 
     def args2body(self, parsed_args):
 
         body = {
-            'bnp_switch': {
+            const.BNP_SWITCH_RESOURCE_NAME: {
                 'ip_address': parsed_args.ip_address,
                 'vendor': parsed_args.vendor,
                 'access_protocol': parsed_args.access_protocol}}
@@ -121,13 +123,16 @@ class BnpSwitchUpdate(extension.ClientExtensionUpdate, BnpSwitch):
 
     def args2body(self, parsed_args):
 
-        body = {'bnp_switch': {}}
+        body = {const.BNP_SWITCH_RESOURCE_NAME: {}}
         if parsed_args.enable:
-            body['bnp_switch']['enable'] = parsed_args.enable
+            body[const.BNP_SWITCH_RESOURCE_NAME][
+                'enable'] = parsed_args.enable
         if parsed_args.rediscover:
-            body['bnp_switch']['rediscover'] = parsed_args.rediscover
+            body[const.BNP_SWITCH_RESOURCE_NAME][
+                'rediscover'] = parsed_args.rediscover
         if parsed_args.access_protocol:
-            body['bnp_switch']['access_protocol'] = parsed_args.access_protocol
+            body[const.BNP_SWITCH_RESOURCE_NAME][
+                'access_protocol'] = parsed_args.access_protocol
         if parsed_args.access_parameters:
             parameters = parsed_args.access_parameters[0]
             write_community = parameters.get('write_community')
@@ -142,5 +147,6 @@ class BnpSwitchUpdate(extension.ClientExtensionUpdate, BnpSwitch):
                                  'priv_key': priv_key,
                                  'auth_protocol': auth_protocol,
                                  'priv_protocol': priv_protocol}
-            body['bnp_switch']['access_parameters'] = access_parameters
+            body[const.BNP_SWITCH_RESOURCE_NAME][
+                'access_parameters'] = access_parameters
         return body
