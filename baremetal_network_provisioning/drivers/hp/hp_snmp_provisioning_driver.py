@@ -268,13 +268,13 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
             port_id = switchport['port_id']
             bnp_switch = db.get_bnp_phys_switch_by_mac(self.context,
                                                        switch_mac_id)
-            phys_port = db.get_bnp_phys_port(self.context,
-                                             bnp_switch.id,
-                                             port_id)
             # check for port and switch level existence
             if not bnp_switch:
                 LOG.error(_LE("No physical switch found '%s' "), switch_mac_id)
                 self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
+            phys_port = db.get_bnp_phys_port(self.context,
+                                             bnp_switch.id,
+                                             port_id)
             if not phys_port:
                 LOG.error(_LE("No physical port found for '%s' "), phys_port)
                 self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
