@@ -80,6 +80,7 @@ class BnpSwitchCreate(extension.ClientExtensionCreate, BnpSwitch):
 
 
 class BnpSwitchList(extension.ClientExtensionList, BnpSwitch):
+    """List all Physical Switch information."""
 
     shell_command = 'switch-list'
     allow_names = False
@@ -89,18 +90,21 @@ class BnpSwitchList(extension.ClientExtensionList, BnpSwitch):
 
 
 class BnpSwitchShow(extension.ClientExtensionShow, BnpSwitch):
+    """Show the Physical Switch information."""
 
     shell_command = 'switch-show'
     allow_names = False
 
 
 class BnpSwitchDelete(extension.ClientExtensionDelete, BnpSwitch):
+    """Delete the Physical Switch."""
 
     shell_command = 'switch-delete'
     allow_names = False
 
 
 class BnpSwitchUpdate(extension.ClientExtensionUpdate, BnpSwitch):
+    """Update the Physical Switch information."""
 
     shell_command = 'switch-update'
     allow_names = False
