@@ -151,6 +151,10 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
                                              port_name)
             if not phys_port:
                 self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
+            port_maps = db.get_all_bnp_swport_mappings(self.context)
+            for port_map in port_maps:
+                if phys_port.id == port_map.switch_port_id:
+                    self._raise_ml2_error(wexc.HTTPConflict, 'create_port')
             switchport['ifindex'] = phys_port.ifindex
         credentials_dict = port.get('port')
         cred_dict = self._get_credentials_dict(bnp_switch, 'create_port')
@@ -254,6 +258,11 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
     def _create_port(self, port):
         switchports = port['port']['switchports']
         LOG.debug(_LE("_create_port switch: %s"), port)
+        network_id = port['port']['network_id']
+        subnets = db.get_subnets_by_network(self.context, network_id)
+        if not subnets:
+            LOG.error("Subnet not found for the network")
+            self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
         for switchport in switchports:
             switch_mac_id = switchport['switch_id']
             port_id = switchport['port_id']
@@ -272,4 +281,4 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
             if bnp_switch.status != constants.SWITCH_STATUS['enable']:
                 LOG.error(_LE("Physical switch is not Enabled '%s' "),
                           bnp_switch.status)
-                self._raise_ml2_error(wexc.HTTPConflict, 'create_port')
+                self._raise_ml2_error(wexc.HTTPBadRequest, 'create_port')
