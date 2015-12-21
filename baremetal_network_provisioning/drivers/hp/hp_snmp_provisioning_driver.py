@@ -17,7 +17,6 @@ from baremetal_network_provisioning.db import bm_nw_provision_db as db
 from baremetal_network_provisioning.drivers import discovery_driver
 from baremetal_network_provisioning.ml2 import network_provisioning_api as api
 
-import eventlet
 import webob.exc as wexc
 
 from neutron.api.v2 import base
@@ -25,10 +24,12 @@ from neutron.common import constants as n_const
 from neutron import context as neutron_context
 from neutron.i18n import _LE
 from neutron.i18n import _LI
+from neutron.i18n import _LW
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_service import loopingcall
 from oslo_utils import importutils
 
 LOG = logging.getLogger(__name__)
@@ -45,9 +46,9 @@ hp_opts = [
                 help=_("Enable sync between neutron and "
                        "switch databases.")),
     cfg.FloatOpt('bnp_sync_interval',
-               default=60,
-               help=_("Interval at which polling thread sync "
-                      "databases."))]
+                 default=300,
+                 help=_("Interval at which polling thread sync "
+                        "databases."))]
 cfg.CONF.register_opts(hp_opts, "default")
 
 
@@ -69,35 +70,43 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
         self._load_drivers(drvr)
         if self.bnp_sync_enable:
             self.start_snmp_polling()
+        else:
+            LOG.info(_LI("BNP SNMP polling is disabled"))
 
-    def _snmp_sync_thread(self):
+    def monitor_port_status(self):
         """Sync switch database periodically."""
-        LOG.info(_LI('BMNP start snmp polling thread with interval:%s'),
-                 self.bnp_sync_interval)
-        while True:
-            portmaps = db.get_all_bnp_swport_mappings(self.context)
-            for portmap in portmaps:
-                swport = db.get_bnp_phys_switch_port_by_id(
-                    self.context, portmap['switch_port_id'])
-                switch = db.get_bnp_phys_switch(self.context,
-                                                portmap['switch_id'])
-                try:
-                    snmp_drv = discovery_driver.SNMPDiscoveryDriver(switch)
-                    port_status = snmp_drv.get_port_status(swport['ifindex'])
-                except Exception as e:
-                    LOG.error(_LE("Exception: %s"), e)
+        self.context = neutron_context.get_admin_context()
+        portmaps = db.get_all_bnp_swport_mappings(self.context)
+        for portmap in portmaps:
+            swport = db.get_bnp_phys_switch_port_by_id(
+                self.context, portmap['switch_port_id'])
+            old_status = swport['port_status']
+            switch = db.get_bnp_phys_switch(self.context,
+                                            portmap['switch_id'])
+            try:
+                snmp_drv = discovery_driver.SNMPDiscoveryDriver(switch)
+                port_status = snmp_drv.get_port_status(swport['ifindex'])
+            except Exception as e:
+                LOG.error(_LE("BNP SNMP polling exception: %s."), e)
+                if old_status != 'UNKNOWN':
+                    LOG.info(_LI("BNP SNMP polling: Update port status to "
+                                 "UNKNOWN."))
                     db.update_bnp_phys_swport_status(
                         self.context, swport['switch_id'],
                         swport['interface_name'], 'UNKNOWN')
                     db.set_port_status(self.context,
                                        portmap['neutron_port_id'],
                                        n_const.PORT_STATUS_ERROR)
-                else:
-                    status = constants.PORT_STATUS.get(str(port_status))
+            else:
+                new_status = constants.PORT_STATUS.get(str(port_status))
+                LOG.debug("BNP SNMP polling: new port status %s", new_status)
+                if new_status != old_status:
+                    LOG.info(_LI('BNP SNMP polling: Update port status to %s'),
+                             new_status)
                     db.update_bnp_phys_swport_status(
                         self.context, swport['switch_id'],
-                        swport['interface_name'], status)
-                    if status is 'UP':
+                        swport['interface_name'], new_status)
+                    if new_status == 'UP':
                         db.set_port_status(self.context,
                                            portmap['neutron_port_id'],
                                            n_const.PORT_STATUS_ACTIVE)
@@ -105,11 +114,21 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
                         db.set_port_status(self.context,
                                            portmap['neutron_port_id'],
                                            n_const.PORT_STATUS_DOWN)
-            eventlet.sleep(self.bnp_sync_interval)
 
     def start_snmp_polling(self):
         """Spawn a thread to poll the switch db."""
-        eventlet.spawn(self._snmp_sync_thread)
+        try:
+            if self.bnp_sync_interval < 0:
+                LOG.warning(_LW("Disabling BNP SNMP polling because its"
+                                " interval is negative"))
+            else:
+                poll_thread = loopingcall.FixedIntervalLoopingCall(
+                    self.monitor_port_status)
+                poll_thread.start(interval=self.bnp_sync_interval)
+                LOG.debug("Successfully started BNP SNMP polling thread with "
+                          "interval %s", self.bnp_sync_interval)
+        except Exception as e:
+            LOG.error(_LE("Can't start BNP SNMP polling: %s"), e)
 
     def create_port(self, port):
         """create_port ."""
