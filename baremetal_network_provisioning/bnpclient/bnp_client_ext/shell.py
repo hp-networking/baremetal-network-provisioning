@@ -33,7 +33,8 @@ from oslo_utils import encodeutils
 VERSION = '2.0'
 NEUTRON_API_VERSION = '2.0'
 clientmanager.neutron_client.API_VERSIONS = {
-    '2.0': 'baremetal_network_provisioning.bnpclient.bnp_client_ext.v2_0.client.Client',
+    '2.0': 'baremetal_network_provisioning.bnpclient.'
+           'bnp_client_ext.v2_0.client.Client',
 }
 
 
@@ -66,7 +67,7 @@ def main(argv=sys.argv[1:]):
             encodeutils.safe_decode, argv)))
     except exc.NeutronClientException:
         return 1
-    except Exception as e:
+    except Exception:
         return 1
 
 

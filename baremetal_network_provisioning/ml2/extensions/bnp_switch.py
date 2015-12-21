@@ -19,7 +19,6 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron.api.v2 import resource
-from neutron.common import exceptions as n_exc
 from neutron import wsgi
 
 from baremetal_network_provisioning.common import constants as const
@@ -71,7 +70,7 @@ class BNPSwitchController(wsgi.Controller):
 
     def index(self, request, **kwargs):
         context = request.context
-        #PHANI TO DO - Find a better approach
+        # PHANI TO DO - Find a better approach
         environ = request.environ
         if environ.get('QUERY_STRING'):
             data = parse_qs(environ['QUERY_STRING'])
