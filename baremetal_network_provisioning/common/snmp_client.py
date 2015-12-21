@@ -49,6 +49,7 @@ class SNMPClient(object):
                  write_community=None, security_name=None,
                  auth_protocol=None, auth_key=None,
                  priv_protocol=None, priv_key=None):
+        self.conf = cfg.CONF
         self.ip_address = ip_address
         self.access_protocol = access_protocol
         self.timeout = cfg.CONF.default.snmp_timeout
