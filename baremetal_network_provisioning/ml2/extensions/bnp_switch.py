@@ -67,10 +67,11 @@ class BNPSwitchController(wsgi.Controller):
     def _check_admin(self, context):
         reason = _("Only admin can configure Bnp-switch")
         if not context.is_admin:
-            raise n_exc.AdminRequired(reason=reason)
+            raise webob.exc.HTTPForbidden(reason)
 
     def index(self, request, **kwargs):
         context = request.context
+        #PHANI TO DO - Find a better approach
         environ = request.environ
         if environ.get('QUERY_STRING'):
             data = parse_qs(environ['QUERY_STRING'])
@@ -118,7 +119,7 @@ class BNPSwitchController(wsgi.Controller):
                 port_status_dict[switch_port[
                     'interface_name']] = switch_port['port_status']
         switch_dict['ports'] = port_status_dict
-        return {'bnp_switch': switch_dict}
+        return {const.BNP_SWITCH_RESOURCE_NAME: switch_dict}
 
     def delete(self, request, id, **kwargs):
         context = request.context
@@ -170,7 +171,7 @@ class BNPSwitchController(wsgi.Controller):
         if bnp_switch.get('ports'):
             self._add_physical_port(context, db_switch.get('id'),
                                     bnp_switch.get('ports'))
-        return {'bnp_switch': dict(db_switch)}
+        return {const.BNP_SWITCH_RESOURCE_NAME: dict(db_switch)}
 
     def _add_physical_port(self, context, switch_id, ports):
         for port in ports:
@@ -280,7 +281,7 @@ class Bnp_switch(extensions.ExtensionDescriptor):
     @classmethod
     def get_description(cls):
         return ("Abstraction for physical switch ports discovery"
-                "for bare metal instance network provisioning")
+                " for bare metal instance network provisioning")
 
     @classmethod
     def get_updated(cls):
