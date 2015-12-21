@@ -333,7 +333,7 @@ def get_bnp_phys_port(context, sw_id, port_name):
         query = context.session.query(models.BNPPhysicalSwitchPort)
         port = query.filter_by(switch_id=sw_id, interface_name=port_name).one()
     except exc.NoResultFound:
-        LOG.error(_LE("no physical switch found with mac address: %s"), port)
+        LOG.error(_LE("no physical port found with port_name: %s"), port_name)
         return
     return port
 
