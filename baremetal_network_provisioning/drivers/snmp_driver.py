@@ -20,7 +20,6 @@ from baremetal_network_provisioning.drivers import (port_provisioning_driver
                                                     as driver)
 
 from neutron.i18n import _LE
-from neutron.i18n import _LI
 
 from oslo_log import log as logging
 
@@ -35,7 +34,6 @@ class SNMPDriver(driver.PortProvisioningDriver):
 
     def set_isolation(self, port):
         """set_isolation ."""
-        LOG.info(_LI("set_isolation with port '%s' "), port)
         try:
             client = snmp_client.get_client(self._get_switch_dict(port))
             seg_id = port['port']['segmentation_id']
