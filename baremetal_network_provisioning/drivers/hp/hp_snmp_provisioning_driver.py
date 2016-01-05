@@ -151,10 +151,10 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
                                              port_name)
             if not phys_port:
                 self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
-            port_maps = db.get_all_bnp_swport_mappings(self.context)
-            for port_map in port_maps:
-                if phys_port.id == port_map.switch_port_id:
-                    self._raise_ml2_error(wexc.HTTPConflict, 'create_port')
+            # port_maps = db.get_all_bnp_swport_mappings(self.context)
+            # for port_map in port_maps:
+            #    if phys_port.id == port_map.switch_port_id:
+            #        self._raise_ml2_error(wexc.HTTPConflict, 'create_port')
             switchport['ifindex'] = phys_port.ifindex
         credentials_dict = port.get('port')
         cred_dict = self._get_credentials_dict(bnp_switch, 'create_port')
