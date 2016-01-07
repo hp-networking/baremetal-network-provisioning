@@ -25,7 +25,6 @@ import sys
 from cliff import commandmanager
 from neutronclient.common import clientmanager
 from neutronclient.common import exceptions as exc
-from neutronclient.common import extension
 from neutronclient import shell as neutronshell
 from oslo_utils import encodeutils
 from stevedore import extension as ext
