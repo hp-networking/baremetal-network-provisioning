@@ -28,6 +28,7 @@ from neutronclient.common import exceptions as exc
 from neutronclient.common import extension
 from neutronclient import shell as neutronshell
 from oslo_utils import encodeutils
+from stevedore import extension as ext
 
 
 VERSION = '2.0'
@@ -45,7 +46,7 @@ class BnpShell(neutronshell.NeutronShell):
 
     def _register_extensions(self, version):
         for name, module in itertools.chain(
-                extension._discover_via_entry_points()):
+                discover_via_entry_points()):
             self._extend_shell_commands(name, module, version)
 
     def __init__(self, apiversion):
@@ -59,6 +60,12 @@ class BnpShell(neutronshell.NeutronShell):
         self._register_extensions(VERSION)
         self.auth_client = None
         self.api_version = apiversion
+
+
+def discover_via_entry_points():
+    emgr = ext.ExtensionManager('bnpclient.extension',
+                                invoke_on_load=False)
+    return ((ext.name, ext.plugin) for ext in emgr)
 
 
 def main(argv=sys.argv[1:]):
