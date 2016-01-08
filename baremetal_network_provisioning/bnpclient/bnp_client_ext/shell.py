@@ -52,7 +52,7 @@ class BnpShell(neutronshell.NeutronShell):
         super(neutronshell.NeutronShell, self).__init__(
             description=__doc__.strip(),
             version=VERSION,
-            command_manager=commandmanager.CommandManager('bmnp.cli'), )
+            command_manager=commandmanager.CommandManager('bnp.cli'), )
         self.commands = COMMANDS
         for k, v in self.commands[apiversion].items():
             self.command_manager.add_command(k, v)
