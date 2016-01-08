@@ -40,13 +40,13 @@ class BnpSwitchCreate(extension.ClientExtensionCreate, BnpSwitch):
 
     def add_known_arguments(self, parser):
         parser.add_argument(
-            'ip_address',
+            'ip_address', metavar='IP_ADDRESS',
             help=_('IP Address of the Physical Switch'))
         parser.add_argument(
-            'vendor',
+            'vendor', metavar='VENDOR',
             help=_('Vendor of the Physical Switch'))
         parser.add_argument(
-            'access_protocol',
+            'access_protocol', metavar='ACCESS_PROTOCOL',
             help=_('Protocol for accessing the Physical Switch'))
         parser.add_argument(
             '--access_parameters',
