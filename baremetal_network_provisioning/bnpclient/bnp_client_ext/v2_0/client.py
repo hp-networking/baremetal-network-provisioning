@@ -17,10 +17,10 @@
 import itertools
 
 from neutronclient import client
-from neutronclient.common import extension
 from neutronclient.v2_0 import client as V2_Client
 
 from baremetal_network_provisioning.bnpclient.bnp_client_ext import shell
+
 
 class Client(V2_Client.Client):
     """Client for the BaremetalNetworkProvisioning v2.0 API.
