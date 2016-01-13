@@ -183,59 +183,96 @@ class BNPSwitchController(wsgi.Controller):
         context = request.context
         self._check_admin(context)
         body = validators.validate_request(request)
+        validate_snmp_creds = False
         phys_switch = db.get_bnp_phys_switch(context, id)
         if not phys_switch:
             raise webob.exc.HTTPNotFound(
                 _("Switch %s does not exist") % id)
-        if body.get('access_parameters', None):
-            if body.get('access_protocol', None):
-                protocol = body['access_protocol']
-                if protocol.lower() not in const.SUPPORTED_PROTOCOLS:
-                    raise webob.exc.HTTPBadRequest(
-                        _("access protocol %s is not supported") % body[
-                            'access_protocol'])
-            else:
-                protocol = phys_switch['access_protocol']
-            if protocol.lower() == const.SNMP_V3:
-                validators.validate_snmpv3_parameters(
-                    body['access_parameters'])
-            else:
-                validators.validate_snmp_parameters(
-                    body['access_parameters'])
+        if body.get('access_parameters'):
+            validate_snmp_creds = True
             access_parameters = body.pop("access_parameters")
             for key, value in access_parameters.iteritems():
                 body[key] = value
+        else:
+            access_parameters = {
+                'write_community': phys_switch['write_community'],
+                'security_name': phys_switch['security_name'],
+                'auth_protocol': phys_switch['auth_protocol'],
+                'priv_protocol': phys_switch['priv_protocol'],
+                'auth_key': phys_switch['auth_key'],
+                'priv_key': phys_switch['priv_key'],
+                'security_level': phys_switch['security_level']}
+        if body.get('access_protocol'):
+            validate_snmp_creds = True
+            protocol = body['access_protocol']
+            if protocol.lower() not in const.SUPPORTED_PROTOCOLS:
+                raise webob.exc.HTTPBadRequest(
+                    _("access protocol %s is not supported") % body[
+                        'access_protocol'])
+        else:
+            protocol = phys_switch['access_protocol']
         switch_dict = self._update_dict(body, dict(phys_switch))
         switch_to_show = self._switch_to_show(switch_dict)
         switch = switch_to_show[0]
-        if 'enable' in body.keys():
+        if validate_snmp_creds:
+            if protocol.lower() == const.SNMP_V3:
+                validators.validate_snmpv3_parameters(access_parameters)
+            else:
+                validators.validate_snmp_parameters(access_parameters)
+            snmp_driver = discovery_driver.SNMPDiscoveryDriver(switch_dict)
+            snmp_driver.get_sys_name()
+            db.update_bnp_phys_switch_access_params(context, id, switch_dict)
+        if body.get('enable'):
             enable = attributes.convert_to_boolean(body['enable'])
             if not enable:
-                if body.get('rediscover', None):
-                    raise webob.exc.HTTPBadRequest(
-                        _("Rediscovery of Switch %s is not supported"
-                          "when enable=False") % id)
                 switch_status = const.SWITCH_STATUS['disable']
-                switch['status'] = switch_status
-                db.update_bnp_phys_switch_status(context,
-                                                 id, switch_status)
-                db.update_bnp_phys_switch_access_params(context, id,
-                                                        switch_dict)
-                return switch
-            elif phys_switch['status'] == const.SWITCH_STATUS[
-                    'enable'] and enable:
-                raise webob.exc.HTTPBadRequest(
-                    _("Disable the switch %s to update") % id)
-        if phys_switch['status'] == const.SWITCH_STATUS[
-           'enable'] and body.get('rediscover', None):
-            raise webob.exc.HTTPBadRequest(
-                _("Disable the switch %s to update") % id)
-        self._discover_switch(switch_dict)
-        switch_status = const.SWITCH_STATUS['enable']
-        switch['status'] = switch_status
-        db.update_bnp_phys_switch_status(context, id, switch_status)
-        db.update_bnp_phys_switch_access_params(context, id, switch_dict)
+                db.update_bnp_phys_switch_status(context, id, switch_status)
+            else:
+                switch_status = const.SWITCH_STATUS['enable']
+                db.update_bnp_phys_switch_status(context, id, switch_status)
+            switch['status'] = switch_status
+        if body.get('rediscover'):
+            bnp_switch = self._discover_switch(switch_dict)
+            switch_ports = db.get_bnp_phys_switch_ports_by_switch_id(
+                context, id)
+            self._update_switch_ports(context, id,
+                                      bnp_switch.get('ports'),
+                                      switch_ports)
         return switch
+
+    def _update_switch_ports(self, context, switch_id, ports, switch_ports):
+        port_ifname_map = {}
+        swport_ifname_map = {}
+        for port in ports:
+            port_ifname_map[port['interface_name']] = const.PORT_STATUS[
+                port['port_status']]
+        for sw_port in switch_ports:
+            swport_ifname_map[
+                sw_port['interface_name']] = sw_port['port_status']
+        for port_ifname in port_ifname_map.keys():
+            if port_ifname in swport_ifname_map.keys():
+                if port_ifname_map[port_ifname] != swport_ifname_map[
+                   port_ifname]:
+                    db.update_bnp_phys_swport_status(
+                        context, switch_id,
+                        port_ifname, port_ifname_map[port_ifname])
+                port_ifname_map.pop(port_ifname)
+                swport_ifname_map.pop(port_ifname)
+            elif port_ifname not in swport_ifname_map.keys():
+                for port in ports:
+                    if port['interface_name'] == port_ifname:
+                        ifindex = port['ifindex']
+                        break
+                phys_port = {'switch_id': switch_id,
+                             'port_status': port_ifname_map[port_ifname],
+                             'interface_name': port_ifname,
+                             'ifindex': ifindex}
+                db.add_bnp_phys_switch_port(context, phys_port)
+                port_ifname_map.pop(port_ifname)
+        if swport_ifname_map:
+            for swport_ifname in swport_ifname_map:
+                db.delete_bnp_phys_switch_ports_by_name(context, switch_id,
+                                                        swport_ifname)
 
     def _discover_switch(self, switch):
         snmp_driver = discovery_driver.SNMPDiscoveryDriver(switch)

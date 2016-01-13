@@ -29,6 +29,12 @@ class SNMPDiscoveryDriver(object):
         switch = {'mac_address': mac_addr, 'ports': ports_dict}
         return switch
 
+    def get_sys_name(self):
+        oid = constants.OID_SYS_NAME
+        varBinds = self.client.get(oid)
+        for name, val in varBinds:
+            return val.prettyPrint()
+
     def get_mac_addr(self):
         oid = constants.OID_MAC_ADDRESS
         var_binds = self.client.get(oid)

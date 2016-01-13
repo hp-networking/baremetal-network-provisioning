@@ -44,6 +44,7 @@ OID_IF_TYPE = '1.3.6.1.2.1.2.2.1.3'
 OID_PORT_STATUS = '1.3.6.1.2.1.2.2.1.8'
 OID_VLAN_CREATE = '1.3.6.1.2.1.17.7.1.4.3.1.5'
 OID_VLAN_EGRESS_PORT = '1.3.6.1.2.1.17.7.1.4.3.1.2'
+OID_SYS_NAME = '1.3.6.1.2.1.1.5.0'
 
 PORT_STATUS = {'1': 'UP',
                '2': 'DOWN',
