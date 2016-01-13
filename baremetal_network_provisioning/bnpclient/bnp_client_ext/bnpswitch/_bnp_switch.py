@@ -16,6 +16,7 @@
 from neutronclient.common import extension
 from neutronclient.common import utils
 from neutronclient.i18n import _
+from neutronclient.neutron import v2_0 as neutronV20
 
 from baremetal_network_provisioning.common import constants as const
 
@@ -128,15 +129,6 @@ class BnpSwitchUpdate(extension.ClientExtensionUpdate, BnpSwitch):
     def args2body(self, parsed_args):
 
         body = {const.BNP_SWITCH_RESOURCE_NAME: {}}
-        if parsed_args.enable:
-            body[const.BNP_SWITCH_RESOURCE_NAME][
-                'enable'] = parsed_args.enable
-        if parsed_args.rediscover:
-            body[const.BNP_SWITCH_RESOURCE_NAME][
-                'rediscover'] = parsed_args.rediscover
-        if parsed_args.access_protocol:
-            body[const.BNP_SWITCH_RESOURCE_NAME][
-                'access_protocol'] = parsed_args.access_protocol
         if parsed_args.access_parameters:
             parameters = parsed_args.access_parameters[0]
             write_community = parameters.get('write_community')
@@ -153,4 +145,7 @@ class BnpSwitchUpdate(extension.ClientExtensionUpdate, BnpSwitch):
                                  'priv_protocol': priv_protocol}
             body[const.BNP_SWITCH_RESOURCE_NAME][
                 'access_parameters'] = access_parameters
+        neutronV20.update_dict(parsed_args,
+                               body[const.BNP_SWITCH_RESOURCE_NAME],
+                               ['rediscover', 'enable', 'access_protocol'])
         return body
