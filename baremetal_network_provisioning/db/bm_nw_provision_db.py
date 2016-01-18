@@ -340,13 +340,8 @@ def get_bnp_phys_port(context, sw_id, port_name):
 
 def get_bnp_phys_switch_by_ip(context, ip_addr):
     """Get physical switch that matches ip address."""
-    try:
-        query = context.session.query(models.BNPPhysicalSwitch)
-        switch = query.filter_by(ip_address=ip_addr).one()
-    except exc.NoResultFound:
-        LOG.error(_LE("no physical switch found with ip address: %s"), ip_addr)
-        return
-    return switch
+    query = context.session.query(models.BNPPhysicalSwitch)
+    return query.filter_by(ip_address=ip_addr).one()
 
 
 def get_bnp_neutron_port(context, neutron_port_id):
