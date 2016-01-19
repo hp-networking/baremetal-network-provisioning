@@ -26,8 +26,6 @@ from baremetal_network_provisioning.common import validators
 from baremetal_network_provisioning.db import bm_nw_provision_db as db
 from baremetal_network_provisioning.drivers import discovery_driver
 
-from cgi import parse_qs
-
 from oslo_log import log as logging
 
 LOG = logging.getLogger(__name__)
@@ -70,15 +68,11 @@ class BNPSwitchController(wsgi.Controller):
 
     def index(self, request, **kwargs):
         context = request.context
-        # PHANI TO DO - Find a better approach
-        environ = request.environ
-        if environ.get('QUERY_STRING'):
-            data = parse_qs(environ['QUERY_STRING'])
-            id = data.get('id')
-            switch = db.get_bnp_phys_switch(context, id[0])
-            switch_list = self._switch_to_show(switch)
-            return {'bnp_switches': switch_list}
-        switches = db.get_all_bnp_phys_switches(context)
+        filters = {}
+        req_dict = dict(request.GET)
+        if req_dict:
+            filters = req_dict
+        switches = db.get_all_bnp_phys_switches(context, **filters)
         switches = self._switch_to_show(switches)
         switches_dict = {'bnp_switches': switches}
         return switches_dict
