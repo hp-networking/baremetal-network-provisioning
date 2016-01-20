@@ -169,8 +169,10 @@ class SNMPClient(object):
 
     def get_bit_map_for_add(self, val, egress_byte):
         ifindex = val
-        byte_index = int(ifindex) / 8
+        byte_index = int(ifindex - 1) / 8
         bit_index = int(ifindex) % 8
+        if bit_index == 0:
+            bit_index = 8
         target_byte = egress_byte[byte_index]
         mask = 0x80
         if bit_index >= 1:
@@ -187,8 +189,10 @@ class SNMPClient(object):
 
     def get_bit_map_for_del(self, val, egress_byte):
         ifindex = val
-        byte_index = int(ifindex) / 8
+        byte_index = int(ifindex - 1) / 8
         bitindex = int(ifindex) % 8
+        if bitindex == 0:
+            bitindex = 8
         target_byte = egress_byte[byte_index]
         mask = 0x80
         if bitindex > 1:
