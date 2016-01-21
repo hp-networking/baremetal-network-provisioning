@@ -22,6 +22,7 @@ from baremetal_network_provisioning.db import bm_nw_provision_models as models
 from neutron.common import exceptions as n_exc
 from neutron.db import models_v2
 from neutron.i18n import _LE
+from neutron.i18n import _LI
 
 
 LOG = logging.getLogger(__name__)
@@ -336,6 +337,7 @@ def get_bnp_phys_port(context, sw_id, port_name):
         LOG.error(_LE("no physical port found with port_name: %s"), port_name)
         return
     return port
+
 
 def get_bnp_phys_switch_by_ip(context, ip_addr):
     """Get physical switch that matches ip address."""
