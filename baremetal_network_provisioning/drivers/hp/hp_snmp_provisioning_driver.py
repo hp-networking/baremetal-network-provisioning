@@ -75,13 +75,13 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
 
     def monitor_port_status(self):
         """Sync switch database periodically."""
-        self.context = neutron_context.get_admin_context()
-        portmaps = db.get_all_bnp_swport_mappings(self.context)
+        context = neutron_context.get_admin_context()
+        portmaps = db.get_all_bnp_swport_mappings(context)
         for portmap in portmaps:
             swport = db.get_bnp_phys_switch_port_by_id(
-                self.context, portmap['switch_port_id'])
+                context, portmap['switch_port_id'])
             old_status = swport['port_status']
-            switch = db.get_bnp_phys_switch(self.context,
+            switch = db.get_bnp_phys_switch(context,
                                             portmap['switch_id'])
             try:
                 snmp_drv = discovery_driver.SNMPDiscoveryDriver(switch)
@@ -92,9 +92,9 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
                     LOG.info(_LI("BNP SNMP polling: Update port status to "
                                  "UNKNOWN."))
                     db.update_bnp_phys_swport_status(
-                        self.context, swport['switch_id'],
+                        context, swport['switch_id'],
                         swport['interface_name'], 'UNKNOWN')
-                    db.set_port_status(self.context,
+                    db.set_port_status(context,
                                        portmap['neutron_port_id'],
                                        n_const.PORT_STATUS_ERROR)
             else:
@@ -104,14 +104,14 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
                     LOG.info(_LI('BNP SNMP polling: Update port status to %s'),
                              new_status)
                     db.update_bnp_phys_swport_status(
-                        self.context, swport['switch_id'],
+                        context, swport['switch_id'],
                         swport['interface_name'], new_status)
                     if new_status == 'UP':
-                        db.set_port_status(self.context,
+                        db.set_port_status(context,
                                            portmap['neutron_port_id'],
                                            n_const.PORT_STATUS_ACTIVE)
                     else:
-                        db.set_port_status(self.context,
+                        db.set_port_status(context,
                                            portmap['neutron_port_id'],
                                            n_const.PORT_STATUS_DOWN)
 
