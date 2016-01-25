@@ -77,9 +77,10 @@ class SNMPDriver(driver.PortProvisioningDriver):
                 bit_list.append(line)
             set_string = client.get_rfc1902_octet_string(''.join(bit_list))
             client.set(egress_oid, set_string)
-            is_last_port_vlan = port['port']['is_last_port_vlan']
+            """on port delete removing interface from target vlan, not deleting global vlan on device""" 
+            '''is_last_port_vlan = port['port']['is_last_port_vlan']
             if is_last_port_vlan:
-                client.set(vlan_oid, client.get_rfc1902_integer(6))
+                client.set(vlan_oid, client.get_rfc1902_integer(6))'''
         except Exception as e:
             LOG.error(_LE("Exception in deleting VLAN '%s' "), e)
             raise exceptions.SNMPFailure(operation="SET", error=e)
