@@ -67,7 +67,6 @@ class SNMPDriver(driver.PortProvisioningDriver):
         try:
             client = snmp_client.get_client(self._get_switch_dict(port))
             seg_id = port['port']['segmentation_id']
-            vlan_oid = constants.OID_VLAN_CREATE + '.' + str(seg_id)
             egress_oid = constants.OID_VLAN_EGRESS_PORT + '.' + str(seg_id)
             nibble_byte = self._get_device_nibble_map(client, egress_oid)
             ifindex = port['port']['ifindex']
