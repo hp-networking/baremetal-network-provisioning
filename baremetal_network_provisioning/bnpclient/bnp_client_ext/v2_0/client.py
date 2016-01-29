@@ -17,8 +17,9 @@
 import itertools
 
 from neutronclient import client
-from neutronclient.common import extension
 from neutronclient.v2_0 import client as V2_Client
+
+from baremetal_network_provisioning.bnpclient.bnp_client_ext import shell
 
 
 class Client(V2_Client.Client):
@@ -57,7 +58,7 @@ class Client(V2_Client.Client):
     """
     def _register_extensions(self, version):
         for name, module in itertools.chain(
-                extension._discover_via_entry_points()):
+                shell.discover_via_entry_points()):
             self._extend_client_with_module(module, version)
 
     def __init__(self, **kwargs):
@@ -71,3 +72,4 @@ class Client(V2_Client.Client):
         self.format = 'json'
         self.action_prefix = "/v%s" % (self.version)
         self.retry_interval = 1
+        self._register_extensions(self.version)

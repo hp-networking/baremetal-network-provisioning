@@ -435,10 +435,11 @@ def delete_bnp_neutron_port(context, nport_id):
                 neutron_port_id=nport_id).delete()
 
 
-def get_all_bnp_phys_switches(context):
+def get_all_bnp_phys_switches(context, **args):
     """Get all physical switches."""
     try:
-        query = context.session.query(models.BNPPhysicalSwitch)
+        query = context.session.query(
+            models.BNPPhysicalSwitch).filter_by(**args)
         switches = query.all()
     except exc.NoResultFound:
         LOG.error(_LE("no physical switch found"))
@@ -530,3 +531,24 @@ def set_port_status(context, port_id, status):
                                    synchronize_session=False))
     except exc.NoResultFound:
         raise n_exc.PortNotFound(port_id=port_id)
+
+
+def delete_bnp_phys_switch_ports_by_name(context, switch_id, ifname):
+    """Delete the switch ports of a switch by name."""
+    session = context.session
+    with session.begin(subtransactions=True):
+        session.query(models.BNPPhysicalSwitchPort).filter_by(
+            switch_id=switch_id,
+            interface_name=ifname).delete()
+
+
+def get_bnp_phys_switch_ports_by_switch_id(context, switch_id):
+    """Get physical switch port by switch id."""
+    try:
+        query = context.session.query(models.BNPPhysicalSwitchPort)
+        switch_ports = query.filter_by(
+            switch_id=switch_id).all()
+    except exc.NoResultFound:
+        LOG.error('no ports found for physical switch %s', switch_id)
+        return
+    return switch_ports
