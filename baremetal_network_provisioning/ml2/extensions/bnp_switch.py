@@ -19,6 +19,7 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron.api.v2 import resource
+from neutron.i18n import _LE
 from neutron import wsgi
 
 from baremetal_network_provisioning.common import constants as const
@@ -71,6 +72,7 @@ class BNPSwitchController(wsgi.Controller):
         filters = {}
         req_dict = dict(request.GET)
         if req_dict:
+            req_dict.pop('fields')
             filters = req_dict
         switches = db.get_all_bnp_phys_switches(context, **filters)
         switches = self._switch_to_show(switches)
@@ -213,9 +215,15 @@ class BNPSwitchController(wsgi.Controller):
                 validators.validate_snmpv3_parameters(access_parameters)
             else:
                 validators.validate_snmp_parameters(access_parameters)
-            snmp_driver = discovery_driver.SNMPDiscoveryDriver(switch_dict)
-            snmp_driver.get_sys_name()
-            db.update_bnp_phys_switch_access_params(context, id, switch_dict)
+            try:
+                snmp_driver = discovery_driver.SNMPDiscoveryDriver(switch_dict)
+                snmp_driver.get_sys_name()
+                db.update_bnp_phys_switch_access_params(context,
+                                                        id, switch_dict)
+            except Exception as e:
+                LOG.error(_LE("Exception in validating credentials '%s' "), e)
+                raise webob.exc.HTTPBadRequest(
+                    _("Validation of credentials failed"))
         if body.get('enable'):
             enable = attributes.convert_to_boolean(body['enable'])
             if not enable:
@@ -227,32 +235,32 @@ class BNPSwitchController(wsgi.Controller):
             switch['status'] = switch_status
         if body.get('rediscover'):
             bnp_switch = self._discover_switch(switch_dict)
-            switch_ports = db.get_bnp_phys_switch_ports_by_switch_id(
+            db_switch_ports = db.get_bnp_phys_switch_ports_by_switch_id(
                 context, id)
             self._update_switch_ports(context, id,
                                       bnp_switch.get('ports'),
-                                      switch_ports)
+                                      db_switch_ports)
         return switch
 
-    def _update_switch_ports(self, context, switch_id, ports, switch_ports):
+    def _update_switch_ports(self, context, switch_id, ports, db_switch_ports):
         port_ifname_map = {}
-        swport_ifname_map = {}
+        db_swport_ifname_map = {}
         for port in ports:
             port_ifname_map[port['interface_name']] = const.PORT_STATUS[
                 port['port_status']]
-        for sw_port in switch_ports:
-            swport_ifname_map[
+        for sw_port in db_switch_ports:
+            db_swport_ifname_map[
                 sw_port['interface_name']] = sw_port['port_status']
         for port_ifname in port_ifname_map.keys():
-            if port_ifname in swport_ifname_map.keys():
-                if port_ifname_map[port_ifname] != swport_ifname_map[
+            if port_ifname in db_swport_ifname_map.keys():
+                if port_ifname_map[port_ifname] != db_swport_ifname_map[
                    port_ifname]:
                     db.update_bnp_phys_swport_status(
                         context, switch_id,
                         port_ifname, port_ifname_map[port_ifname])
                 port_ifname_map.pop(port_ifname)
-                swport_ifname_map.pop(port_ifname)
-            elif port_ifname not in swport_ifname_map.keys():
+                db_swport_ifname_map.pop(port_ifname)
+            elif port_ifname not in db_swport_ifname_map.keys():
                 for port in ports:
                     if port['interface_name'] == port_ifname:
                         ifindex = port['ifindex']
@@ -263,8 +271,8 @@ class BNPSwitchController(wsgi.Controller):
                              'ifindex': ifindex}
                 db.add_bnp_phys_switch_port(context, phys_port)
                 port_ifname_map.pop(port_ifname)
-        if swport_ifname_map:
-            for swport_ifname in swport_ifname_map:
+        if db_swport_ifname_map:
+            for swport_ifname in db_swport_ifname_map:
                 db.delete_bnp_phys_switch_ports_by_name(context, switch_id,
                                                         swport_ifname)
 

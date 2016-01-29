@@ -549,6 +549,6 @@ def get_bnp_phys_switch_ports_by_switch_id(context, switch_id):
         switch_ports = query.filter_by(
             switch_id=switch_id).all()
     except exc.NoResultFound:
-        LOG.debug('no ports found for physical switch %s', switch_id)
+        LOG.error('no ports found for physical switch %s', switch_id)
         return
     return switch_ports

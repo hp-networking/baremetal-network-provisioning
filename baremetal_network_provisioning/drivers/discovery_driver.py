@@ -31,9 +31,7 @@ class SNMPDiscoveryDriver(object):
 
     def get_sys_name(self):
         oid = constants.OID_SYS_NAME
-        varBinds = self.client.get(oid)
-        for name, val in varBinds:
-            return val.prettyPrint()
+        self.client.get(oid)
 
     def get_mac_addr(self):
         oid = constants.OID_MAC_ADDRESS
