@@ -99,6 +99,12 @@ class BNPSwitchController(wsgi.Controller):
     def show(self, request, id, **kwargs):
         context = request.context
         switch = db.get_bnp_phys_switch(context, id)
+        snmp_drv = discovery_driver.SNMPDiscoveryDriver(switch)
+        ports_list = snmp_drv.get_ports_info()
+        sw_ports = {}
+        for port_dict in ports_list:
+            sw_ports[port_dict['ifindex']] = port_dict['port_status']
+
         port_status_dict = {}
         if not switch:
             raise webob.exc.HTTPNotFound(
@@ -111,8 +117,9 @@ class BNPSwitchController(wsgi.Controller):
             for port in bounded_ports:
                 switch_port = db.get_bnp_phys_switch_port_by_id(
                     context, port['switch_port_id'])
-                port_status_dict[switch_port[
-                    'interface_name']] = switch_port['port_status']
+                port_status_dict[switch_port['interface_name']] = (
+                    const.PORT_STATUS.get(
+                        str(sw_ports[switch_port['ifindex']])))
         switch_dict['ports'] = port_status_dict
         return {const.BNP_SWITCH_RESOURCE_NAME: switch_dict}
 
