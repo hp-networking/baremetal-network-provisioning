@@ -101,7 +101,7 @@ class BNPSwitchController(wsgi.Controller):
             context = request.context
             switch = db.get_bnp_phys_switch(context, id)
             snmp_drv = discovery_driver.SNMPDiscoveryDriver(switch)
-            ports_list = snmp_drv.get_ports_info()
+            ports_list = snmp_drv.get_ports_status()
         except Exception as e:
             LOG.error(_LE("BNP SNMP getbulk failed with exception: %s."), e)
             is_getbulk_success = False

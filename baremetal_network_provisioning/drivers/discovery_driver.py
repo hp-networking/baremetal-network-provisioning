@@ -60,3 +60,16 @@ class SNMPDiscoveryDriver(object):
                      'interface_name': port_name,
                      'port_status': var_bind_table_row[3][1].prettyPrint()})
         return ports_dict
+
+    def get_ports_status(self):
+
+        oids = [constants.OID_PORTS,
+                constants.OID_PORT_STATUS]
+        var_binds = self.client.get_bulk(*oids)
+        ports_dict = []
+        for var_bind_table_row in var_binds:
+            if_index = (var_bind_table_row[0][1]).prettyPrint()
+            ports_dict.append(
+                {'ifindex': if_index,
+                 'port_status': var_bind_table_row[1][1].prettyPrint()})
+        return ports_dict
