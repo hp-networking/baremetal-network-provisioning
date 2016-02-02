@@ -68,7 +68,6 @@ class TestHPSNMPProvisioningDriver(base.BaseTestCase):
         port_dict = self._get_port_payload()
         bnp_phys_switch = models.BNPPhysicalSwitch
         bnp_phys_port = models.BNPPhysicalSwitchPort
-        bnp_mappings = models.BNPSwitchPortMapping
         cred_dict = self._get_credentials_dict()
         with contextlib.nested(
             mock.patch.object(db,
@@ -77,9 +76,6 @@ class TestHPSNMPProvisioningDriver(base.BaseTestCase):
             mock.patch.object(db,
                               'get_bnp_phys_port',
                               return_value=bnp_phys_port),
-            mock.patch.object(db,
-                              'get_all_bnp_swport_mappings',
-                              return_value=bnp_mappings),
             mock.patch.object(self.driver,
                               '_get_credentials_dict',
                               return_value=cred_dict),

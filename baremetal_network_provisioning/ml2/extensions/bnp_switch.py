@@ -97,13 +97,19 @@ class BNPSwitchController(wsgi.Controller):
         return switch_list
 
     def show(self, request, id, **kwargs):
-        context = request.context
-        switch = db.get_bnp_phys_switch(context, id)
-        snmp_drv = discovery_driver.SNMPDiscoveryDriver(switch)
-        ports_list = snmp_drv.get_ports_info()
-        sw_ports = {}
-        for port_dict in ports_list:
-            sw_ports[port_dict['ifindex']] = port_dict['port_status']
+        try:
+            context = request.context
+            switch = db.get_bnp_phys_switch(context, id)
+            snmp_drv = discovery_driver.SNMPDiscoveryDriver(switch)
+            ports_list = snmp_drv.get_ports_info()
+        except Exception as e:
+            LOG.error(_LE("BNP SNMP getbulk failed with exception: %s."), e)
+            is_getbulk_success = False
+        else:
+            is_getbulk_success = True
+            sw_ports = {}
+            for port_dict in ports_list:
+                sw_ports[port_dict['ifindex']] = port_dict['port_status']
 
         port_status_dict = {}
         if not switch:
@@ -114,12 +120,18 @@ class BNPSwitchController(wsgi.Controller):
         bounded_ports = db.get_bnp_switch_port_map_by_switchid(
             context, id)
         if bounded_ports:
-            for port in bounded_ports:
-                switch_port = db.get_bnp_phys_switch_port_by_id(
-                    context, port['switch_port_id'])
-                port_status_dict[switch_port['interface_name']] = (
-                    const.PORT_STATUS.get(
-                        str(sw_ports[switch_port['ifindex']])))
+            if is_getbulk_success:
+                for port in bounded_ports:
+                    switch_port = db.get_bnp_phys_switch_port_by_id(
+                        context, port['switch_port_id'])
+                    port_status_dict[switch_port['interface_name']] = (
+                        const.PORT_STATUS.get(
+                            str(sw_ports[switch_port['ifindex']])))
+            else:
+                for port in bounded_ports:
+                    switch_port = db.get_bnp_phys_switch_port_by_id(
+                        context, port['switch_port_id'])
+                    port_status_dict[switch_port['interface_name']] = 'UNKNOWN'
         switch_dict['ports'] = port_status_dict
         return {const.BNP_SWITCH_RESOURCE_NAME: switch_dict}
 

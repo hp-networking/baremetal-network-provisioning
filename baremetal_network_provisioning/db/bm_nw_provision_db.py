@@ -447,17 +447,6 @@ def get_all_bnp_phys_switches(context, **args):
     return switches
 
 
-def get_all_bnp_swport_mappings(context):
-    """Get all switch port mappings."""
-    try:
-        query = context.session.query(models.BNPSwitchPortMapping)
-        swport_map = query.all()
-    except exc.NoResultFound:
-        LOG.error(_LE("no switch port mapping found"))
-        return
-    return swport_map
-
-
 def update_bnp_phys_switch_status(context, sw_id, sw_status):
     """Update physical switch status."""
     try:
