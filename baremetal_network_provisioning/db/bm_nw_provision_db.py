@@ -19,9 +19,9 @@ from sqlalchemy.orm import exc
 
 from baremetal_network_provisioning.db import bm_nw_provision_models as models
 
-from neutron.common import exceptions as n_exc
 from neutron.db import models_v2
 from neutron.i18n import _LE
+from neutron.i18n import _LI
 
 
 LOG = logging.getLogger(__name__)
@@ -344,7 +344,7 @@ def get_bnp_phys_switch_by_ip(context, ip_addr):
         query = context.session.query(models.BNPPhysicalSwitch)
         switch = query.filter_by(ip_address=ip_addr).one()
     except exc.NoResultFound:
-        LOG.error(_LE("no physical switch found with ip address: %s"), ip_addr)
+        LOG.info(_LI("no physical switch found with ip address: %s"), ip_addr)
         return
     return switch
 
@@ -447,17 +447,6 @@ def get_all_bnp_phys_switches(context, **args):
     return switches
 
 
-def get_all_bnp_swport_mappings(context):
-    """Get all switch port mappings."""
-    try:
-        query = context.session.query(models.BNPSwitchPortMapping)
-        swport_map = query.all()
-    except exc.NoResultFound:
-        LOG.error(_LE("no switch port mapping found"))
-        return
-    return swport_map
-
-
 def update_bnp_phys_switch_status(context, sw_id, sw_status):
     """Update physical switch status."""
     try:
@@ -521,16 +510,6 @@ def get_bnp_phys_switch_port_by_id(context, id):
         LOG.debug('no physical switch port found for %s', id)
         return
     return switch_port
-
-
-def set_port_status(context, port_id, status):
-    try:
-        with context.session.begin(subtransactions=True):
-            (context.session.query(models_v2.Port).filter_by(
-                id=port_id).update({'status': status},
-                                   synchronize_session=False))
-    except exc.NoResultFound:
-        raise n_exc.PortNotFound(port_id=port_id)
 
 
 def delete_bnp_phys_switch_ports_by_name(context, switch_id, ifname):

@@ -79,7 +79,8 @@ class BNPPhysicalSwitch(model_base.BASEV2, models_v2.HasId):
     priv_protocol = sa.Column(sa.String(16), nullable=True)
     priv_key = sa.Column(sa.String(255), nullable=True)
     security_level = sa.Column(sa.String(16), nullable=True)
-    __table_args__ = (sa.PrimaryKeyConstraint('id', 'ip_address'),)
+    __table_args__ = (sa.PrimaryKeyConstraint('id'),
+                      sa.UniqueConstraint('ip_address'),)
 
 
 class BNPSwitchPortMapping(model_base.BASEV2):
