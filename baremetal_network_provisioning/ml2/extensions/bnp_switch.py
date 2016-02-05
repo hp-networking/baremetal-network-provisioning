@@ -97,9 +97,12 @@ class BNPSwitchController(wsgi.Controller):
         return switch_list
 
     def show(self, request, id, **kwargs):
+        context = request.context
+        switch = db.get_bnp_phys_switch(context, id)
+        if not switch:
+            raise webob.exc.HTTPNotFound(
+                _("Switch %s does not exist") % id)
         try:
-            context = request.context
-            switch = db.get_bnp_phys_switch(context, id)
             snmp_drv = discovery_driver.SNMPDiscoveryDriver(switch)
             ports_list = snmp_drv.get_ports_status()
         except Exception as e:
@@ -112,9 +115,6 @@ class BNPSwitchController(wsgi.Controller):
                 sw_ports[port_dict['ifindex']] = port_dict['port_status']
 
         port_status_dict = {}
-        if not switch:
-            raise webob.exc.HTTPNotFound(
-                _("Switch %s does not exist") % id)
         switch_list = self._switch_to_show(switch)
         switch_dict = switch_list[0]
         bounded_ports = db.get_bnp_switch_port_map_by_switchid(
