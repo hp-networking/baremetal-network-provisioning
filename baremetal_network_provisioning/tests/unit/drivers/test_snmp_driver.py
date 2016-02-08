@@ -18,6 +18,7 @@ import contextlib
 import mock
 
 from baremetal_network_provisioning.common import constants as hp_const
+from baremetal_network_provisioning.common import exceptions
 from baremetal_network_provisioning.common import snmp_client
 from baremetal_network_provisioning.drivers import snmp_driver
 
@@ -49,9 +50,6 @@ class TestSnmpDriver(base.BaseTestCase):
         oct_str = rfc1902.OctetString('')
         with contextlib.nested(mock.patch.object(snmp_client, 'get_client',
                                                  return_value=self.client),
-                               mock.patch.object(snmp_driver.SNMPDriver,
-                                                 '_get_switch_dict',
-                                                 return_value=None),
                                mock.patch.object(snmp_client.SNMPClient, 'set',
                                                  return_value=None),
                                mock.patch.object(snmp_driver.SNMPDriver,
@@ -77,9 +75,6 @@ class TestSnmpDriver(base.BaseTestCase):
         with contextlib.nested(mock.patch.object(snmp_client, 'get_client',
                                                  return_value=self.client),
                                mock.patch.object(snmp_driver.SNMPDriver,
-                                                 '_get_switch_dict',
-                                                 return_value=None),
-                               mock.patch.object(snmp_driver.SNMPDriver,
                                                  '_snmp_get',
                                                  return_value=None),
                                mock.patch.object(snmp_client.SNMPClient, 'set',
@@ -87,21 +82,31 @@ class TestSnmpDriver(base.BaseTestCase):
                                mock.patch.object(snmp_driver.SNMPDriver,
                                                  '_get_device_nibble_map',
                                                  return_value=None),
-                               mock.patch.object(snmp_driver.SNMPDriver,
-                                                 '_get_ifindex_for_port',
-                                                 return_value='1'),
                                mock.patch.object(snmp_client.SNMPClient,
                                                  'get_bit_map_for_add',
                                                  return_value=egress_byte)):
             self.driver.set_isolation(self.port)
             snmp_client.get_client.called
-            snmp_client.SNMPClient.set.called
-            snmp_driver.SNMPDriver._get_switch_dict.called
             snmp_driver.SNMPDriver._snmp_get.called
+            snmp_client.SNMPClient.set.called
             snmp_driver.SNMPDriver._get_device_nibble_map.called
-            snmp_driver.SNMPDriver._get_ifindex_for_port.called
             snmp_client.SNMPClient.get_bit_map_for_add.called
             snmp_client.SNMPClient.set.assert_called_with(egress_oid, oct_str)
+
+    def test_set_isolation_exception(self):
+        self.port = self._get_port_payload()
+        self.client = snmp_client.get_client(self.snmp_info)
+        with contextlib.nested(
+            mock.patch.object(snmp_client, 'get_client',
+                              return_value=self.client),
+            mock.patch.object(snmp_driver.SNMPDriver,
+                              '_snmp_get',
+                              return_value=None),
+            mock.patch.object(snmp_client.SNMPClient, 'set',
+                              side_effect=exceptions.SNMPFailure)):
+            self.assertRaises(exceptions.SNMPFailure,
+                              self.driver.set_isolation,
+                              self.port)
 
     def _get_port_payload(self):
         """Get port payload for processing requests."""
@@ -110,10 +115,25 @@ class TestSnmpDriver(base.BaseTestCase):
                       'ifindex': '1',
                       'host_id': 'ironic',
                       'access_type': hp_const.ACCESS,
+                      'credentials': self._get_credentials_dict(),
                       'switchports':
                       [{'port_id': 'Ten-GigabitEthernet1/0/35',
+                        'ifindex': '1',
                           'switch_id': '44:31:92:61:89:d2'}],
                       'id': '321f506f-5f0d-435c-9c23-c2a11f78c3e3',
                       'network_id': 'net-id',
                       'is_lag': False}}
         return port_dict
+
+    def _get_credentials_dict(self):
+        creds_dict = {}
+        creds_dict['ip_address'] = "1.1.1.1"
+        creds_dict['write_community'] = 'public'
+        creds_dict['security_name'] = 'test'
+        creds_dict['security_level'] = 'test'
+        creds_dict['auth_protocol'] = 'md5'
+        creds_dict['access_protocol'] = 'test1'
+        creds_dict['auth_key'] = 'test'
+        creds_dict['priv_protocol'] = 'aes'
+        creds_dict['priv_key'] = 'test_priv'
+        return creds_dict
