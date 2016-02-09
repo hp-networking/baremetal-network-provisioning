@@ -65,6 +65,28 @@ class TestSnmpDriver(base.BaseTestCase):
             snmp_client.SNMPClient.get_bit_map_for_del.called
             snmp_client.SNMPClient.set.assert_called_with(egress_oid, oct_str)
 
+    def test_delete_isolation_exception(self):
+        self.port = self._get_port_payload()
+        self.client = snmp_client.get_client(self.snmp_info)
+        egress_byte = []
+        with contextlib.nested(
+            mock.patch.object(snmp_client, 'get_client',
+                              return_value=self.client),
+            mock.patch.object(snmp_driver.SNMPDriver,
+                              '_snmp_get',
+                              return_value=None),
+            mock.patch.object(snmp_driver.SNMPDriver,
+                              '_get_device_nibble_map',
+                              return_value=None),
+            mock.patch.object(snmp_client.SNMPClient,
+                              'get_bit_map_for_del',
+                              return_value=egress_byte),
+            mock.patch.object(snmp_client.SNMPClient, 'set',
+                              side_effect=exceptions.SNMPFailure)):
+            self.assertRaises(exceptions.SNMPFailure,
+                              self.driver.delete_isolation,
+                              self.port)
+
     def test_set_isolation(self):
         self.port = self._get_port_payload()
         self.client = snmp_client.get_client(self.snmp_info)
@@ -107,6 +129,18 @@ class TestSnmpDriver(base.BaseTestCase):
             self.assertRaises(exceptions.SNMPFailure,
                               self.driver.set_isolation,
                               self.port)
+
+    def test__get_device_nibble_map(self):
+        self.client = snmp_client.get_client(self.snmp_info)
+        seg_id = 1001
+        egrs_oid = hp_const.OID_VLAN_EGRESS_PORT + '.' + str(seg_id)
+        varbinds = [(rfc1902.ObjectName('1.3.6.1.2.1.17.7.1.4.3.1.2.1001'),
+                     rfc1902.OctetString('\x80'))]
+        with contextlib.nested(mock.patch.object(snmp_client.SNMPClient, 'get',
+                                                 return_value=varbinds)):
+            egbytes = self.driver._get_device_nibble_map(self.client, egrs_oid)
+            snmp_client.SNMPClient.get.assert_called_with(egrs_oid)
+        self.assertEqual(egbytes, '\x80')
 
     def _get_port_payload(self):
         """Get port payload for processing requests."""
