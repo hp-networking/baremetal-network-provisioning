@@ -2,6 +2,7 @@
 BNP_DIR=$DEST/baremetal-network-provisioning
 BNP_ML2_CONF_HP_FILE=/etc/neutron/plugins/ml2/ml2_conf_hp.ini
 BNP_ENTRY_POINT_FILE=/opt/stack/neutron/neutron.egg-info/entry_points.txt
+NEUTRON_CONF_DIR=/etc/neutron/plugins/ml2
 SNMP_TIMEOUT=3
 SNMP_RETRIES=5
 NET_PROVISIONING_DRIVER=baremetal_network_provisioning.drivers.hp.hp_snmp_provisioning_driver.HPSNMPProvisioningDriver
