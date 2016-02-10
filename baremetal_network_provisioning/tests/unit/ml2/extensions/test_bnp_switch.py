@@ -116,10 +116,9 @@ class TestBnpSwitches(test_plugin.NeutronDbPluginV2TestCase,
             mock.patch.object(discovery_driver.SNMPDiscoveryDriver,
                               'get_ports_status',
                               return_value=ports_list)):
-            switch = self.bnp_wsgi_controller.show(show_req, switch_id)
+            self.bnp_wsgi_controller.show(show_req, switch_id)
             db.get_bnp_switch_port_map_by_switchid.called
             discovery_driver.SNMPDiscoveryDriver.get_ports_status.called
-            return switch
 
     def test_create_show_switch(self):
         switch = self._create_switch(self.data, self.bnp_switch_dict)
@@ -134,6 +133,13 @@ class TestBnpSwitches(test_plugin.NeutronDbPluginV2TestCase,
         result = self.bnp_wsgi_controller.index(list_req)
         result = result.pop('bnp_switches')
         self.assertEqual(2, len(result))
+
+    def test_create_update_delete_switch(self):
+        switch = self._create_switch(self.data, self.bnp_switch_dict)
+        switch_id = switch['bnp_switch']['id']
+        data = {"bnp_switch": {"enable": "False"}}
+        self._update_switch(data, switch_id)
+        self._delete_switch(switch_id)
 
     def test_update_with_invalid_protocol(self):
         switch = self._create_switch(self.data, self.bnp_switch_dict)
