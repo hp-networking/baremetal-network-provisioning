@@ -21,6 +21,10 @@ function run_bnp_alembic_migration {
 }
 
 function configure_bnp_plugin { 
+    if [ ! -d $NEUTRON_CONF_DIR ]; then
+       sudo mkdir -p $NEUTRON_CONF_DIR
+       sudo chown -R $STACK_USER:root /etc/neutron
+    fi
     cp $BNP_DIR/etc/ml2_conf_hp.ini $BNP_ML2_CONF_HP_FILE
     iniset $BNP_ML2_CONF_HP_FILE default snmp_timeout $SNMP_TIMEOUT
     iniset $BNP_ML2_CONF_HP_FILE default snmp_retries $SNMP_RETRIES
