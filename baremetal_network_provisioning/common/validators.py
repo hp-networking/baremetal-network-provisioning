@@ -20,6 +20,11 @@ import webob.exc
 from baremetal_network_provisioning.common import constants as const
 
 
+access_parameter_keys = ['write_community', 'security_name',
+                         'auth_protocol', 'priv_protocol', 'auth_key',
+                         'priv_key', 'security_level']
+
+
 def access_parameter_validator(data, valid_values=None):
     """Validate the access parameters."""
     if not data:
@@ -46,12 +51,20 @@ def validate_request(request):
     return body
 
 
+def validate_attributes(keys, attr_keys):
+    extra_keys = set(keys) - set(attr_keys)
+    if extra_keys:
+        msg = _("Unrecognized attribute(s) '%s'") % ', '.join(extra_keys)
+        raise webob.exc.HTTPBadRequest(msg)
+
+
 def validate_access_parameters(body):
     if body['access_protocol'].lower() not in const.SUPPORTED_PROTOCOLS:
         raise webob.exc.HTTPBadRequest(
             _("'access protocol %s' is not supported") % body[
                 'access_protocol'])
     access_parameters = body.get("access_parameters")
+    validate_attributes(access_parameters.keys(), access_parameter_keys)
     if body['access_protocol'].lower() == const.SNMP_V3:
         validate_snmpv3_parameters(access_parameters)
     else:

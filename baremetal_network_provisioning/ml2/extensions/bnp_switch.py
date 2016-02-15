@@ -158,6 +158,7 @@ class BNPSwitchController(wsgi.Controller):
             if key not in keys:
                 raise webob.exc.HTTPBadRequest(
                     _("Key %s not found in request body") % key)
+        validators.validate_attributes(keys, key_list)
         if body['vendor'] not in const.SUPPORTED_VENDORS:
             raise webob.exc.HTTPBadRequest(
                 _("Switch with vendor %s is not supported") %
@@ -198,6 +199,9 @@ class BNPSwitchController(wsgi.Controller):
         context = request.context
         self._check_admin(context)
         body = validators.validate_request(request)
+        key_list = ['access_protocol', 'access_parameters',
+                    'enable', 'rediscover']
+        validators.validate_attributes(body.keys(), key_list)
         validate_snmp_creds = False
         phys_switch = db.get_bnp_phys_switch(context, id)
         if not phys_switch:
