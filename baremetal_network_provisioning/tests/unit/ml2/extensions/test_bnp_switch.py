@@ -65,7 +65,7 @@ class TestBnpSwitches(test_plugin.NeutronDbPluginV2TestCase,
                        "security_name": None,
                        "auth_protocol": None,
                        "priv_protocol": None},
-                      "vendor": "hp",
+                      "vendor": "hpe",
                       "ip_address": "1.2.3.4",
                       "access_protocol": "snmpv1"}}
         self.data1 = {"bnp_switch":
@@ -76,7 +76,7 @@ class TestBnpSwitches(test_plugin.NeutronDbPluginV2TestCase,
                         "security_name": None,
                         "auth_protocol": None,
                         "priv_protocol": None},
-                       "vendor": "hp",
+                       "vendor": "hpe",
                        "ip_address": "1.1.1.1",
                        "access_protocol": "snmpv2c"}}
         self.bnp_switch_dict = {"mac_address": "44:31:92:dc:2e:c0",

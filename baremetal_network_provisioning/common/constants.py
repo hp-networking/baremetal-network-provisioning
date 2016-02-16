@@ -28,7 +28,7 @@ SUPPORTED_AUTH_PROTOCOLS = [None, 'md5', 'sha', 'sha1']
 SUPPORTED_PRIV_PROTOCOLS = [None, 'des', '3des', 'aes',
                             'des56', 'aes128', 'aes192', 'aes256']
 
-SUPPORTED_VENDORS = ['hp']
+SUPPORTED_VENDORS = ['hpe']
 
 SNMP_V1 = 'snmpv1'
 SNMP_V2C = 'snmpv2c'
