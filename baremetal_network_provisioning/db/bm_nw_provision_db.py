@@ -531,3 +531,14 @@ def get_bnp_phys_switch_ports_by_switch_id(context, switch_id):
         LOG.error('no ports found for physical switch %s', switch_id)
         return
     return switch_ports
+
+
+def get_all_bnp_swport_mappings(context):
+    """Get all switch port mappings."""
+    try:
+        query = context.session.query(models.BNPSwitchPortMapping)
+        swport_map = query.all()
+    except exc.NoResultFound:
+        LOG.error(_LE("no switch port mapping found"))
+        return
+    return swport_map
