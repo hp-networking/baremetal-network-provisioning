@@ -34,6 +34,7 @@ import contextlib
 
 TARGET_PLUGIN = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 _get_path = test_base._get_path
+extensions_path = ':'.join(neutron.extensions.__path__)
 
 
 class TestBnpSwitches(test_plugin.NeutronDbPluginV2TestCase,
@@ -42,7 +43,6 @@ class TestBnpSwitches(test_plugin.NeutronDbPluginV2TestCase,
     fmt = 'json'
     _mechanism_drivers = ['hp']
     _ext_drivers = 'bnp_ext_driver'
-    extensions_path = ':'.join(neutron.extensions.__path__)
 
     def setUp(self):
         super(TestBnpSwitches, self).setUp()
@@ -103,9 +103,20 @@ class TestBnpSwitches(test_plugin.NeutronDbPluginV2TestCase,
         self.bnp_wsgi_controller.update(update_req, switch_id)
 
     def _delete_switch(self, switch_id):
-        delete_req = self.new_delete_request('bnp-switches',
-                                             switch_id)
-        self.bnp_wsgi_controller.delete(delete_req, switch_id)
+        with contextlib.nested(
+            mock.patch.object(db, 'get_all_bnp_swport_mappings',
+                              return_value=[])):
+            delete_req = self.new_delete_request('bnp-switches',
+                                                 switch_id)
+            self.bnp_wsgi_controller.delete(delete_req, switch_id)
+
+    def _delete_switch_with_active_mappings(self, switch_id):
+        with contextlib.nested(
+            mock.patch.object(db, 'get_all_bnp_swport_mappings',
+                              return_value=[{'switch_id': switch_id}])):
+            delete_req = self.new_delete_request('bnp-switches',
+                                                 switch_id)
+            self.bnp_wsgi_controller.delete(delete_req, switch_id)
 
     def _show_switch(self, switch_id):
         ports_list = []
@@ -162,6 +173,12 @@ class TestBnpSwitches(test_plugin.NeutronDbPluginV2TestCase,
                           self._delete_switch,
                           switch_id)
 
+    def test_delete_switch_with_mappings(self):
+        switch_id = 'foobar'
+        self.assertRaises(webob.exc.HTTPConflict,
+                          self._delete_switch_with_active_mappings,
+                          switch_id)
+
     def test_create_with_invalid_vendor(self):
         data = self.data
         data['bnp_switch']['vendor'] = 'fake_vendor'
@@ -183,3 +200,9 @@ class TestBnpSwitches(test_plugin.NeutronDbPluginV2TestCase,
                                    "write_community": "public"}}}
         self.assertRaises(webob.exc.HTTPBadRequest,
                           self._update_switch, data, switch_id)
+
+    def test_del_switch_with_active_mapping(self):
+        switch_id = 'foobar'
+        self.assertRaises(webob.exc.HTTPNotFound,
+                          self._delete_switch,
+                          switch_id)

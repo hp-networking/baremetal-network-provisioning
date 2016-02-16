@@ -139,6 +139,12 @@ class BNPSwitchController(wsgi.Controller):
         context = request.context
         self._check_admin(context)
         switch = db.get_bnp_phys_switch(context, id)
+        portmaps = db.get_all_bnp_swport_mappings(context)
+        for portmap in portmaps:
+            switch_id = portmap['switch_id']
+            if id == switch_id:
+                raise webob.exc.HTTPConflict(
+                    _("Switch id %s has active port mappings") % id)
         if not switch:
             raise webob.exc.HTTPNotFound(
                 _("Switch %s does not exist") % id)
