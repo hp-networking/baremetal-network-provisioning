@@ -200,3 +200,9 @@ class TestBnpSwitches(test_plugin.NeutronDbPluginV2TestCase,
                                    "write_community": "public"}}}
         self.assertRaises(webob.exc.HTTPBadRequest,
                           self._update_switch, data, switch_id)
+
+    def test_del_switch_with_active_mapping(self):
+        switch_id = 'foobar'
+        self.assertRaises(webob.exc.HTTPNotFound,
+                          self._delete_switch,
+                          switch_id)
