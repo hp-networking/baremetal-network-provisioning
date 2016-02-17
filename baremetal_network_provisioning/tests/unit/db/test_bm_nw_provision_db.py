@@ -309,11 +309,3 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
         port_updt = self.ctx.session.query(models.BNPPhysicalSwitchPort).all()
         self.assertNotEqual(port_dict['port_status'],
                             port_updt[0]['port_status'])
-
-    def test_get_all_bnp_sw_port_mappings(self):
-        """Test test_get_all_bnp_sw_port_mappings method."""
-        port_map = self._get_bnp_switch_port_map_dict()
-        db.add_bnp_switch_port_map(self.ctx, port_map)
-        mappings = db.get_all_bnp_swport_mappings(self.ctx)
-        actual_switch_id = mappings[0]['switch_id']
-        self.assertEqual(actual_switch_id, '3456')

@@ -41,7 +41,7 @@ class TestBnpSwitches(test_plugin.NeutronDbPluginV2TestCase,
                       testlib_api.WebTestCase):
 
     fmt = 'json'
-    _mechanism_drivers = ['hp']
+    _mechanism_drivers = ['hpe_bnp']
     _ext_drivers = 'bnp_ext_driver'
 
     def setUp(self):
@@ -104,7 +104,7 @@ class TestBnpSwitches(test_plugin.NeutronDbPluginV2TestCase,
 
     def _delete_switch(self, switch_id):
         with contextlib.nested(
-            mock.patch.object(db, 'get_all_bnp_swport_mappings',
+            mock.patch.object(db, 'get_bnp_switch_port_map_by_switchid',
                               return_value=[])):
             delete_req = self.new_delete_request('bnp-switches',
                                                  switch_id)
@@ -112,7 +112,7 @@ class TestBnpSwitches(test_plugin.NeutronDbPluginV2TestCase,
 
     def _delete_switch_with_active_mappings(self, switch_id):
         with contextlib.nested(
-            mock.patch.object(db, 'get_all_bnp_swport_mappings',
+            mock.patch.object(db, 'get_bnp_switch_port_map_by_switchid',
                               return_value=[{'switch_id': switch_id}])):
             delete_req = self.new_delete_request('bnp-switches',
                                                  switch_id)
