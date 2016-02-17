@@ -26,17 +26,17 @@ from baremetal_network_provisioning.common import constants as hp_const
 
 
 LOG = logging.getLogger(__name__)
-hp_opts = [
+hpe_opts = [
     cfg.StrOpt('net_provisioning_driver',
                default='baremetal_network_provisioning.ml2'
                '.hp_network_provisioning_driver.HPNetworkProvisioningDriver',
                help=_("Driver to provision networks on the switches in"
                       "the cloud fabric")),
 ]
-cfg.CONF.register_opts(hp_opts, "ml2_hp")
+cfg.CONF.register_opts(hpe_opts, "ml2_hpe")
 
 
-class HPMechanismDriver(api.MechanismDriver):
+class HPEMechanismDriver(api.MechanismDriver):
     """Ml2 Mechanism front-end driver interface for bare
 
     metal provisioning.
@@ -50,7 +50,7 @@ class HPMechanismDriver(api.MechanismDriver):
 
     def _load_drivers(self):
         """Loads back end network provision driver from configuration."""
-        driver_obj = self.conf.ml2_hp.net_provisioning_driver
+        driver_obj = self.conf.ml2_hpe.net_provisioning_driver
         if not driver_obj:
             raise SystemExit(_('A network provisioning driver'
                                'must be specified'))
