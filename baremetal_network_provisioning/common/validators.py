@@ -47,7 +47,7 @@ def validate_request(request):
         body = body.pop(const.BNP_SWITCH_RESOURCE_NAME)
     except KeyError:
         raise webob.exc.HTTPBadRequest(
-            _("'switch' not found in request body"))
+            _("'bnp_switch' not found in request body"))
     return body
 
 
