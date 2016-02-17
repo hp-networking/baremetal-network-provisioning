@@ -13,9 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from oslo_log import log as logging
-import mock
-from sqlalchemy.orm import exc
-import testtools
 
 from neutron import context
 from neutron.tests.unit import testlib_api
@@ -220,13 +217,13 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
     def _get_bnp_access_param_dict(self):
         """Get a phy switch access params dict."""
         param_dict = {'access_protocol': "snmpv3",
-                       'write_community': "public",
-                       'security_name': "xyz",
-                       'auth_protocol': "md5",
-                       'auth_key': "abc",
-                       'priv_protocol': "des",
-                       'priv_key': "abc",
-                       'security_level': "authPriv"}
+                      'write_community': "public",
+                      'security_name': "xyz",
+                      'auth_protocol': "md5",
+                      'auth_key': "abc",
+                      'priv_protocol': "des",
+                      'priv_key': "abc",
+                      'security_level': "authPriv"}
         return param_dict
 
     def _get_bnp_phys_switchport_dict(self):
@@ -325,7 +322,6 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
                                          switches[0]['id'],
                                          "disable")
         sw_updt = self.ctx.session.query(models.BNPPhysicalSwitch).all()
-        # TODO switch status is not getting updated
         self.assertNotEqual(sw_updt[0]['status'], "disable")
 
     def test_update_bnp_phys_swport_status(self):
@@ -346,14 +342,13 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
         db.add_bnp_phys_switch(self.ctx, sw_dict)
         switches = db.get_all_bnp_phys_switches(self.ctx)
         db.update_bnp_phys_switch_access_params(self.ctx,
-                                         switches[0]['id'],
-                                         param_dict)
+                                                switches[0]['id'],
+                                                param_dict)
         sw_updt = self.ctx.session.query(models.BNPPhysicalSwitch).all()
-        # TODO switch status is not getting updated
         self.assertNotEqual(sw_updt[0]['access_protocol'], "snmpv3")
-       
+
     def test_get_bnp_phys_switch_port_by_id(self):
-        """Test get_bnp_phys_switch_port_by_id method"""
+        """Test get_bnp_phys_switch_port_by_id method."""
         swport = self._get_bnp_phys_switchport_dict()
         db.add_bnp_phys_switch_port(self.ctx, swport)
         port = db.get_bnp_phys_switch_ports_by_switch_id(self.ctx,
@@ -366,7 +361,7 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
         """Test delete_bnp_phys_switch_ports_by_name method."""
         swport_dict = self._get_bnp_phys_switchport_dict()
         db.add_bnp_phys_switch_port(self.ctx, swport_dict)
-        db.delete_bnp_phys_switch_ports_by_name(self.ctx, 
+        db.delete_bnp_phys_switch_ports_by_name(self.ctx,
                                                 swport_dict['switch_id'],
                                                 swport_dict['interface_name'])
         count = self.ctx.session.query(models.BNPPhysicalSwitchPort).count()
