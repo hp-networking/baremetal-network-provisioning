@@ -30,7 +30,7 @@ from baremetal_network_provisioning.ml2 import network_provisioning_api as api
 
 
 LOG = logging.getLogger(__name__)
-hp_opts = [
+hpe_opts = [
     cfg.StrOpt('base_url',
                help=_("Base HTTP URL of  SDN controller")),
     cfg.StrOpt('auth_token',
@@ -45,7 +45,7 @@ hp_opts = [
                help=_("Timeout in seconds to wait for SDN HTTP request"
                       "completion.")),
 ]
-cfg.CONF.register_opts(hp_opts, "default")
+cfg.CONF.register_opts(hpe_opts, "default")
 
 
 class HPNetworkProvisioningDriver(api.NetworkProvisioningApi):
