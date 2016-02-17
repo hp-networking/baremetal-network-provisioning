@@ -71,7 +71,7 @@ class BNPSwitchController(wsgi.Controller):
         context = request.context
         filters = {}
         req_dict = dict(request.GET)
-        if req_dict:
+        if req_dict and req_dict.get('fields', None):
             req_dict.pop('fields')
             filters = req_dict
         switches = db.get_all_bnp_phys_switches(context, **filters)
