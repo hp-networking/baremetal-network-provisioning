@@ -63,10 +63,17 @@ class TestDiscoveryDriver(base.BaseTestCase):
             snmp_client.SNMPClient.get.assert_called_once_with(oid)
 
     def test_get_ports_info(self):
-        oids = [constants.OID_PORTS,
-                constants.OID_IF_INDEX,
+        oids = [constants.OID_IF_INDEX,
+                constants.OID_PORTS,
                 constants.OID_IF_TYPE,
                 constants.OID_PORT_STATUS]
         with mock.patch.object(snmp_client.SNMPClient, 'get_bulk'):
             self.dis_driver.get_ports_info()
+            snmp_client.SNMPClient.get_bulk.assert_called_once_with(*oids)
+
+    def test_get_ports_status(self):
+        oids = [constants.OID_IF_INDEX,
+                constants.OID_PORT_STATUS]
+        with mock.patch.object(snmp_client.SNMPClient, 'get_bulk'):
+            self.dis_driver.get_ports_status()
             snmp_client.SNMPClient.get_bulk.assert_called_once_with(*oids)

@@ -492,14 +492,6 @@ def update_bnp_phys_switch_access_params(context, switch_id, params):
         LOG.error(_LE("no physical switch found for id: %s"), switch_id)
 
 
-def delete_bnp_phys_switch_ports_by_switchid(context, id):
-    """Delete the switch ports of a switch."""
-    session = context.session
-    with session.begin(subtransactions=True):
-        session.query(models.BNPPhysicalSwitchPort).filter_by(
-            switch_id=id).delete()
-
-
 def get_bnp_phys_switch_port_by_id(context, id):
     """Get physical switch port by id."""
     try:

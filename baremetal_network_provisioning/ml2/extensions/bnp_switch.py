@@ -120,17 +120,14 @@ class BNPSwitchController(wsgi.Controller):
         bounded_ports = db.get_bnp_switch_port_map_by_switchid(
             context, id)
         if bounded_ports:
-            if is_getbulk_success:
-                for port in bounded_ports:
-                    switch_port = db.get_bnp_phys_switch_port_by_id(
-                        context, port['switch_port_id'])
+            for port in bounded_ports:
+                switch_port = db.get_bnp_phys_switch_port_by_id(
+                    context, port['switch_port_id'])
+                if is_getbulk_success:
                     port_status_dict[switch_port['interface_name']] = (
                         const.PORT_STATUS.get(
                             str(sw_ports[switch_port['ifindex']])))
-            else:
-                for port in bounded_ports:
-                    switch_port = db.get_bnp_phys_switch_port_by_id(
-                        context, port['switch_port_id'])
+                else:
                     port_status_dict[switch_port['interface_name']] = 'UNKNOWN'
         switch_dict['ports'] = port_status_dict
         return {const.BNP_SWITCH_RESOURCE_NAME: switch_dict}
