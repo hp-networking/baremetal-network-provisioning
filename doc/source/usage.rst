@@ -22,16 +22,19 @@ BNP introduces a various models to describe the relationship between neutron por
 
 Create Switch:
 neutron-bnp switch-create --help (This command will provide help for giving parameters)
+
 Example:
 neutron-bnp switch-create xxx.xxx.xxx.xxx hpe snmpv2c --access_parameters write_community=public
 
 Show Switch:
 neutron-bnp switch-show --help (Help related to switch-show command)
+
 Example:
 neutron-bnp switch-show <switch_id>
 
 List Switch:
 neutron-bnp switch-list --help (Help related to switch-list command)
+
 Example:
 neutron-bnp switch-list
 
