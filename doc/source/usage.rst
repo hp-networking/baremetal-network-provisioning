@@ -7,8 +7,7 @@ Overview
 1. What is Bare Metal Network Provisioning (BNP)
 ================================================
 
-Openstack Ironic project deals with provisioning BM servers. However, plumbing of BM servers into tenant networks has been a manual procedure by the Cloud Admin .Within the timeframe of Liberty/Mitaka release of Openstack, we are attempting to spruce-up ironic to automate plumbing BM servers into tenant networks. Since Openstack Neutron project deals with plumbing ports on tenant-network in the cloud, Ironic has requested the Neutron team to provide enhancement to enable plumb the BM server ports into Cloud infrastructure (part of solution).
-	Initially, Openstack Neutron will be extended to allow plumbing of BM server ports into only VLAN-based networks. These networks could either be a boot up network (ie., PXE booting network for BM servers) , or tenant network (for cloud to BM server communication) or cleaning-network (for recovering BM server used IP namespaces).
+Openstack Ironic project deals with provisioning BM servers. However, plumbing of BM servers into tenant networks has been a manual procedure by the Cloud Admin .Within the timeframe of Liberty/Mitaka release of Openstack, we are attempting to spruce-up ironic to automate plumbing BM servers into tenant networks. Since Openstack Neutron project deals with plumbing ports on tenant-network in the cloud, Ironic has requested the Neutron team to provide enhancement to enable plumb the BM server ports into Cloud infrastructure (part of solution).Initially, Openstack Neutron will be extended to allow plumbing of BM server ports into only VLAN-based networks. These networks could either be a boot up network (ie., PXE booting network for BM servers) , or tenant network (for cloud to BM server communication) or cleaning-network (for recovering BM server used IP namespaces).
 
 To support this neutron has added new vnic_type as 'baremetal' and ironic supplied the link_local_information in the binding:profile dict of port .
 
@@ -31,17 +30,18 @@ neutron-bnp switch-show --help (Help related to switch-show command)
 Example:
 neutron-bnp switch-show <switch_id>
 
-List Switch
+List Switch:
 neutron-bnp switch-list --help (Help related to switch-list command)
 Example:
 neutron-bnp switch-list
 
-Delete switch: This happens in 2 steps:
+Delete switch: 
+This happens in 2 steps:
 a.	Disable the switch:  neutron-bnp switch-update <switch_id> --enable=False
 b.	Delete the switch: neutron-bnp switch-delete <switch_id>
 
 Update Switch
-a.	neutron-bnp switch-update –help
+neutron-bnp switch-update –help
 
 Example:
 neutron-bnp switch-update $switch_id  --enable False --rediscover True
