@@ -14,7 +14,7 @@ To support this neutron has added new vnic_type as 'baremetal' and ironic suppli
 .. _model:
 2. BNP models
 =============
-BNP introduces a various models to describe the relationship between neutron ports and the physical ports.
+BNP introduces various models to describe the relationship between neutron ports and the physical ports.
 
 .. _cli:
 3. BNP CLI's
