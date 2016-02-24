@@ -21,21 +21,15 @@ BNP introduces various models to describe the relationship between neutron ports
 ============
 
 Create Switch:
-neutron-bnp switch-create --help (This command will provide help for giving parameters)
 
-Example:
-neutron-bnp switch-create xxx.xxx.xxx.xxx hpe snmpv2c --access_parameters write_community=public
+neutron-bnp switch-create $switch_ip  $vendor_name  $protocol --access_parameters write_community=$community_string
 
 Show Switch:
-neutron-bnp switch-show --help (Help related to switch-show command)
 
-Example:
 neutron-bnp switch-show <switch_id>
 
 List Switch:
-neutron-bnp switch-list --help (Help related to switch-list command)
 
-Example:
 neutron-bnp switch-list
 
 Delete switch: 
@@ -44,9 +38,7 @@ a.	Disable the switch:  neutron-bnp switch-update <switch_id> --enable=False
 b.	Delete the switch: neutron-bnp switch-delete <switch_id>
 
 Update Switch
-neutron-bnp switch-update –help
 
-Example:
 neutron-bnp switch-update $switch_id  --enable False --rediscover True
 neutron-bnp switch-update $switch_id   --rediscover True
 
