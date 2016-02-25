@@ -37,7 +37,7 @@ This happens in 2 steps:
 a.	Disable the switch:  neutron-bnp switch-update <switch_id> --enable=False
 b.	Delete the switch: neutron-bnp switch-delete <switch_id>
 
-Update Switch
+Update Switch:
 
 neutron-bnp switch-update $switch_id  --enable False --rediscover True
 neutron-bnp switch-update $switch_id   --rediscover True
