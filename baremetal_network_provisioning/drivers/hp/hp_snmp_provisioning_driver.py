@@ -51,7 +51,7 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
         self.conf = cfg.CONF
         # TODO(selva) need to check how we can load dynamically
         drvr = 'baremetal_network_provisioning.drivers.snmp_driver.SNMPDriver'
-        self.context = neutron_context.get_admin_context()
+        # self.context = neutron_context.get_admin_context()
         self._load_drivers(drvr)
 
     def create_port(self, port):
@@ -63,14 +63,15 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
         """bind_port_to_segment ."""
         LOG.info(_LI('bind_port_to_segment called from back-end mech driver'))
         switchports = port['port']['switchports']
+        context = neutron_context.get_admin_context()
         for switchport in switchports:
             switch_id = switchport['switch_id']
-            bnp_switch = db.get_bnp_phys_switch_by_mac(self.context,
+            bnp_switch = db.get_bnp_phys_switch_by_mac(context,
                                                        switch_id)
             port_name = switchport['port_id']
             if not bnp_switch:
                 self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
-            phys_port = db.get_bnp_phys_port(self.context,
+            phys_port = db.get_bnp_phys_port(context,
                                              bnp_switch.id,
                                              port_name)
             if not phys_port:
@@ -91,8 +92,8 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
                             'segmentation_id': int(segmentation_id),
                             'bind_status': 0
                             }
-            db.add_bnp_switch_port_map(self.context, mapping_dict)
-            db.add_bnp_neutron_port(self.context, mapping_dict)
+            db.add_bnp_switch_port_map(context, mapping_dict)
+            db.add_bnp_neutron_port(context, mapping_dict)
             return constants.BIND_SUCCESS
         except Exception as e:
             LOG.error(_LE("Exception in configuring VLAN '%s' "), e)
@@ -101,7 +102,8 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
     def update_port(self, port):
         """update_port ."""
         port_id = port['port']['id']
-        bnp_sw_map = db.get_bnp_switch_port_mappings(self.context, port_id)
+        context = neutron_context.get_admin_context()
+        bnp_sw_map = db.get_bnp_switch_port_mappings(context, port_id)
         if not bnp_sw_map:
             # We are creating the switch ports because initial ironic
             # port-create will not supply local link information for tenant .
@@ -111,21 +113,22 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
 
     def delete_port(self, port_id):
         """delete_port ."""
+        context = neutron_context.get_admin_context()
         try:
-            port_map = db.get_bnp_neutron_port(self.context, port_id)
+            port_map = db.get_bnp_neutron_port(context, port_id)
         except Exception:
             LOG.error(_LE("No neutron port is associated with the phys port"))
             return
         is_last_port_in_vlan = False
         seg_id = port_map.segmentation_id
-        bnp_sw_map = db.get_bnp_switch_port_mappings(self.context, port_id)
+        bnp_sw_map = db.get_bnp_switch_port_mappings(context, port_id)
         switch_port_id = bnp_sw_map[0].switch_port_id
-        bnp_switch = db.get_bnp_phys_switch(self.context,
+        bnp_switch = db.get_bnp_phys_switch(context,
                                             bnp_sw_map[0].switch_id)
         cred_dict = self._get_credentials_dict(bnp_switch, 'delete_port')
-        phys_port = db.get_bnp_phys_switch_port_by_id(self.context,
+        phys_port = db.get_bnp_phys_switch_port_by_id(context,
                                                       switch_port_id)
-        result = db.get_bnp_neutron_port_by_seg_id(self.context, seg_id)
+        result = db.get_bnp_neutron_port_by_seg_id(context, seg_id)
         if not result:
             LOG.error(_LE("No neutron port is associated with the phys port"))
             self._raise_ml2_error(wexc.HTTPNotFound, 'delete_port')
@@ -143,8 +146,8 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
         credentials_dict['credentials'] = cred_dict
         try:
             self.protocol_driver.delete_isolation(port_dict)
-            db.delete_bnp_neutron_port(self.context, port_id)
-            db.delete_bnp_switch_port_mappings(self.context, port_id)
+            db.delete_bnp_neutron_port(context, port_id)
+            db.delete_bnp_switch_port_mappings(context, port_id)
         except Exception as e:
             LOG.error(_LE("Error in deleting the port '%s' "), e)
             self._raise_ml2_error(wexc.HTTPNotFound, 'delete_port')
@@ -179,20 +182,21 @@ class HPSNMPProvisioningDriver(api.NetworkProvisioningApi):
         switchports = port['port']['switchports']
         LOG.debug(_LE("_create_port switch: %s"), port)
         network_id = port['port']['network_id']
-        subnets = db.get_subnets_by_network(self.context, network_id)
+        context = neutron_context.get_admin_context()
+        subnets = db.get_subnets_by_network(context, network_id)
         if not subnets:
             LOG.error("Subnet not found for the network")
             self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
         for switchport in switchports:
             switch_mac_id = switchport['switch_id']
             port_id = switchport['port_id']
-            bnp_switch = db.get_bnp_phys_switch_by_mac(self.context,
+            bnp_switch = db.get_bnp_phys_switch_by_mac(context,
                                                        switch_mac_id)
             # check for port and switch level existence
             if not bnp_switch:
                 LOG.error(_LE("No physical switch found '%s' "), switch_mac_id)
                 self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
-            phys_port = db.get_bnp_phys_port(self.context,
+            phys_port = db.get_bnp_phys_port(context,
                                              bnp_switch.id,
                                              port_id)
             if not phys_port:
