@@ -14,6 +14,8 @@
 # under the License.
 # service type constants:
 
+from copy import deepcopy
+import os.path
 from simplejson import scanner as json_scanner
 import webob.exc
 
@@ -44,10 +46,13 @@ def validate_request(request):
         raise webob.exc.HTTPBadRequest(
             _("Invalid JSON body"))
     try:
-        body = body.pop(const.BNP_SWITCH_RESOURCE_NAME)
+        key = body.keys()
+        if key[0] in [const.BNP_SWITCH_RESOURCE_NAME,
+                   const.BNP_CREDENTIAL_RESOURCE_NAME]:
+            body = body.pop(key[0])
     except KeyError:
         raise webob.exc.HTTPBadRequest(
-            _("'bnp_switch' not found in request body"))
+            _("resource name not found in request body"))
     return body
 
 
@@ -59,27 +64,50 @@ def validate_attributes(keys, attr_keys):
 
 
 def validate_access_parameters(body):
-    if body['access_protocol'].lower() not in const.SUPPORTED_PROTOCOLS:
+    protocol_dict = deepcopy(body)
+    if 'name' not in protocol_dict.keys():
         raise webob.exc.HTTPBadRequest(
-            _("'access protocol %s' is not supported") % body[
-                'access_protocol'])
-    access_parameters = body.get("access_parameters")
-    validate_attributes(access_parameters.keys(), access_parameter_keys)
-    if body['access_protocol'].lower() == const.SNMP_V3:
-        validate_snmpv3_parameters(access_parameters)
+                    _("Name not found in request body"))
+    protocol_dict.pop('name')
+    keys = protocol_dict.keys()
+    if not len(keys):
+        raise webob.exc.HTTPBadRequest(
+                    _("Request body should have at least one protocol specified"))
+    elif len(keys) > 1:
+        raise webob.exc.HTTPBadRequest(
+            _("multiple protocols in a single request is not supported"))
+    key = keys[0]
+    if key.lower() not in const.SUPPORTED_PROTOCOLS:
+        raise webob.exc.HTTPBadRequest(
+            _("'protocol %s' is not supported") % keys)
+    if key.lower() == const.SNMP_V3:
+        return validate_snmpv3_parameters(protocol_dict, key)
+    elif key.lower() in [const.NETCONF_SSH, const.NETCONF_SOAP]:
+        return validate_netconf_parameters(protocol_dict, key)
     else:
-        validate_snmp_parameters(access_parameters)
+        return validate_snmp_parameters(protocol_dict, key)
 
 
-def validate_snmp_parameters(access_parameters):
+def validate_snmp_parameters(protocol_dict, key):
     """Validate SNMP v1 and v2c parameters."""
+    access_parameters = protocol_dict.pop(key)
+    keys = access_parameters.keys()
+    validate_attributes(keys, ['write_community'])
     if not access_parameters.get('write_community'):
         raise webob.exc.HTTPBadRequest(
             _("'write_community' not found in request body"))
+    if key.lower() == const.SNMP_V1:
+        return const.SNMP_V1
+    else:
+        return const.SNMP_V2C
 
 
-def validate_snmpv3_parameters(access_parameters):
+def validate_snmpv3_parameters(protocol_dict, key):
     """Validate SNMP v3 parameters."""
+    access_parameters = protocol_dict.pop(key)
+    keys = access_parameters.keys()
+    attr_keys = ['security_name', 'auth_protocol', 'auth_key', 'priv_protocol', 'priv_key']
+    validate_attributes(keys, attr_keys)
     if not access_parameters.get('security_name'):
         raise webob.exc.HTTPBadRequest(
             _("security_name not found in request body"))
@@ -111,3 +139,37 @@ def validate_snmpv3_parameters(access_parameters):
             raise webob.exc.HTTPBadRequest(
                 _("'priv_key %s' should be equal or more than"
                   "8 characters") % access_parameters['priv_key'])
+    return const.SNMP_V3
+
+
+def _validate_user_name_password(access_parameters):
+    if not access_parameters.get('user_name'):
+        raise webob.exc.HTTPBadRequest(
+            _("user_name not found in request body"))
+    elif not access_parameters.get('password'):
+        raise webob.exc.HTTPBadRequest(
+            _("password not found in request body"))
+
+
+def validate_netconf_parameters(protocol_dict, key):
+    """Validate NETCONF SSH/SOAP parameters"""
+    
+    access_parameters = protocol_dict.pop(key)
+    if key.lower() == const.NETCONF_SSH:
+        """ check for key path"""
+        if access_parameters.get('key_path'):
+            if not os.path.isfile(access_parameters.get('key_path')):
+                raise webob.exc.HTTPBadRequest(
+                    _("Invalid key path"))
+            if access_parameters.get('user_name') or access_parameters.get('password'):
+                raise webob.exc.HTTPBadRequest(
+                    _("Either specify username and password OR keypath, not both"))
+            return const.NETCONF_SSH
+        _validate_user_name_password(access_parameters)
+        return const.NETCONF_SSH
+    else:
+        if access_parameters.get('key_path'):
+            raise webob.exc.HTTPBadRequest(
+                    _("Invalid attribute key_path"))
+        _validate_user_name_password(access_parameters)
+        return const.NETCONF_SOAP

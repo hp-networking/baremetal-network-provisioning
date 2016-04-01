@@ -523,3 +523,82 @@ def get_bnp_phys_switch_ports_by_switch_id(context, switch_id):
         LOG.error('no ports found for physical switch %s', switch_id)
         return
     return switch_ports
+
+def add_bnp_snmp_cred(context, snmp_cred):
+    """Add physical switch."""
+    session = context.session
+    with session.begin(subtransactions=True):
+        uuid = 's' + uuidutils.generate_uuid()
+        snmp_cred = models.BNPSNMPCredential(
+            id=uuid,
+            name=snmp_cred['name'],
+            proto_type=snmp_cred['proto_type'],
+            write_community=snmp_cred['write_community'],
+            security_name=snmp_cred['security_name'],
+            auth_protocol=snmp_cred['auth_protocol'],
+            auth_key=snmp_cred['auth_key'],
+            priv_protocol=snmp_cred['priv_protocol'],
+            priv_key=snmp_cred['priv_key'],
+            security_level=snmp_cred['security_level'])
+        session.add(snmp_cred)
+    return snmp_cred
+
+
+def add_bnp_netconf_cred(context, netconf_cred):
+    """Add physical switch."""
+    session = context.session
+    with session.begin(subtransactions=True):
+        uuid = 'n' + uuidutils.generate_uuid()
+        netconf_cred = models.BNPNETCONFCredential(
+            id=uuid,
+            name=netconf_cred['name'],
+            proto_type=netconf_cred['proto_type'],
+            user_name=netconf_cred['user_name'],
+            password=netconf_cred['password'],
+            key_path=netconf_cred['key_path'])
+        session.add(netconf_cred)
+    return netconf_cred
+
+
+def get_snmp_cred_by_name(context, name):
+    """Get physical switch that matches ip address."""
+    try:
+        query = context.session.query(models.BNPSNMPCredential)
+        snmp_cred = query.filter_by(name=name).one()
+    except exc.NoResultFound:
+        LOG.info(_LI("no snmp credential found with name: %s"), name)
+        return
+    return snmp_cred
+
+
+def get_snmp_cred_by_id(context, id):
+    """Get physical switch that matches ip address."""
+    try:
+        query = context.session.query(models.BNPSNMPCredential)
+        snmp_cred = query.filter_by(id=id).one()
+    except exc.NoResultFound:
+        LOG.info(_LI("no snmp credential found with id: %s"), id)
+        return
+    return snmp_cred
+
+
+def get_netconf_cred_by_name(context, name):
+    """Get physical switch that matches ip address."""
+    try:
+        query = context.session.query(models.BNPNETCONFCredential)
+        netconf_cred = query.filter_by(name=name).one()
+    except exc.NoResultFound:
+        LOG.info(_LI("no netconf credential found with name: %s"), name)
+        return
+    return netconf_cred
+
+
+def get_netconf_cred_by_id(context, id):
+    """Get physical switch that matches ip address."""
+    try:
+        query = context.session.query(models.BNPNETCONFCredential)
+        netconf_cred = query.filter_by(id=id).one()
+    except exc.NoResultFound:
+        LOG.info(_LI("no netconf credential found with id: %s"), id)
+        return
+    return netconf_cred

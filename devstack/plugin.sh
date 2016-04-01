@@ -31,6 +31,7 @@ function configure_bnp_plugin {
     iniadd $BNP_ML2_CONF_HPE_FILE ml2_hpe net_provisioning_driver $NET_PROVISIONING_DRIVER
     iniset $BNP_ENTRY_POINT_FILE neutron.ml2.mechanism_drivers hpe_bnp $HPE_MECHANISM_DRIVER
     iniset $BNP_ENTRY_POINT_FILE neutron.ml2.extension_drivers bnp_ext_driver $BNP_EXTENSION_DRIVER
+    iniset $BNP_ENTRY_POINT_FILE neutron.ml2.extension_drivers bnp_cred_ext_driver $BNP_CRED_EXT_DRIVER
 }
 
 
