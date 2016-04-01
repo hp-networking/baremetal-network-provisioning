@@ -66,6 +66,7 @@ def upgrade():
 
     op.create_table('bnp_physical_switches',
                     sa.Column('id', sa.String(36), nullable=False),
+                    sa.Column('name', sa.String(36), nullable=False),
                     sa.Column('vendor', sa.String(16), nullable=False),
                     sa.Column('family', sa.String(16), nullable=True),
                     sa.Column('ip_address', sa.String(64), nullable=False),

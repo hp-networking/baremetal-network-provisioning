@@ -67,6 +67,7 @@ class BNPPhysicalSwitchPort(model_base.BASEV2, models_v2.HasId):
 class BNPPhysicalSwitch(model_base.BASEV2, models_v2.HasId):
     """Define physical switch properties."""
     __tablename__ = "bnp_physical_switches"
+    name = sa.Column(sa.String(36), nullable=False)
     vendor = sa.Column(sa.String(16), nullable=False)
     family = sa.Column(sa.String(16), nullable=True)
     ip_address = sa.Column(sa.String(64), nullable=False)
