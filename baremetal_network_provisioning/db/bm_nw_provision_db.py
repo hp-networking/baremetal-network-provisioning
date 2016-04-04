@@ -561,7 +561,7 @@ def add_bnp_netconf_cred(context, netconf_cred):
 
 
 def get_snmp_cred_by_name(context, name):
-    """Get SNMP Credentail that matches name."""
+    """Get SNMP Credential that matches name."""
     try:
         query = context.session.query(models.BNPSNMPCredential)
         snmp_cred = query.filter_by(name=name).one()
@@ -572,7 +572,7 @@ def get_snmp_cred_by_name(context, name):
 
 
 def get_snmp_cred_by_id(context, id):
-    """Get SNMP Credentail that matches id."""
+    """Get SNMP Credential that matches id."""
     try:
         query = context.session.query(models.BNPSNMPCredential)
         snmp_cred = query.filter_by(id=id).one()
