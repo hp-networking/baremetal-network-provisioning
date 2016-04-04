@@ -545,7 +545,7 @@ def add_bnp_snmp_cred(context, snmp_cred):
 
 
 def add_bnp_netconf_cred(context, netconf_cred):
-    """Add NETCONF Credenial."""
+    """Add NETCONF Credential."""
     session = context.session
     with session.begin(subtransactions=True):
         uuid = 'n' + uuidutils.generate_uuid()
@@ -583,7 +583,7 @@ def get_snmp_cred_by_id(context, id):
 
 
 def get_netconf_cred_by_name(context, name):
-    """Get NETCONF Credentail that matches name."""
+    """Get NETCONF Credential that matches name."""
     try:
         query = context.session.query(models.BNPNETCONFCredential)
         netconf_cred = query.filter_by(name=name).one()
@@ -594,7 +594,7 @@ def get_netconf_cred_by_name(context, name):
 
 
 def get_netconf_cred_by_id(context, id):
-    """Get NETCONF Credentail that matches id."""
+    """Get NETCONF Credential that matches id."""
     try:
         query = context.session.query(models.BNPNETCONFCredential)
         netconf_cred = query.filter_by(id=id).one()
