@@ -1,28 +1,23 @@
-# Copyright 2015 Rackspace Hosting Inc.
-# All Rights Reserved
+# Copyright (c) 2015 OpenStack Foundation
 #
-#    Licensed under the Apache License, Version 2.0 (the "License"); you may
-#    not use this file except in compliance with the License. You may obtain
-#    a copy of the License at
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-#         http://www.apache.org/licenses/LICENSE-2.0
+#    http://www.apache.org/licenses/LICENSE-2.0
 #
-#    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-#    License for the specific language governing permissions and limitations
-#    under the License.
-#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from neutronclient.common import extension
 from neutronclient.common import utils
 from neutronclient.i18n import _
 from neutronclient.neutron import v2_0 as neutronV20
-
 from baremetal_network_provisioning.common import constants as const
-
-meta = ('write_community=write,security_name=name,'
-        'auth_protocol=auth,priv_protocol=priv,'
-        'auth_key=key,priv_key=key,security_level=level1')
 
 
 class BnpSwitch(extension.NeutronClientExtension):
@@ -36,47 +31,49 @@ class BnpSwitch(extension.NeutronClientExtension):
 
 class BnpSwitchCreate(extension.ClientExtensionCreate, BnpSwitch):
     """Create Physical Switch information."""
-
     shell_command = 'switch-create'
 
     def add_known_arguments(self, parser):
-        parser.add_argument(
-            'ip_address', metavar='IP_ADDRESS',
-            help=_('IP Address of the Physical Switch'))
-        parser.add_argument(
-            'vendor', metavar='VENDOR',
-            help=_('Vendor of the Physical Switch'))
-        parser.add_argument(
-            'access_protocol', metavar='ACCESS_PROTOCOL',
-            help=_('Protocol for accessing the Physical Switch'))
-        parser.add_argument(
-            '--access_parameters',
-            metavar=meta, action='append', dest='access_parameters',
-            type=utils.str2dict,
-            help=_('Protocol access credentials of the Physical Switch'))
+
+        parser.add_argument('name', metavar='NAME',
+                            help=_('Name of the physical switch'))
+        parser.add_argument('ip_address', metavar='IP_ADDRESS',
+                            help=_('IP address of the physical switch'))
+        parser.add_argument('vendor', metavar='VENDOR',
+                            help=_('Vendor of the physical switch'))
+        parser.add_argument('--family',
+                            metavar='FAMILY',
+                            help=_('Family of the physical switch'))
+        parser.add_argument('--disc-proto',
+                            metavar='DISCOVERY_PROTOCOL',
+                            help=_('Discovery protocol of the physical switch'))
+        parser.add_argument('--disc-creds',
+                            metavar='DISCOVERY_CREDENTIALS',
+                            help=_('Discovery credential of the physical switch'))
+        parser.add_argument('--prov-proto',
+                            metavar='PROVISIONING_PROTOCOL',
+                            help=_('Provisioning protocol of the physical switch'))
+        parser.add_argument('--prov-creds',
+                            metavar='PROVISIONING_CREDENTIALS',
+                            help=_('Provisioning credential of the physical switch'))
 
     def args2body(self, parsed_args):
 
         body = {
             const.BNP_SWITCH_RESOURCE_NAME: {
+                'name': parsed_args.name,
                 'ip_address': parsed_args.ip_address,
-                'vendor': parsed_args.vendor,
-                'access_protocol': parsed_args.access_protocol}}
-        if parsed_args.access_parameters:
-            parameters = parsed_args.access_parameters[0]
-            write_community = parameters.get('write_community')
-            security_name = parameters.get('security_name')
-            auth_key = parameters.get('auth_key')
-            priv_key = parameters.get('priv_key')
-            auth_protocol = parameters.get('auth_protocol')
-            priv_protocol = parameters.get('priv_protocol')
-            access_parameters = {'write_community': write_community,
-                                 'security_name': security_name,
-                                 'auth_key': auth_key,
-                                 'priv_key': priv_key,
-                                 'auth_protocol': auth_protocol,
-                                 'priv_protocol': priv_protocol}
-            body['bnp_switch']['access_parameters'] = access_parameters
+                'vendor': parsed_args.vendor}}
+        if parsed_args.family:
+            body['bnp_switch']['family'] = parsed_args.family
+        if parsed_args.disc_proto:
+            body['bnp_switch']['disc_proto'] = parsed_args.disc_proto
+        if parsed_args.disc_creds:
+            body['bnp_switch']['disc_creds'] = parsed_args.disc_creds
+        if parsed_args.prov_proto:
+            body['bnp_switch']['prov_proto'] = parsed_args.prov_proto
+        if parsed_args.prov_creds:
+            body['bnp_switch']['prov_creds'] = parsed_args.prov_creds
         return body
 
 
@@ -85,7 +82,8 @@ class BnpSwitchList(extension.ClientExtensionList, BnpSwitch):
 
     shell_command = 'switch-list'
     allow_names = False
-    list_columns = ['id', 'mac_address', 'ip_address', 'vendor', 'status']
+    list_columns = ['id', 'name', 'vendor', 'family',
+                    'ip_address', 'port_prov', 'disc_proto', 'prov_proto']
     pagination_support = True
     sorting_support = True
 
@@ -111,41 +109,34 @@ class BnpSwitchUpdate(extension.ClientExtensionUpdate, BnpSwitch):
     allow_names = False
 
     def add_known_arguments(self, parser):
-        parser.add_argument(
-            '--access_protocol',
-            help=_('Protocol with which the Switch will be connected'))
-        parser.add_argument(
-            '--access_parameters',
-            metavar=meta, action='append', dest='access_parameters',
-            type=utils.str2dict,
-            help=_('SNMP Credentials of the Switch'))
-        utils.add_boolean_argument(
-            parser, '--enable',
-            help=_('Enable or Disable the switch'))
-        parser.add_argument(
-            '--rediscover', action='store_true',
-            help=_('Trigger rediscovery of the Switch'))
+
+        #parser.add_argument('name', metavar='NAME',help=_('Name of the physical switch'))
+        parser.add_argument('--disc-proto', metavar='DISCOVERY_PROTOCOL',
+                            help=_('Discovery protocol of the physical switch'))
+        parser.add_argument('--disc-creds', metavar='DISCOVERY_CREDENTIAL',
+                            help=_('Discovery credential of the physical switch'))
+        parser.add_argument('--prov-proto', metavar='PROVISIONING_PROTOCOL',
+                            help=_('Provisioning protocol of the physical switch'))
+        parser.add_argument('--prov-creds', metavar='PROVISIONING_CREDENTIALS',
+                            help=_('Provisioning credentials of the physical switch'))
+        utils.add_boolean_argument(parser, '--enable',
+                                   help=_('Enable or Disable the switch'))
+        parser.add_argument('--rediscover', action='store_true',
+                            help=_('Trigger rediscovery of the Switch'))
 
     def args2body(self, parsed_args):
 
         body = {const.BNP_SWITCH_RESOURCE_NAME: {}}
-        if parsed_args.access_parameters:
-            parameters = parsed_args.access_parameters[0]
-            write_community = parameters.get('write_community')
-            security_name = parameters.get('security_name')
-            auth_key = parameters.get('auth_key')
-            priv_key = parameters.get('priv_key')
-            auth_protocol = parameters.get('auth_protocol')
-            priv_protocol = parameters.get('priv_protocol')
-            access_parameters = {'write_community': write_community,
-                                 'security_name': security_name,
-                                 'auth_key': auth_key,
-                                 'priv_key': priv_key,
-                                 'auth_protocol': auth_protocol,
-                                 'priv_protocol': priv_protocol}
-            body[const.BNP_SWITCH_RESOURCE_NAME][
-                'access_parameters'] = access_parameters
+        if parsed_args.disc_proto:
+            body['bnp_switch']['disc_proto'] = parsed_args.disc_proto
+        if parsed_args.disc_creds:
+            body['bnp_switch']['disc_creds'] = parsed_args.disc_creds
+        if parsed_args.prov_proto:
+            body['bnp_switch']['prov_proto'] = parsed_args.prov_proto
+        if parsed_args.prov_creds:
+            body['bnp_switch']['prov_creds'] = parsed_args.prov_creds
+
         neutronV20.update_dict(parsed_args,
                                body[const.BNP_SWITCH_RESOURCE_NAME],
-                               ['rediscover', 'enable', 'access_protocol'])
+                               ['rediscover', 'enable', 'disc_proto', 'disc_creds', 'prov_proto', 'prov_creds'])
         return body
