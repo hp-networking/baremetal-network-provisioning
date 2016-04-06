@@ -39,9 +39,6 @@ class DiscoveryManager(stevedore.named.NamedExtensionManager):
 
     def _register_discovery(self):
         for ext in self:
-            LOG.debug("self.names %s ", self.names())
-            LOG.debug("self %s ", self)
-            LOG.debug("self drivers %s ", self)
             discovery_name = ext.obj.get_driver_name()
             if discovery_name in self.drivers:
                 LOG.error(_LE("discovery driver '%(new_driver)s' ignored "
@@ -88,7 +85,8 @@ class ProvisioningManager(stevedore.named.NamedExtensionManager):
                            'type': provisioning_type})
             else:
                 self.drivers[provisioning_type] = ext
-        LOG.info(_LI("Registered provisioning driver: %s"), self.drivers.keys())
+        LOG.info(_LI("Registered provisioning driver: %s"),
+                 self.drivers.keys())
 
     def provisioning_driver(self, provisioning_type):
         """provisioning driver instance."""

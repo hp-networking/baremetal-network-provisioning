@@ -21,26 +21,22 @@ import six
 
 @six.add_metaclass(abc.ABCMeta)
 class DiscoveryDriverAPI(object):
-    """Interface for back-end discovery drivers.
-    """
+    """Interface for back-end discovery drivers."""
 
     def initialize(self):
         pass
 
     @abc.abstractmethod
     def discover_switch(self, switch_info):
-        """discover_switch discovers the physical switch and ports.
-         """
+        """discover_switch discovers the physical switch and ports."""
         pass
 
     @abc.abstractmethod
     def get_ports_status(self, switch_info):
-        """get_ports_status gets the operation status of the ports.
-         """
+        """get_ports_status gets the operation status of the ports."""
         pass
 
     @abc.abstractmethod
     def get_driver_name(self):
-        """get driver name to load the driver.
-         """
+        """get driver name to load the driver."""
         pass

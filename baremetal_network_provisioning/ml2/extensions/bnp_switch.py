@@ -128,7 +128,6 @@ class BNPSwitchController(wsgi.Controller):
             raise webob.exc.HTTPNotFound(
                 _("Switch %s does not exist") % id)
         try:
-            # snmp_drv = snmp_discovery_driver.SNMPDiscoveryDriver(switch)
             snmp_drv = None
             ports_list = snmp_drv.get_ports_status()
         except Exception as e:
@@ -178,7 +177,7 @@ class BNPSwitchController(wsgi.Controller):
         context = request.context
         self._check_admin(context)
         body = validators.validate_request(request)
-        key_list = ['name','ip_address', 'vendor',
+        key_list = ['name', 'ip_address', 'vendor',
                     'disc_proto', 'disc_creds',
                     'prov_proto', 'prov_creds']
         keys = body.keys()
@@ -200,10 +199,10 @@ class BNPSwitchController(wsgi.Controller):
                 ip_address)
         access_parameters = self._get_access_param(context, body['disc_proto'],
                                                    body['disc_creds'])
-        switch_dict = self._create_switch_dict()
+        # switch_dict = self._create_switch_dict()
         for key, value in access_parameters.iteritems():
             body[key] = value
-        switch = self._update_dict(body, switch_dict)
+        # switch = self._update_dict(body, switch_dict)
         bnp_switch = self._discover_switch(body)
         if bnp_switch.get('mac_address'):
             body['mac_address'] = bnp_switch.get('mac_address')
@@ -338,7 +337,6 @@ class BNPSwitchController(wsgi.Controller):
         # Need to get family name
         family = None
         disc_driver = self._discovery_driver(protocol, vendor, family)
-        LOG.error("disc_driver %s ", disc_driver)
         bnp_switch = disc_driver.obj.discover_switch(switch)
         return bnp_switch
 
@@ -366,7 +364,7 @@ class BNPSwitchController(wsgi.Controller):
         return switch_dict
 
     def _discovery_driver(self, protocol, vendor, family):
-        """Get the discovery driver instance based on protocol."""
+        """Get discovery driver instance based on protocol, vendor, family."""
         try:
             if const.PROTOCOL_SNMP in protocol:
                 driver_key = self._driver_key(vendor, const.PROTOCOL_SNMP,

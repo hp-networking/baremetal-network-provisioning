@@ -1,4 +1,4 @@
-# Copyright (c) 2015 OpenStack Foundation
+# Copyright (c) 2016 OpenStack Foundation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,10 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from oslo_log import log
+
 from baremetal_network_provisioning.common import constants
 from baremetal_network_provisioning.common import snmp_client
 from baremetal_network_provisioning.drivers import discovery_driver_api
-from oslo_log import log
 
 LOG = log.getLogger(__name__)
 
@@ -24,18 +25,20 @@ LOG = log.getLogger(__name__)
 class SNMPDiscoveryDriver(discovery_driver_api.DiscoveryDriverAPI):
 
     def discover_switch(self, snmp_info):
-        LOG.debug(" discover_switch called... %s ", snmp_info)
+        """discovers switch information."""
         mac_addr = self.get_mac_addr(snmp_info)
         ports_dict = self.get_ports_info(snmp_info)
         switch = {'mac_address': mac_addr, 'ports': ports_dict}
         return switch
 
     def get_sys_name(self, snmp_info):
+        """fetches system name."""
         client = snmp_client.get_client(snmp_info)
         oid = constants.OID_SYS_NAME
         client.get(oid)
 
     def get_mac_addr(self, snmp_info):
+        """retrieves switch MAC address."""
         client = snmp_client.get_client(snmp_info)
         oid = constants.OID_MAC_ADDRESS
         var_binds = client.get(oid)
@@ -46,6 +49,7 @@ class SNMPDiscoveryDriver(discovery_driver_api.DiscoveryDriverAPI):
             return mac_addr
 
     def get_ports_info(self, snmp_info):
+        """retrieves switch port information."""
         client = snmp_client.get_client(snmp_info)
         oids = [constants.OID_IF_INDEX,
                 constants.OID_PORTS,
@@ -65,6 +69,7 @@ class SNMPDiscoveryDriver(discovery_driver_api.DiscoveryDriverAPI):
         return ports_dict
 
     def get_ports_status(self, snmp_info):
+        """retrieves port status."""
         client = snmp_client.get_client(snmp_info)
         oids = [constants.OID_IF_INDEX,
                 constants.OID_PORT_STATUS]
