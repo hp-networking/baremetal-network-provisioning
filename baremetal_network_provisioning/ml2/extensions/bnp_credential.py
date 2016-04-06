@@ -79,6 +79,26 @@ class BNPCredentialController(wsgi.Controller):
     def delete(self, request, id, **kwargs):
         pass
 
+    def _creds_to_show(self, creds):
+        attr_list = ['security_name', 'auth_protocol', 'auth_key',
+                     'priv_protocol', 'priv_key', 'write_community',
+                     'security_level', 'user_name', 'password', 'key_path']
+        creds_list = []
+        if isinstance(creds, list):
+            for cred in creds:
+                cred = dict(cred)
+                for key in attr_list:
+                    if cred.has_key(key):
+                        cred.pop(key)
+                creds_list.append(cred)
+            return creds_list
+        else:
+            cred = dict(creds)
+            for key in attr_list:
+                if cred.has_key(key):
+                    cred.pop(key)
+            return cred
+
     def create(self, request, **kwargs):
         """Create a new Credential"""
         context = request.context
@@ -91,9 +111,11 @@ class BNPCredentialController(wsgi.Controller):
         protocol = validators.validate_access_parameters(body)
         if protocol in ['snmpv1', 'snmpv2c', 'snmpv3']:
             db_snmp_cred = self._create_snmp_creds(context, body, protocol)
+            db_snmp_cred = self._creds_to_show(db_snmp_cred)
             return {const.BNP_CREDENTIAL_RESOURCE_NAME: dict(db_snmp_cred)}
         else:
             db_netconf_cred = self._create_netconf_creds(context, body, protocol)
+            db_netconf_cred = self._creds_to_show(db_netconf_cred)
             return {const.BNP_CREDENTIAL_RESOURCE_NAME: dict(db_netconf_cred)}
 
     def _create_snmp_creds(self, context, body, protocol):
