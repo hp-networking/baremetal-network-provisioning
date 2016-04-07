@@ -199,10 +199,8 @@ class BNPSwitchController(wsgi.Controller):
                 ip_address)
         access_parameters = self._get_access_param(context, body['disc_proto'],
                                                    body['disc_creds'])
-        # switch_dict = self._create_switch_dict()
         for key, value in access_parameters.iteritems():
             body[key] = value
-        # switch = self._update_dict(body, switch_dict)
         bnp_switch = self._discover_switch(body)
         if bnp_switch.get('mac_address'):
             body['mac_address'] = bnp_switch.get('mac_address')
@@ -334,8 +332,10 @@ class BNPSwitchController(wsgi.Controller):
         vendor = switch['vendor']
         protocol = switch['disc_proto']
         switch['access_protocol'] = switch['disc_proto']
-        # Need to get family name
         family = None
+        keys = switch.keys()
+        if 'family' in keys:
+            family = switch['family']
         disc_driver = self._discovery_driver(protocol, vendor, family)
         bnp_switch = disc_driver.obj.discover_switch(switch)
         return bnp_switch

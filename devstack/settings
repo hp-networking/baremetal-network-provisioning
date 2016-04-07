@@ -7,6 +7,7 @@ NET_PROVISIONING_DRIVER=baremetal_network_provisioning.drivers.hp.hp_snmp_provis
 HPE_MECHANISM_DRIVER=baremetal_network_provisioning.ml2.mechanism_hpe:HPEMechanismDriver
 BNP_EXTENSION_DRIVER=baremetal_network_provisioning.ml2.hpeironicextensiondriver:HPEIronicExtensionDriver
 BNP_CRED_EXT_DRIVER=baremetal_network_provisioning.ml2.hpe_ironic_credential_ext_driver:HPEIronicCredentialExtDriver
+HPE_SNMP=hpe_snmp
 #
 # Each service you enable has the following meaning:
 # bnp-plugin - Add this config flag to  enable bnp service plugin
