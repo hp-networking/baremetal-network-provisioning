@@ -71,7 +71,7 @@ class BNPSwitchController(wsgi.Controller):
         context = request.context
         filters = {}
         req_dict = dict(request.GET)
-        if req_dict:
+        if req_dict and req_dict.get('fields', None):
             req_dict.pop('fields')
             filters = req_dict
         switches = db.get_all_bnp_phys_switches(context, **filters)
@@ -120,17 +120,14 @@ class BNPSwitchController(wsgi.Controller):
         bounded_ports = db.get_bnp_switch_port_map_by_switchid(
             context, id)
         if bounded_ports:
-            if is_getbulk_success:
-                for port in bounded_ports:
-                    switch_port = db.get_bnp_phys_switch_port_by_id(
-                        context, port['switch_port_id'])
+            for port in bounded_ports:
+                switch_port = db.get_bnp_phys_switch_port_by_id(
+                    context, port['switch_port_id'])
+                if is_getbulk_success:
                     port_status_dict[switch_port['interface_name']] = (
                         const.PORT_STATUS.get(
                             str(sw_ports[switch_port['ifindex']])))
-            else:
-                for port in bounded_ports:
-                    switch_port = db.get_bnp_phys_switch_port_by_id(
-                        context, port['switch_port_id'])
+                else:
                     port_status_dict[switch_port['interface_name']] = 'UNKNOWN'
         switch_dict['ports'] = port_status_dict
         return {const.BNP_SWITCH_RESOURCE_NAME: switch_dict}
@@ -139,6 +136,10 @@ class BNPSwitchController(wsgi.Controller):
         context = request.context
         self._check_admin(context)
         switch = db.get_bnp_phys_switch(context, id)
+        portmap = db.get_bnp_switch_port_map_by_switchid(context, id)
+        if portmap:
+            raise webob.exc.HTTPConflict(
+                _("Switch id %s has active port mappings") % id)
         if not switch:
             raise webob.exc.HTTPNotFound(
                 _("Switch %s does not exist") % id)
@@ -158,6 +159,7 @@ class BNPSwitchController(wsgi.Controller):
             if key not in keys:
                 raise webob.exc.HTTPBadRequest(
                     _("Key %s not found in request body") % key)
+        validators.validate_attributes(keys, key_list)
         if body['vendor'] not in const.SUPPORTED_VENDORS:
             raise webob.exc.HTTPBadRequest(
                 _("Switch with vendor %s is not supported") %
@@ -198,6 +200,9 @@ class BNPSwitchController(wsgi.Controller):
         context = request.context
         self._check_admin(context)
         body = validators.validate_request(request)
+        key_list = ['access_protocol', 'access_parameters',
+                    'enable', 'rediscover']
+        validators.validate_attributes(body.keys(), key_list)
         validate_snmp_creds = False
         phys_switch = db.get_bnp_phys_switch(context, id)
         if not phys_switch:

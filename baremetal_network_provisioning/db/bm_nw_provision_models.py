@@ -67,18 +67,16 @@ class BNPPhysicalSwitchPort(model_base.BASEV2, models_v2.HasId):
 class BNPPhysicalSwitch(model_base.BASEV2, models_v2.HasId):
     """Define physical switch properties."""
     __tablename__ = "bnp_physical_switches"
+    name = sa.Column(sa.String(36), nullable=False)
+    vendor = sa.Column(sa.String(16), nullable=False)
+    family = sa.Column(sa.String(16), nullable=True)
     ip_address = sa.Column(sa.String(64), nullable=False)
     mac_address = sa.Column(sa.String(32), nullable=True)
-    status = sa.Column(sa.String(16), nullable=False)
-    access_protocol = sa.Column(sa.String(16), nullable=False)
-    vendor = sa.Column(sa.String(16), nullable=False)
-    write_community = sa.Column(sa.String(255), nullable=True)
-    security_name = sa.Column(sa.String(255), nullable=True)
-    auth_protocol = sa.Column(sa.String(16), nullable=True)
-    auth_key = sa.Column(sa.String(255), nullable=True)
-    priv_protocol = sa.Column(sa.String(16), nullable=True)
-    priv_key = sa.Column(sa.String(255), nullable=True)
-    security_level = sa.Column(sa.String(16), nullable=True)
+    port_prov = sa.Column(sa.String(16), nullable=False)
+    disc_proto = sa.Column(sa.String(16), nullable=False)
+    disc_creds = sa.Column(sa.String(36), nullable=False)
+    prov_proto = sa.Column(sa.String(16), nullable=False)
+    prov_creds = sa.Column(sa.String(36), nullable=False)
     __table_args__ = (sa.PrimaryKeyConstraint('id'),
                       sa.UniqueConstraint('ip_address'),)
 
@@ -108,3 +106,30 @@ class BNPNeutronPort(model_base.BASEV2):
     sa.ForeignKeyConstraint(['neutron_port_id'],
                             ['bnp_switch_port_mappings.neutron_port_id'],
                             ondelete='CASCADE')
+
+class BNPSNMPCredential(model_base.BASEV2, models_v2.HasId):
+    """Define snmp credentials."""
+    __tablename__ = "bnp_snmp_credentials"
+    name = sa.Column(sa.String(36), nullable=False)
+    proto_type = sa.Column(sa.String(255), nullable=False)
+    write_community = sa.Column(sa.String(255), nullable=True)
+    security_name = sa.Column(sa.String(255), nullable=True)
+    auth_protocol = sa.Column(sa.String(16), nullable=True)
+    auth_key = sa.Column(sa.String(255), nullable=True)
+    priv_protocol = sa.Column(sa.String(16), nullable=True)
+    priv_key = sa.Column(sa.String(255), nullable=True)
+    security_level = sa.Column(sa.String(16), nullable=True)
+    __table_args__ = (sa.PrimaryKeyConstraint('id'),
+                      sa.UniqueConstraint('name'),)
+
+
+class BNPNETCONFCredential(model_base.BASEV2, models_v2.HasId):
+    """Define netconf credentials."""
+    __tablename__ = "bnp_netconf_credentials"
+    name = sa.Column(sa.String(36), nullable=False)
+    proto_type = sa.Column(sa.String(255), nullable=False)
+    user_name = sa.Column(sa.String(255), nullable=True)
+    password = sa.Column(sa.String(255), nullable=True)
+    key_path = sa.Column(sa.String(255), nullable=True)
+    __table_args__ = (sa.PrimaryKeyConstraint('id'),
+                      sa.UniqueConstraint('name'),)

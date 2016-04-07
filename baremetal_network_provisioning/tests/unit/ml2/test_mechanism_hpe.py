@@ -15,7 +15,7 @@
 from baremetal_network_provisioning.common import constants as hp_const
 from baremetal_network_provisioning.ml2 import (hp_network_provisioning_driver
                                                 as np_drv)
-from baremetal_network_provisioning.ml2 import mechanism_hp as hp_mech
+from baremetal_network_provisioning.ml2 import mechanism_hpe as hpe_mech
 
 import contextlib
 
@@ -27,12 +27,12 @@ from neutron.tests import base
 CONF = cfg.CONF
 
 
-class TestHPMechDriver(base.BaseTestCase):
+class TestHPEMechDriver(base.BaseTestCase):
     """Test class for mech driver."""
 
     def setUp(self):
-        super(TestHPMechDriver, self).setUp()
-        self.driver = hp_mech.HPMechanismDriver()
+        super(TestHPEMechDriver, self).setUp()
+        self.driver = hpe_mech.HPEMechanismDriver()
         self.np_driver = np_drv.HPNetworkProvisioningDriver()
         self.driver.initialize()
         self.driver._load_drivers()
@@ -82,10 +82,10 @@ class TestHPMechDriver(base.BaseTestCase):
         fake_port_dict = mock.Mock()
         fake_context = mock.Mock()
         with contextlib.nested(
-            mock.patch.object(hp_mech.HPMechanismDriver,
+            mock.patch.object(hpe_mech.HPEMechanismDriver,
                               '_is_port_of_interest',
                               return_value=True),
-            mock.patch.object(hp_mech.HPMechanismDriver,
+            mock.patch.object(hpe_mech.HPEMechanismDriver,
                               '_construct_port',
                               return_value=fake_port_dict),
             mock.patch.object(np_drv.HPNetworkProvisioningDriver,
@@ -114,7 +114,7 @@ class TestHPMechDriver(base.BaseTestCase):
                                               network_context)
         port_id = port_context.current['id']
         with contextlib.nested(
-            mock.patch.object(hp_mech.HPMechanismDriver,
+            mock.patch.object(hpe_mech.HPEMechanismDriver,
                               '_get_vnic_type',
                               return_value=portbindings.VNIC_BAREMETAL),
             mock.patch.object(np_drv.HPNetworkProvisioningDriver,
