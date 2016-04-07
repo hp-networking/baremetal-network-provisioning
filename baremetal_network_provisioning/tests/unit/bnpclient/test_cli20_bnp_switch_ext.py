@@ -1,30 +1,32 @@
-# Copyright (c) 2015 OpenStack Foundation
+# Copyright 2016 OpenStack Foundation
+# All Rights Reserved.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
 #
-#    http://www.apache.org/licenses/LICENSE-2.0
+#         http://www.apache.org/licenses/LICENSE-2.0
 #
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-# implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
 
-import sys
-import mock
+
 from baremetal_network_provisioning.bnpclient.bnp_client_ext.bnpswitch import (
     _bnp_switch as bnp_switch)
-from baremetal_network_provisioning.tests.unit.bnpclient import test_cli20
 from baremetal_network_provisioning.bnpclient.bnp_client_ext import shell
+from baremetal_network_provisioning.tests.unit.bnpclient import test_cli20
+
+import mock
+
+import sys
 
 
 class CLITestV20ExtensionBNPSwitchJSON(test_cli20.CLITestV20Base):
 
     def setUp(self):
-        # need to mock before super because extensions loaded on instantiation
         self._mock_extension_loading()
         super(CLITestV20ExtensionBNPSwitchJSON,
               self).setUp(plurals={'tags': 'tag'})
@@ -36,7 +38,8 @@ class CLITestV20ExtensionBNPSwitchJSON(test_cli20.CLITestV20Base):
         return thing
 
     def _mock_extension_loading(self):
-        ext_pkg = 'baremetal_network_provisioning.bnpclient.bnp_client_ext.shell'
+        ext_pkg = ('baremetal_network_provisioning.bnpclient.bnp_client_ext'
+                   '.shell')
         contrib = self._create_patch(ext_pkg + '.discover_via_entry_points')
         contrib.return_value = [("_bnp_switch",
                                  bnp_switch)]
@@ -63,7 +66,7 @@ class CLITestV20ExtensionBNPSwitchJSON(test_cli20.CLITestV20Base):
         cmd = bnp_switch.BnpSwitchCreate(
             test_cli20.MyApp(sys.stdout), None)
         name = 'bnpSwitchName'
-        ip_address = '105.0.1.27'
+        ip_address = '10.0.0.1'
         vendor = 'hpe'
         myid = 'myid'
         position_names = ['name', 'ip_address', 'vendor']
@@ -77,19 +80,21 @@ class CLITestV20ExtensionBNPSwitchJSON(test_cli20.CLITestV20Base):
         cmd = bnp_switch.BnpSwitchCreate(
             test_cli20.MyApp(sys.stdout), None)
         name = 'bnpSwitchName'
-        ip_address = '105.0.1.27'
+        ip_address = '10.0.0.1'
         vendor = 'hpe'
         myid = 'myid'
         position_names = ['name', 'ip_address', 'vendor', 'family',
-                          'disc_proto', 'disc_creds', 'prov_proto', 'prov_creds']
+                          'disc_proto', 'disc_creds', 'prov_proto',
+                          'prov_creds']
         position_values = [name, ip_address, vendor, '5900',
                            'snmpv1', 'credential1', 'snmpv2c', 'credential2']
-        args = [name, ip_address, vendor, '--family', '5900', '--disc-proto', 'snmpv1',
-                '--disc-creds', 'credential1', '--prov-proto', 'snmpv2c', '--prov-creds', 'credential2']
+        args = [name, ip_address, vendor, '--family', '5900', '--disc-proto',
+                'snmpv1', '--disc-creds', 'credential1', '--prov-proto',
+                'snmpv2c', '--prov-creds', 'credential2']
         self._test_create_resource(
             resource, cmd, None, myid, args, position_names, position_values)
 
-    def test_update_bnp_switch_disc_proto_disc_creds_without_discover(self):
+    def test_update_bnp_switch_disc_proto_creds_without_discover(self):
         resource = 'bnp_switch'
         cmd = bnp_switch.BnpSwitchUpdate(test_cli20.MyApp(sys.stdout), None)
         myid = 'myid'
@@ -98,7 +103,7 @@ class CLITestV20ExtensionBNPSwitchJSON(test_cli20.CLITestV20Base):
                         'disc_creds': 'fake_cred', 'rediscover': False}
         self._test_update_resource(resource, cmd, myid, args, updatefields)
 
-    def test_update_bnp_switch_disc_proto_disc_creds_with_discover(self):
+    def test_update_bnp_switch_disc_proto_creds_with_discover(self):
         resource = 'bnp_switch'
         cmd = bnp_switch.BnpSwitchUpdate(test_cli20.MyApp(sys.stdout), None)
         myid = 'myid'
@@ -108,7 +113,7 @@ class CLITestV20ExtensionBNPSwitchJSON(test_cli20.CLITestV20Base):
                         'disc_creds': 'fake_cred', 'rediscover': True}
         self._test_update_resource(resource, cmd, myid, args, updatefields)
 
-    def test_update_bnp_switch_prov_proto_prov_creds_without_discover(self):
+    def test_update_bnp_switch_prov_proto_creds_without_discover(self):
         resource = 'bnp_switch'
         cmd = bnp_switch.BnpSwitchUpdate(test_cli20.MyApp(sys.stdout), None)
         myid = 'myid'
@@ -118,7 +123,7 @@ class CLITestV20ExtensionBNPSwitchJSON(test_cli20.CLITestV20Base):
                         'prov_creds': 'fake_cred', 'rediscover': False}
         self._test_update_resource(resource, cmd, myid, args, updatefields)
 
-    def test_update_bnp_switch_prov_proto_prov_creds_with_discover(self):
+    def test_update_bnp_switch_prov_proto_creds_with_discover(self):
         resource = 'bnp_switch'
         cmd = bnp_switch.BnpSwitchUpdate(test_cli20.MyApp(sys.stdout), None)
         myid = 'myid'
@@ -128,27 +133,29 @@ class CLITestV20ExtensionBNPSwitchJSON(test_cli20.CLITestV20Base):
                         'prov_creds': 'fake_cred', 'rediscover': True}
         self._test_update_resource(resource, cmd, myid, args, updatefields)
 
-    def test_update_bnp_switch_prov_proto_prov_creds_enable_without_discover(self):
+    def test_update_bnp_switch_prov_proto_creds_enable_without_discover(self):
         resource = 'bnp_switch'
         cmd = bnp_switch.BnpSwitchUpdate(test_cli20.MyApp(sys.stdout), None)
         myid = 'myid'
         args = ['--prov-proto', 'prov_proto', '--prov-creds',
                 'fake_cred', '--enable', 'True', myid]
         updatefields = {'prov_proto': 'prov_proto',
-                        'prov_creds': 'fake_cred', 'enable': 'True', 'rediscover': False}
+                        'prov_creds': 'fake_cred', 'enable': 'True',
+                        'rediscover': False}
         self._test_update_resource(resource, cmd, myid, args, updatefields)
 
-    def test_update_bnp_switch_prov_proto_prov_creds_enable_with_discover(self):
+    def test_update_bnp_switch_prov_proto_creds_enable_with_discover(self):
         resource = 'bnp_switch'
         cmd = bnp_switch.BnpSwitchUpdate(test_cli20.MyApp(sys.stdout), None)
         myid = 'myid'
         args = ['--prov-proto', 'prov_proto', '--prov-creds',
                 'fake_cred', '--enable', 'False', '--rediscover', myid]
         updatefields = {'prov_proto': 'prov_proto',
-                        'prov_creds': 'fake_cred', 'enable': 'False', 'rediscover': True}
+                        'prov_creds': 'fake_cred', 'enable': 'False',
+                        'rediscover': True}
         self._test_update_resource(resource, cmd, myid, args, updatefields)
 
-    def test_list_bnp_switch(self):
+    def test_list_bnp_switches(self):
         resources = 'bnp_switches'
         cmd = bnp_switch.BnpSwitchList(test_cli20.MyApp(sys.stdout), None)
         self._test_list_resources(resources, cmd, True)

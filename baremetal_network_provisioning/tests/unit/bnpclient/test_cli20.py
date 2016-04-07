@@ -1,23 +1,27 @@
-# Copyright (c) 2015 OpenStack Foundation
+# Copyright 2016 OpenStack Foundation
+# All Rights Reserved.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
 #
-#    http://www.apache.org/licenses/LICENSE-2.0
+#         http://www.apache.org/licenses/LICENSE-2.0
 #
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-# implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+
 
 from mox3 import mox
-from neutronclient.neutron import v2_0 as neutronV2_0
+
+from baremetal_network_provisioning.bnpclient.bnp_client_ext.v2_0 import (
+    client as bnpswitchclient)
+
 from neutronclient import shell as neutronshell
-from baremetal_network_provisioning.bnpclient.bnp_client_ext.v2_0 import client as bnpswitchclient
 from neutronclient.tests.unit import test_cli20 as neutron_test_cli20
+
 TOKEN = neutron_test_cli20.TOKEN
 end_url = neutron_test_cli20.end_url
 
@@ -40,7 +44,7 @@ class MyComparator(neutron_test_cli20.MyComparator):
 class CLITestV20Base(neutron_test_cli20.CLITestV20Base):
 
     format = 'json'
-    test_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+    test_id = 'fake_id'
     id_field = 'id'
 
     def setUp(self, plurals=None):
@@ -58,7 +62,7 @@ class CLITestV20Base(neutron_test_cli20.CLITestV20Base):
 
     def _test_create_resource(self, resource, cmd, name, myid, args,
                               position_names, position_values,
-                              tenant_id=None, tags=None, admin_state_up=True,
+                              tags=None, admin_state_up=True,
                               extra_body=None, cmd_resource=None,
                               parent_id=None, no_api_call=False,
                               expected_exception=None,
