@@ -524,6 +524,7 @@ def get_bnp_phys_switch_ports_by_switch_id(context, switch_id):
         return
     return switch_ports
 
+
 def add_bnp_snmp_cred(context, snmp_cred):
     """Add SNMP Credential."""
     session = context.session

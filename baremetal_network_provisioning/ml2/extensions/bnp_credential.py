@@ -19,13 +19,11 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron.api.v2 import resource
-from neutron.i18n import _LE
 from neutron import wsgi
 
 from baremetal_network_provisioning.common import constants as const
 from baremetal_network_provisioning.common import validators
 from baremetal_network_provisioning.db import bm_nw_provision_db as db
-from baremetal_network_provisioning.drivers import discovery_driver
 
 from oslo_log import log as logging
 
@@ -88,19 +86,19 @@ class BNPCredentialController(wsgi.Controller):
             for cred in creds:
                 cred = dict(cred)
                 for key in attr_list:
-                    if cred.has_key(key):
+                    if key in cred:
                         cred.pop(key)
                 creds_list.append(cred)
             return creds_list
         else:
             cred = dict(creds)
             for key in attr_list:
-                if cred.has_key(key):
+                if key in cred:
                     cred.pop(key)
             return cred
 
     def create(self, request, **kwargs):
-        """Create a new Credential"""
+        """Create a new Credential."""
         context = request.context
         self._check_admin(context)
         body = validators.validate_request(request)
@@ -114,12 +112,13 @@ class BNPCredentialController(wsgi.Controller):
             db_snmp_cred = self._creds_to_show(db_snmp_cred)
             return {const.BNP_CREDENTIAL_RESOURCE_NAME: dict(db_snmp_cred)}
         else:
-            db_netconf_cred = self._create_netconf_creds(context, body, protocol)
+            db_netconf_cred = self._create_netconf_creds(
+                context, body, protocol)
             db_netconf_cred = self._creds_to_show(db_netconf_cred)
             return {const.BNP_CREDENTIAL_RESOURCE_NAME: dict(db_netconf_cred)}
 
     def _create_snmp_creds(self, context, body, protocol):
-        """Create a new SNMP Credential"""
+        """Create a new SNMP Credential."""
         name = body.get('name')
         snmp_cred = db.get_snmp_cred_by_name(context,
                                              name)
@@ -137,7 +136,7 @@ class BNPCredentialController(wsgi.Controller):
         return db_snmp_cred
 
     def _create_netconf_creds(self, context, body, protocol):
-        """Create a new NETCONF Credential"""
+        """Create a new NETCONF Credential."""
         name = body.get('name')
         netconf_cred = db.get_netconf_cred_by_name(context,
                                                    name)
@@ -154,9 +153,8 @@ class BNPCredentialController(wsgi.Controller):
         db_netconf_cred = db.add_bnp_netconf_cred(context, netconf_cred)
         return db_netconf_cred
 
-
     def _create_snmp_cred_dict(self):
-        """Create SNMP credential dict"""
+        """Create SNMP credential dict."""
         snmp_cred_dict = {
             'name': None,
             'proto_type': None,
@@ -170,7 +168,7 @@ class BNPCredentialController(wsgi.Controller):
         return snmp_cred_dict
 
     def _create_netconf_cred_dict(self):
-        """Create NETCONF credential dict"""
+        """Create NETCONF credential dict."""
         netconf_cred_dict = {
             'name': None,
             'proto_type': None,
@@ -180,7 +178,7 @@ class BNPCredentialController(wsgi.Controller):
         return netconf_cred_dict
 
     def _update_dict(self, body, cred_dict):
-        """Update the existing dict""" 
+        """Update the existing dict."""
         for key in cred_dict.keys():
             if key in body.keys():
                 cred_dict[key] = body[key]
