@@ -600,3 +600,26 @@ def get_netconf_cred_by_id(context, id):
         LOG.info(_LI("no netconf credential found with id: %s"), id)
         return
     return netconf_cred
+
+
+def get_bnp_phys_switch_by_name(context, name):
+    """Get physical switch that matches name."""
+    try:
+        query = context.session.query(models.BNPPhysicalSwitch)
+        switch = query.filter_by(name=name).all()
+    except exc.NoResultFound:
+        LOG.error(_LE("no physical switch found with name: %s"), name)
+        return
+    return switch
+
+
+def delete_bnp_phys_switch_by_name(context, name):
+    """Delete physical switch that matches name."""
+    try:
+        session = context.session
+        with session.begin(subtransactions=True):
+            if name:
+                session.query(models.BNPPhysicalSwitch).filter_by(
+                    name=name).delete()
+    except exc.NoResultFound:
+        LOG.error(_LE("no switch found for switch name: %s"), name)
