@@ -168,7 +168,7 @@ class BNPSwitchController(wsgi.Controller):
         if not switch:
             raise webob.exc.HTTPNotFound(
                 _("Switch %s does not exist") % id)
-        if switch['status'] == const.SWITCH_STATUS['enable']:
+        if switch['port_prov'] == const.SWITCH_STATUS['enable']:
             raise webob.exc.HTTPBadRequest(
                 _("Disable the switch %s to delete") % id)
         db.delete_bnp_phys_switch(context, id)
