@@ -14,10 +14,11 @@
 # under the License.
 # service type constants:
 
-from copy import deepcopy
-import os.path
 from simplejson import scanner as json_scanner
 import webob.exc
+
+from copy import deepcopy
+import os.path
 
 from baremetal_network_provisioning.common import constants as const
 
@@ -48,7 +49,7 @@ def validate_request(request):
     try:
         key = body.keys()
         if key[0] in [const.BNP_SWITCH_RESOURCE_NAME,
-                   const.BNP_CREDENTIAL_RESOURCE_NAME]:
+                      const.BNP_CREDENTIAL_RESOURCE_NAME]:
             body = body.pop(key[0])
     except KeyError:
         raise webob.exc.HTTPBadRequest(
@@ -69,12 +70,12 @@ def validate_access_parameters(body):
     protocol_dict = deepcopy(body)
     if const.NAME not in protocol_dict.keys():
         raise webob.exc.HTTPBadRequest(
-                    _("Name not found in request body"))
+            _("Name not found in request body"))
     protocol_dict.pop('name')
     keys = protocol_dict.keys()
     if not len(keys):
         raise webob.exc.HTTPBadRequest(
-                    _("Request body should have at least one protocol specified"))
+            _("Request body should have at least one protocol specified"))
     elif len(keys) > 1:
         raise webob.exc.HTTPBadRequest(
             _("multiple protocols in a single request is not supported"))
@@ -108,7 +109,8 @@ def validate_snmpv3_parameters(protocol_dict, key):
     """Validate SNMP v3 parameters."""
     access_parameters = protocol_dict.pop(key)
     keys = access_parameters.keys()
-    attr_keys = ['security_name', 'auth_protocol', 'auth_key', 'priv_protocol', 'priv_key']
+    attr_keys = ['security_name', 'auth_protocol',
+                 'auth_key', 'priv_protocol', 'priv_key']
     validate_attributes(keys, attr_keys)
     if not access_parameters.get('security_name'):
         raise webob.exc.HTTPBadRequest(
@@ -155,22 +157,23 @@ def _validate_user_name_password(access_parameters):
 
 
 def validate_netconf_parameters(protocol_dict, key):
-    """Validate NETCONF SSH/SOAP parameters"""
+    """Validate NETCONF SSH/SOAP parameters."""
     access_parameters = protocol_dict.pop(key)
     if key.lower() == const.NETCONF_SSH:
         if access_parameters.get('key_path'):
             if not os.path.isfile(access_parameters.get('key_path')):
                 raise webob.exc.HTTPBadRequest(
                     _("Invalid key path"))
-            if access_parameters.get('user_name') or access_parameters.get('password'):
+            if (access_parameters.get('user_name') or
+               access_parameters.get('password')):
                 raise webob.exc.HTTPBadRequest(
-                    _("Either specify username and password OR keypath, not both"))
+                    _("Specify username and password OR keypath, not both"))
             return const.NETCONF_SSH
         _validate_user_name_password(access_parameters)
         return const.NETCONF_SSH
     else:
         if access_parameters.get('key_path'):
             raise webob.exc.HTTPBadRequest(
-                    _("Invalid attribute key_path"))
+                _("Invalid attribute key_path"))
         _validate_user_name_password(access_parameters)
         return const.NETCONF_SOAP
