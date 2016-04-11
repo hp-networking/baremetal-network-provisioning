@@ -205,7 +205,7 @@ class BNPSwitchController(wsgi.Controller):
             if key not in keys:
                 raise webob.exc.HTTPBadRequest(
                     _("Key %s not found in request body") % key)
-        validators.validate_attributes(keys, key_list)
+        validators.validate_switch_attributes(keys, key_list)
         if body['vendor'] not in const.SUPPORTED_VENDORS:
             raise webob.exc.HTTPBadRequest(
                 _("Switch with vendor %s is not supported") %
@@ -227,6 +227,8 @@ class BNPSwitchController(wsgi.Controller):
             body['port_prov'] = const.SWITCH_STATUS['enable']
         else:
             body['port_prov'] = const.SWITCH_STATUS['create']
+        if 'family' not in body:
+            body['family'] = None
         db_switch = db.add_bnp_phys_switch(context, body)
         if bnp_switch.get('ports'):
             self._add_physical_port(context, db_switch.get('id'),
@@ -239,7 +241,7 @@ class BNPSwitchController(wsgi.Controller):
         else:
             access_parameters = db.get_snmp_cred_by_id(context, creds)
         if not access_parameters:
-            raise webob.exc.HTTPBadRequest(
+            raise webob.exc.HTTPNotFound(
                 _("Invalid disc_creds %s") % creds)
         if access_parameters and access_parameters.proto_type == proto:
             return access_parameters
@@ -412,9 +414,9 @@ class BNPSwitchController(wsgi.Controller):
 
     def _driver_key(self, vendor, protocol, family):
         if family:
-            driver_key = vendor + protocol + family
+            driver_key = vendor + '_' + protocol + '_' + family
         else:
-            driver_key = vendor + protocol
+            driver_key = vendor + '_' + protocol
         return driver_key
 
 

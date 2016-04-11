@@ -270,7 +270,8 @@ def add_bnp_phys_switch(context, switch):
             disc_creds=switch['disc_creds'],
             prov_proto=switch['prov_proto'],
             prov_creds=switch['prov_creds'],
-            vendor=switch['vendor'])
+            vendor=switch['vendor'],
+            family=switch['family'])
         session.add(phy_switch)
     return phy_switch
 

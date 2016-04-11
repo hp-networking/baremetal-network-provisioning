@@ -138,6 +138,25 @@ class SNMPProvisioningDriver(driver.PortProvisioningDriver):
             return None
         return snmp_response
 
-    def get_type(self):
+    def get_driver_name(self):
         """get driver name for loading the driver using stevedore."""
-        return 'hpe' + constants.PROTOCOL_SNMP
+        return 'hpe' + '_' + constants.PROTOCOL_SNMP
+
+    def get_ports_info(self, port):
+        oids = [constants.OID_IF_INDEX,
+                constants.OID_PORTS,
+                constants.OID_IF_TYPE,
+                constants.OID_PORT_STATUS]
+        client = snmp_client.get_client(self._get_switch_dict(port))
+        var_binds = client.get_bulk(*oids)
+        ports_dict = []
+        for var_bind_table_row in var_binds:
+            if_index = (var_bind_table_row[0][1]).prettyPrint()
+            port_name = (var_bind_table_row[1][1]).prettyPrint()
+            if_type = (var_bind_table_row[2][1]).prettyPrint()
+            if if_type == constants.PHY_PORT_TYPE:
+                ports_dict.append(
+                    {'ifindex': if_index,
+                     'interface_name': port_name,
+                     'port_status': var_bind_table_row[3][1].prettyPrint()})
+        return ports_dict
