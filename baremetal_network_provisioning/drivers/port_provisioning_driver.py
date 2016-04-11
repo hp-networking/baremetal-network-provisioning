@@ -53,3 +53,8 @@ class PortProvisioningDriver(object):
     def delete_lag(self, port):
         """delete_lag  delete the link aggregation for the physical ports."""
         pass
+
+    @abc.abstractmethod
+    def get_type(self):
+        """get driver type for stevedore loading."""
+        pass

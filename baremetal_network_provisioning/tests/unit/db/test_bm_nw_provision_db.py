@@ -202,16 +202,13 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
         """Get a phy switch dict."""
         switch_dict = {'ip_address': "1.1.1.1",
                        'mac_address': "A:B:C:D",
-                       'status': "enable",
-                       'access_protocol': "snmpv2c",
+                       'port_prov': "enable",
+                       'name': "test1",
                        'vendor': "HPE",
-                       'write_community': "public",
-                       'security_name': "xyz",
-                       'auth_protocol': "md5",
-                       'auth_key': "abc",
-                       'priv_protocol': "des",
-                       'priv_key': "abc",
-                       'security_level': "authPriv"}
+                       'disc_proto': 'snmpv1',
+                       'disc_creds': 'creds1',
+                       'prov_proto': 'snmpv1',
+                       'prov_creds': 'creds2'}
         return switch_dict
 
     def _get_bnp_access_param_dict(self):
@@ -322,7 +319,7 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
                                          switches[0]['id'],
                                          "disable")
         sw_updt = self.ctx.session.query(models.BNPPhysicalSwitch).all()
-        self.assertNotEqual(sw_updt[0]['status'], "disable")
+        self.assertNotEqual(sw_updt[0]['port_prov'], "disable")
 
     def test_update_bnp_phys_swport_status(self):
         """Test update_bnp_phys_swport_status method."""
@@ -335,7 +332,7 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
         port_updt = self.ctx.session.query(models.BNPPhysicalSwitchPort).all()
         self.assertEqual(port_updt[0]['port_status'], "DOWN")
 
-    def test_update_bnp_phys_switch_access_params(self):
+    '''def test_update_bnp_phys_switch_access_params(self):
         """Tests update_bnp_phys_switch_access_params method."""
         sw_dict = self._get_bnp_phys_switch_dict()
         param_dict = self._get_bnp_access_param_dict()
@@ -345,7 +342,7 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
                                                 switches[0]['id'],
                                                 param_dict)
         sw_updt = self.ctx.session.query(models.BNPPhysicalSwitch).all()
-        self.assertNotEqual(sw_updt[0]['access_protocol'], "snmpv3")
+        self.assertNotEqual(sw_updt[0]['access_protocol'], "snmpv3")'''
 
     def test_get_bnp_phys_switch_port_by_id(self):
         """Test get_bnp_phys_switch_port_by_id method."""
