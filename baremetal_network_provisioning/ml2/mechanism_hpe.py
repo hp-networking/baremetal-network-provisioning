@@ -263,7 +263,7 @@ class HPEMechanismDriver(api.MechanismDriver):
         try:
             prov_protocol = bnp_switch.prov_proto
             vendor = bnp_switch.vendor
-            family = bnp_switch.familyR
+            family = bnp_switch.family
             prov_driver = self._provisioning_driver(prov_protocol, vendor,
                                                     family)
             if not prov_driver:
@@ -390,6 +390,9 @@ class HPEMechanismDriver(api.MechanismDriver):
                 snmp_cred = db.get_snmp_cred_by_name(db_context, prov_creds)
             else:
                 snmp_cred = db.get_snmp_cred_by_id(db_context, prov_creds)
+            if not snmp_cred:
+                LOG.error(_LE("Credentials does not match"))
+                self._raise_ml2_error(wexc.HTTPNotFound, '')
             creds_dict['write_community'] = snmp_cred.write_community
             creds_dict['security_name'] = snmp_cred.security_name
             creds_dict['security_level'] = snmp_cred.security_level
@@ -405,6 +408,9 @@ class HPEMechanismDriver(api.MechanismDriver):
             else:
                 netconf_cred = db.get_netconf_cred_by_id(db_context,
                                                          prov_creds)
+            if not netconf_cred:
+                LOG.error(_LE("Credentials does not match"))
+                self._raise_ml2_error(wexc.HTTPNotFound, '')
             creds_dict['user_name'] = netconf_cred.write_community
             creds_dict['password'] = netconf_cred.security_name
             creds_dict['key_path'] = netconf_cred.security_level
