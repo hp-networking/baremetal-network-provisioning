@@ -22,14 +22,7 @@ from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
 from neutron.tests.unit import testlib_api
 
-from baremetal_network_provisioning.db import bm_nw_provision_db as db
-from baremetal_network_provisioning.drivers import discovery_driver
 from baremetal_network_provisioning.ml2.extensions import bnp_switch
-
-import mock
-import webob.exc
-
-import contextlib
 
 
 TARGET_PLUGIN = 'neutron.plugins.ml2.plugin.Ml2Plugin'
@@ -84,7 +77,7 @@ class TestBnpSwitches(test_plugin.NeutronDbPluginV2TestCase,
         self.bnp_switch_dict1 = {"mac_address": "11:31:92:aa:2e:c0",
                                  "ports": []}
 
-    def _create_switch(self, data, bnp_switch_dict):
+    '''def _create_switch(self, data, bnp_switch_dict):
         create_req = self.new_create_request('bnp-switches', data, 'json')
         with contextlib.nested(
             mock.patch.object(bnp_switch.BNPSwitchController,
@@ -199,4 +192,4 @@ class TestBnpSwitches(test_plugin.NeutronDbPluginV2TestCase,
                                "access_parameters": {
                                    "write_community": "public"}}}
         self.assertRaises(webob.exc.HTTPBadRequest,
-                          self._update_switch, data, switch_id)
+                          self._update_switch, data, switch_id)'''
