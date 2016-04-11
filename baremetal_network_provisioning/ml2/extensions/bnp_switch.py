@@ -268,8 +268,8 @@ class BNPSwitchController(wsgi.Controller):
             else:
                 validators.validate_snmp_parameters(access_parameters)
             try:
-                snmp_driver = snmp_discovery_driver.SNMPDiscoveryDriver(switch_dict)
-                snmp_driver.get_sys_name()
+                driver = snmp_discovery_driver.SNMPDiscoveryDriver(switch_dict)
+                driver.get_sys_name()
                 db.update_bnp_phys_switch_access_params(context,
                                                         id, switch_dict)
             except Exception as e:
