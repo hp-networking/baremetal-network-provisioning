@@ -38,7 +38,6 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
                     'port_name': "Tengig0/1",
                     'lag_id': "lag1234"}
         return rec_dict
-    
 
     def _get_switch_lag_port_dict(self):
         """Get a switch lag port dict."""
@@ -55,32 +54,31 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
                     'segmentation_id': 100,
                     'host_id': 'ironic'}
         return rec_dict
-    
+
     def _get_snmp_cred_dict(self):
         """Get a snmp credential dict."""
         snmp_cred_dict = {
             'name': 'CRED1',
             'proto_type': 'snmpv3',
-            'write_community':None,
-            'security_name': 'phani',
+            'write_community': None,
+            'security_name': 'xyz',
             'auth_protocol': 'md5',
             'auth_key': 'abcd1234',
             'priv_protocol': 'des',
             'priv_key': 'xxxxxxxx',
             'security_level': None}
         return snmp_cred_dict
-    
+
     def _get_netconf_cred_dict(self):
         """Get a netconf credential dict."""
         netconf_cred_dict = {
-            'name':'CRED1',
-            'proto_type':'netconf-soap',
-            'user_name':'sdn',
-            'password':'skyline',
-            'key_path':None}
+            'name': 'CRED1',
+            'proto_type': 'netconf-soap',
+            'user_name': 'sdn',
+            'password': 'skyline',
+            'key_path': None}
         return netconf_cred_dict
-    
-    
+
     def test_add_hp_switch_lag_port(self):
         """Test add_hp_switch_lag_port method."""
         rec_dict = self._get_switch_lag_port_dict()
@@ -228,13 +226,16 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
         """Get a phy switch dict."""
         switch_dict = {'ip_address': "1.1.1.1",
                        'mac_address': "A:B:C:D",
-                       'port_prov': "enable",
-                       'name': "test1",
+                       'status': "enable",
+                       'access_protocol': "snmpv2c",
                        'vendor': "HPE",
-                       'disc_proto': 'snmpv1',
-                       'disc_creds': 'creds1',
-                       'prov_proto': 'snmpv1',
-                       'prov_creds': 'creds2'}
+                       'write_community': "public",
+                       'security_name': "xyz",
+                       'auth_protocol': "md5",
+                       'auth_key': "abc",
+                       'priv_protocol': "des",
+                       'priv_key': "abc",
+                       'security_level': "authPriv"}
         return switch_dict
 
     def _get_bnp_access_param_dict(self):
@@ -345,7 +346,7 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
                                          switches[0]['id'],
                                          "disable")
         sw_updt = self.ctx.session.query(models.BNPPhysicalSwitch).all()
-        self.assertNotEqual(sw_updt[0]['port_prov'], "disable")
+        self.assertNotEqual(sw_updt[0]['status'], "disable")
 
     def test_update_bnp_phys_swport_status(self):
         """Test update_bnp_phys_swport_status method."""
@@ -358,7 +359,7 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
         port_updt = self.ctx.session.query(models.BNPPhysicalSwitchPort).all()
         self.assertEqual(port_updt[0]['port_status'], "DOWN")
 
-    '''def test_update_bnp_phys_switch_access_params(self):
+    def test_update_bnp_phys_switch_access_params(self):
         """Tests update_bnp_phys_switch_access_params method."""
         sw_dict = self._get_bnp_phys_switch_dict()
         param_dict = self._get_bnp_access_param_dict()
@@ -368,7 +369,7 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
                                                 switches[0]['id'],
                                                 param_dict)
         sw_updt = self.ctx.session.query(models.BNPPhysicalSwitch).all()
-        self.assertNotEqual(sw_updt[0]['access_protocol'], "snmpv3")'''
+        self.assertNotEqual(sw_updt[0]['access_protocol'], "snmpv3")
 
     def test_get_bnp_phys_switch_port_by_id(self):
         """Test get_bnp_phys_switch_port_by_id method."""
@@ -389,48 +390,45 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
                                                 swport_dict['interface_name'])
         count = self.ctx.session.query(models.BNPPhysicalSwitchPort).count()
         self.assertEqual(0, count)
-        
+
     def test_add_bnp_snmp_cred(self):
         """Test test_add_bnp_snmp_cred method."""
-        snmp_cred_dict=self._get_snmp_cred_dict()
-        db.add_bnp_snmp_cred(self.ctx,snmp_cred_dict)
+        snmp_cred_dict = self._get_snmp_cred_dict()
+        db.add_bnp_snmp_cred(self.ctx, snmp_cred_dict)
         count = self.ctx.session.query(models.BNPSNMPCredential).count()
         self.assertEqual(1, count)
-        
-        
+
     def test_add_bnp_netconf_cred(self):
         """Test test_add_bnp_netconf_cred method."""
-        netconf_cred_dict=self._get_netconf_cred_dict()
-        db.add_bnp_netconf_cred(self.ctx,netconf_cred_dict)
+        netconf_cred_dict = self._get_netconf_cred_dict()
+        db.add_bnp_netconf_cred(self.ctx, netconf_cred_dict)
         count = self.ctx.session.query(models.BNPNETCONFCredential).count()
         self.assertEqual(1, count)
-        
-        
+
     def test_get_snmp_cred_by_name(self):
         """Test get_snmp_cred_by_name method."""
-        snmp_cred_dict=self._get_snmp_cred_dict()
-        retval=db.add_bnp_snmp_cred(self.ctx,snmp_cred_dict)
-        cred_val=db.get_snmp_cred_by_name(self.ctx,'CRED1')
+        snmp_cred_dict = self._get_snmp_cred_dict()
+        retval = db.add_bnp_snmp_cred(self.ctx, snmp_cred_dict)
+        cred_val = db.get_snmp_cred_by_name(self.ctx, 'CRED1')
         self.assertEqual(retval, cred_val)
-        
+
     def test_get_snmp_cred_by_id(self):
         """Test get_snmp_cred_by_id method."""
-        snmp_cred_dict=self._get_snmp_cred_dict()
-        retval=db.add_bnp_snmp_cred(self.ctx,snmp_cred_dict)
-        cred_val=db.get_snmp_cred_by_id(self.ctx,retval['id'])
+        snmp_cred_dict = self._get_snmp_cred_dict()
+        retval = db.add_bnp_snmp_cred(self.ctx, snmp_cred_dict)
+        cred_val = db.get_snmp_cred_by_id(self.ctx, retval['id'])
         self.assertEqual(retval, cred_val)
-        
+
     def test_get_netconf_cred_by_name(self):
         """Test get_netconf_cred_by_name method."""
-        netconf_cred_dict=self._get_netconf_cred_dict()
-        retval=db.add_bnp_netconf_cred(self.ctx,netconf_cred_dict)
-        cred_val=db.get_netconf_cred_by_name(self.ctx,'CRED1')
+        netconf_cred_dict = self._get_netconf_cred_dict()
+        retval = db.add_bnp_netconf_cred(self.ctx, netconf_cred_dict)
+        cred_val = db.get_netconf_cred_by_name(self.ctx, 'CRED1')
         self.assertEqual(retval, cred_val)
-        
+
     def test_get_netconf_cred_by_id(self):
         """Test get_netconf_cred_by_id method."""
-        netconf_cred_dict=self._get_netconf_cred_dict()
-        retval=db.add_bnp_netconf_cred(self.ctx,netconf_cred_dict)
-        cred_val=db.get_netconf_cred_by_id(self.ctx,retval['id'])
+        netconf_cred_dict = self._get_netconf_cred_dict()
+        retval = db.add_bnp_netconf_cred(self.ctx, netconf_cred_dict)
+        cred_val = db.get_netconf_cred_by_id(self.ctx, retval['id'])
         self.assertEqual(retval, cred_val)
-        
