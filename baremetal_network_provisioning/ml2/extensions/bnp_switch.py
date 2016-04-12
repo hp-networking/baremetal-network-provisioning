@@ -30,6 +30,7 @@ from baremetal_network_provisioning import managers
 
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import uuidutils
 
 LOG = logging.getLogger(__name__)
 
@@ -160,18 +161,37 @@ class BNPSwitchController(wsgi.Controller):
     def delete(self, request, id, **kwargs):
         context = request.context
         self._check_admin(context)
-        switch = db.get_bnp_phys_switch(context, id)
-        portmap = db.get_bnp_switch_port_map_by_switchid(context, id)
-        if portmap:
-            raise webob.exc.HTTPConflict(
-                _("Switch id %s has active port mappings") % id)
+        port_prov = None
+        is_uuid = False
+        if not uuidutils.is_uuid_like(id):
+            switch = db.get_bnp_phys_switch_by_name(context, id)
+        else:
+            is_uuid = True
+            switch = db.get_bnp_phys_switch(context, id)
         if not switch:
             raise webob.exc.HTTPNotFound(
                 _("Switch %s does not exist") % id)
-        if switch['port_prov'] == const.SWITCH_STATUS['enable']:
+        if isinstance(switch, list) and len(switch) > 1:
+            raise webob.exc.HTTPConflict(
+                _("Multiple switches matches found "
+                  "for name %s, use an ID to be more specific.") % id)
+        if isinstance(switch, list) and len(switch) == 1:
+            portmap = db.get_bnp_switch_port_map_by_switchid(context,
+                                                             switch[0].id)
+            port_prov = switch[0].port_prov
+        else:
+            portmap = db.get_bnp_switch_port_map_by_switchid(context, id)
+            port_prov = switch['port_prov']
+        if portmap:
+            raise webob.exc.HTTPConflict(
+                _("Switch id %s has active port mappings") % id)
+        if port_prov == const.SWITCH_STATUS['enable']:
             raise webob.exc.HTTPBadRequest(
                 _("Disable the switch %s to delete") % id)
-        db.delete_bnp_phys_switch(context, id)
+        if is_uuid:
+            db.delete_bnp_phys_switch(context, id)
+        else:
+            db.delete_bnp_phys_switch_by_name(context, id)
 
     def create(self, request, **kwargs):
         context = request.context
@@ -214,8 +234,18 @@ class BNPSwitchController(wsgi.Controller):
         return {const.BNP_SWITCH_RESOURCE_NAME: dict(db_switch)}
 
     def _get_access_param(self, context, proto, creds):
-        access_parameters = db.get_snmp_cred_by_name(context, creds)
-        return access_parameters
+        if not uuidutils.is_uuid_like(creds):
+            access_parameters = db.get_snmp_cred_by_name(context, creds)
+        else:
+            access_parameters = db.get_snmp_cred_by_id(context, creds)
+        if not access_parameters:
+            raise webob.exc.HTTPBadRequest(
+                _("Invalid disc_creds %s") % creds)
+        if access_parameters and access_parameters.proto_type == proto:
+            return access_parameters
+        if access_parameters and access_parameters.proto_type != proto:
+            raise webob.exc.HTTPBadRequest(
+                _("Invalid disc_proto %s") % proto)
 
     def _add_physical_port(self, context, switch_id, ports):
         for port in ports:
