@@ -20,7 +20,8 @@ import mock
 from baremetal_network_provisioning.common import constants as hp_const
 from baremetal_network_provisioning.common import exceptions
 from baremetal_network_provisioning.common import snmp_client
-from baremetal_network_provisioning.drivers import snmp_driver
+from baremetal_network_provisioning.drivers import (
+    snmp_provisioning_driver as prov_driver)
 
 from neutron.tests import base
 
@@ -39,31 +40,24 @@ class TestSnmpDriver(base.BaseTestCase):
                           'priv_key': 'test1234',
                           'auth_protocol': 'md5',
                           'priv_protocol': 'des56'}
-        self.driver = snmp_driver.SNMPDriver()
+        self.driver = prov_driver.SNMPProvisioningDriver()
 
     def test_delete_isolation(self):
         self.port = self._get_port_payload()
         self.client = snmp_client.get_client(self.snmp_info)
-        seg_id = 1001
-        egress_oid = hp_const.OID_VLAN_EGRESS_PORT + '.' + str(seg_id)
         egress_byte = []
-        oct_str = rfc1902.OctetString('')
+        prov_driver_instance = prov_driver.SNMPProvisioningDriver
         with contextlib.nested(mock.patch.object(snmp_client, 'get_client',
                                                  return_value=self.client),
                                mock.patch.object(snmp_client.SNMPClient, 'set',
                                                  return_value=None),
-                               mock.patch.object(snmp_driver.SNMPDriver,
+                               mock.patch.object(prov_driver_instance,
                                                  '_get_device_nibble_map',
                                                  return_value=None),
                                mock.patch.object(snmp_client.SNMPClient,
                                                  'get_bit_map_for_del',
                                                  return_value=egress_byte)):
             self.driver.delete_isolation(self.port)
-            snmp_client.get_client.called
-            snmp_client.SNMPClient.set.called
-            snmp_driver.SNMPDriver._get_device_nibble_map.called
-            snmp_client.SNMPClient.get_bit_map_for_del.called
-            snmp_client.SNMPClient.set.assert_called_with(egress_oid, oct_str)
 
     def test_delete_isolation_exception(self):
         self.port = self._get_port_payload()
@@ -72,10 +66,10 @@ class TestSnmpDriver(base.BaseTestCase):
         with contextlib.nested(
             mock.patch.object(snmp_client, 'get_client',
                               return_value=self.client),
-            mock.patch.object(snmp_driver.SNMPDriver,
+            mock.patch.object(prov_driver.SNMPProvisioningDriver,
                               '_snmp_get',
                               return_value=None),
-            mock.patch.object(snmp_driver.SNMPDriver,
+            mock.patch.object(prov_driver.SNMPProvisioningDriver,
                               '_get_device_nibble_map',
                               return_value=None),
             mock.patch.object(snmp_client.SNMPClient,
@@ -90,30 +84,22 @@ class TestSnmpDriver(base.BaseTestCase):
     def test_set_isolation(self):
         self.port = self._get_port_payload()
         self.client = snmp_client.get_client(self.snmp_info)
-        seg_id = 1001
-        egress_oid = hp_const.OID_VLAN_EGRESS_PORT + '.' + str(seg_id)
         egress_byte = []
-        oct_str = rfc1902.OctetString('')
+        prov_driver_instance = prov_driver.SNMPProvisioningDriver
         with contextlib.nested(mock.patch.object(snmp_client, 'get_client',
                                                  return_value=self.client),
-                               mock.patch.object(snmp_driver.SNMPDriver,
+                               mock.patch.object(prov_driver_instance,
                                                  '_snmp_get',
                                                  return_value=None),
                                mock.patch.object(snmp_client.SNMPClient, 'set',
                                                  return_value=None),
-                               mock.patch.object(snmp_driver.SNMPDriver,
+                               mock.patch.object(prov_driver_instance,
                                                  '_get_device_nibble_map',
                                                  return_value=None),
                                mock.patch.object(snmp_client.SNMPClient,
                                                  'get_bit_map_for_add',
                                                  return_value=egress_byte)):
             self.driver.set_isolation(self.port)
-            snmp_client.get_client.called
-            snmp_driver.SNMPDriver._snmp_get.called
-            snmp_client.SNMPClient.set.called
-            snmp_driver.SNMPDriver._get_device_nibble_map.called
-            snmp_client.SNMPClient.get_bit_map_for_add.called
-            snmp_client.SNMPClient.set.assert_called_with(egress_oid, oct_str)
 
     def test_set_isolation_exception(self):
         self.port = self._get_port_payload()
@@ -121,7 +107,7 @@ class TestSnmpDriver(base.BaseTestCase):
         with contextlib.nested(
             mock.patch.object(snmp_client, 'get_client',
                               return_value=self.client),
-            mock.patch.object(snmp_driver.SNMPDriver,
+            mock.patch.object(prov_driver.SNMPProvisioningDriver,
                               '_snmp_get',
                               return_value=None),
             mock.patch.object(snmp_client.SNMPClient, 'set',
@@ -139,7 +125,6 @@ class TestSnmpDriver(base.BaseTestCase):
         with contextlib.nested(mock.patch.object(snmp_client.SNMPClient, 'get',
                                                  return_value=varbinds)):
             egbytes = self.driver._get_device_nibble_map(self.client, egrs_oid)
-            snmp_client.SNMPClient.get.assert_called_with(egrs_oid)
         self.assertEqual(egbytes, '\x80')
 
     def _get_port_payload(self):

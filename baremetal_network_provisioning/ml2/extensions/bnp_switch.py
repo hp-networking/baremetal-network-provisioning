@@ -25,29 +25,52 @@ from neutron import wsgi
 from baremetal_network_provisioning.common import constants as const
 from baremetal_network_provisioning.common import validators
 from baremetal_network_provisioning.db import bm_nw_provision_db as db
-from baremetal_network_provisioning.drivers import discovery_driver
+from baremetal_network_provisioning.drivers import snmp_discovery_driver
+from baremetal_network_provisioning import managers
 
+from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import uuidutils
 
 LOG = logging.getLogger(__name__)
 
+hpe_opts = [
+    cfg.StrOpt('disc_driver',
+               default='baremetal_network_provisioning.drivers'
+               '.snmp_discovery_driver.SNMPDiscoveryDriver',
+               help=_("Discovery Driver to provision networks on the switches"
+                       " in the cloud fabric")),
+]
+cfg.CONF.register_opts(hpe_opts, "ml2_hpe")
 
 RESOURCE_ATTRIBUTE_MAP = {
     'bnp-switches': {
         'id': {'allow_post': False, 'allow_put': False,
                'is_visible': True},
+        'name': {'allow_post': True, 'allow_put': True,
+                 'validate': {'type:string': None},
+                 'is_visible': True},
         'ip_address': {'allow_post': True, 'allow_put': False,
                        'validate': {'type:ip_address': None},
                        'is_visible': True, 'default': ''},
         'mac_address': {'allow_post': True, 'allow_put': False,
                         'validate': {'type:string': None},
                         'is_visible': True, 'default': ''},
-        'access-parameters': {'allow_post': True, 'allow_put': True,
-                              'validate': {'type:access_dict': None},
-                              'is_visible': True},
-        'access-protocol': {'allow_post': True, 'allow_put': True,
-                            'validate': {'type:string': None},
-                            'is_visible': True},
+        'family': {'allow_post': True, 'allow_put': False,
+                   'validate': {'type:string': None},
+                   'is_visible': True, 'default': ''},
+        'disc-proto': {'allow_post': True, 'allow_put': True,
+                       'validate': {'type:string': None},
+                       'is_visible': True},
+        'disc-creds': {'allow_post': True, 'allow_put': True,
+                       'validate': {'type:string': None},
+                       'is_visible': True},
+        'prov-proto': {'allow_post': True, 'allow_put': True,
+                       'validate': {'type:string': None},
+                       'is_visible': True},
+        'prov-creds': {'allow_post': True, 'allow_put': True,
+                       'validate': {'type:string': None},
+                       'is_visible': True},
         'vendor': {'allow_post': True, 'allow_put': False,
                    'validate': {'type:string': None},
                    'is_visible': True}
@@ -61,6 +84,9 @@ attributes.validators['type:access_dict'] = validator_func
 class BNPSwitchController(wsgi.Controller):
 
     """WSGI Controller for the extension bnp-switch."""
+
+    def __init__(self):
+        self.disc_manager = managers.DiscoveryManager()
 
     def _check_admin(self, context):
         reason = _("Only admin can configure Bnp-switch")
@@ -103,7 +129,7 @@ class BNPSwitchController(wsgi.Controller):
             raise webob.exc.HTTPNotFound(
                 _("Switch %s does not exist") % id)
         try:
-            snmp_drv = discovery_driver.SNMPDiscoveryDriver(switch)
+            snmp_drv = None
             ports_list = snmp_drv.get_ports_status()
         except Exception as e:
             LOG.error(_LE("BNP SNMP getbulk failed with exception: %s."), e)
@@ -135,25 +161,45 @@ class BNPSwitchController(wsgi.Controller):
     def delete(self, request, id, **kwargs):
         context = request.context
         self._check_admin(context)
-        switch = db.get_bnp_phys_switch(context, id)
-        portmap = db.get_bnp_switch_port_map_by_switchid(context, id)
-        if portmap:
-            raise webob.exc.HTTPConflict(
-                _("Switch id %s has active port mappings") % id)
+        port_prov = None
+        is_uuid = False
+        if not uuidutils.is_uuid_like(id):
+            switch = db.get_bnp_phys_switch_by_name(context, id)
+        else:
+            is_uuid = True
+            switch = db.get_bnp_phys_switch(context, id)
         if not switch:
             raise webob.exc.HTTPNotFound(
                 _("Switch %s does not exist") % id)
-        if switch['status'] == const.SWITCH_STATUS['enable']:
+        if isinstance(switch, list) and len(switch) > 1:
+            raise webob.exc.HTTPConflict(
+                _("Multiple switches matches found "
+                  "for name %s, use an ID to be more specific.") % id)
+        if isinstance(switch, list) and len(switch) == 1:
+            portmap = db.get_bnp_switch_port_map_by_switchid(context,
+                                                             switch[0].id)
+            port_prov = switch[0].port_prov
+        else:
+            portmap = db.get_bnp_switch_port_map_by_switchid(context, id)
+            port_prov = switch['port_prov']
+        if portmap:
+            raise webob.exc.HTTPConflict(
+                _("Switch id %s has active port mappings") % id)
+        if port_prov == const.SWITCH_STATUS['enable']:
             raise webob.exc.HTTPBadRequest(
                 _("Disable the switch %s to delete") % id)
-        db.delete_bnp_phys_switch(context, id)
+        if is_uuid:
+            db.delete_bnp_phys_switch(context, id)
+        else:
+            db.delete_bnp_phys_switch_by_name(context, id)
 
     def create(self, request, **kwargs):
         context = request.context
         self._check_admin(context)
         body = validators.validate_request(request)
-        key_list = ['ip_address', 'vendor',
-                    'access_protocol', 'access_parameters']
+        key_list = ['name', 'ip_address', 'vendor',
+                    'disc_proto', 'disc_creds',
+                    'prov_proto', 'prov_creds']
         keys = body.keys()
         for key in key_list:
             if key not in keys:
@@ -171,23 +217,35 @@ class BNPSwitchController(wsgi.Controller):
             raise webob.exc.HTTPConflict(
                 _("Switch with ip_address %s is already present") %
                 ip_address)
-        validators.validate_access_parameters(body)
-        access_parameters = body.pop("access_parameters")
-        switch_dict = self._create_switch_dict()
+        access_parameters = self._get_access_param(context, body['disc_proto'],
+                                                   body['disc_creds'])
         for key, value in access_parameters.iteritems():
             body[key] = value
-        switch = self._update_dict(body, switch_dict)
-        bnp_switch = self._discover_switch(switch)
+        bnp_switch = self._discover_switch(body)
         if bnp_switch.get('mac_address'):
-            switch['mac_address'] = bnp_switch.get('mac_address')
-            switch['status'] = const.SWITCH_STATUS['enable']
+            body['mac_address'] = bnp_switch.get('mac_address')
+            body['port_prov'] = const.SWITCH_STATUS['enable']
         else:
-            switch['status'] = const.SWITCH_STATUS['create']
-        db_switch = db.add_bnp_phys_switch(context, switch)
+            body['port_prov'] = const.SWITCH_STATUS['create']
+        db_switch = db.add_bnp_phys_switch(context, body)
         if bnp_switch.get('ports'):
             self._add_physical_port(context, db_switch.get('id'),
                                     bnp_switch.get('ports'))
         return {const.BNP_SWITCH_RESOURCE_NAME: dict(db_switch)}
+
+    def _get_access_param(self, context, proto, creds):
+        if not uuidutils.is_uuid_like(creds):
+            access_parameters = db.get_snmp_cred_by_name(context, creds)
+        else:
+            access_parameters = db.get_snmp_cred_by_id(context, creds)
+        if not access_parameters:
+            raise webob.exc.HTTPBadRequest(
+                _("Invalid disc_creds %s") % creds)
+        if access_parameters and access_parameters.proto_type == proto:
+            return access_parameters
+        if access_parameters and access_parameters.proto_type != proto:
+            raise webob.exc.HTTPBadRequest(
+                _("Invalid disc_proto %s") % proto)
 
     def _add_physical_port(self, context, switch_id, ports):
         for port in ports:
@@ -240,8 +298,8 @@ class BNPSwitchController(wsgi.Controller):
             else:
                 validators.validate_snmp_parameters(access_parameters)
             try:
-                snmp_driver = discovery_driver.SNMPDiscoveryDriver(switch_dict)
-                snmp_driver.get_sys_name()
+                driver = snmp_discovery_driver.SNMPDiscoveryDriver(switch_dict)
+                driver.get_sys_name()
                 db.update_bnp_phys_switch_access_params(context,
                                                         id, switch_dict)
             except Exception as e:
@@ -301,14 +359,22 @@ class BNPSwitchController(wsgi.Controller):
                                                         swport_ifname)
 
     def _discover_switch(self, switch):
-        snmp_driver = discovery_driver.SNMPDiscoveryDriver(switch)
-        bnp_switch = snmp_driver.discover_switch()
+        vendor = switch['vendor']
+        protocol = switch['disc_proto']
+        switch['access_protocol'] = switch['disc_proto']
+        family = None
+        keys = switch.keys()
+        if 'family' in keys:
+            family = switch['family']
+        disc_driver = self._discovery_driver(protocol, vendor, family)
+        bnp_switch = disc_driver.obj.discover_switch(switch)
         return bnp_switch
 
     def _update_dict(self, body, switch_dict):
         for key in switch_dict.keys():
             if key in body.keys():
                 switch_dict[key] = body[key]
+        switch_dict['access_protocol'] = body['disc_proto']
         return switch_dict
 
     def _create_switch_dict(self):
@@ -326,6 +392,30 @@ class BNPSwitchController(wsgi.Controller):
             'priv_key': None,
             'security_level': None}
         return switch_dict
+
+    def _discovery_driver(self, protocol, vendor, family):
+        """Get discovery driver instance based on protocol, vendor, family."""
+        try:
+            if const.PROTOCOL_SNMP in protocol:
+                driver_key = self._driver_key(vendor, const.PROTOCOL_SNMP,
+                                              family)
+                driver = self.disc_manager.discovery_driver(driver_key)
+            else:
+                driver_key = self._driver_key(vendor, protocol,
+                                              family)
+                driver = self.disc_manager.discovery_driver(driver_key)
+        except Exception as e:
+            LOG.error(_LE("No suitable protocol driver loaded'%s' "), e)
+            raise webob.exc.HTTPBadRequest(
+                _("No suitable protocol driver loaded for '%s' ") % protocol)
+        return driver
+
+    def _driver_key(self, vendor, protocol, family):
+        if family:
+            driver_key = vendor + protocol + family
+        else:
+            driver_key = vendor + protocol
+        return driver_key
 
 
 class Bnp_switch(extensions.ExtensionDescriptor):

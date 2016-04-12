@@ -107,6 +107,7 @@ class BNPNeutronPort(model_base.BASEV2):
                             ['bnp_switch_port_mappings.neutron_port_id'],
                             ondelete='CASCADE')
 
+
 class BNPSNMPCredential(model_base.BASEV2, models_v2.HasId):
     """Define snmp credentials."""
     __tablename__ = "bnp_snmp_credentials"

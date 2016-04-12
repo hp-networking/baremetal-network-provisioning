@@ -18,8 +18,7 @@ from oslo_config import cfg
 
 from baremetal_network_provisioning.common import constants
 from baremetal_network_provisioning.common import snmp_client
-from baremetal_network_provisioning.drivers.hp import (
-    hp_snmp_provisioning_driver as snmp_driver)
+from baremetal_network_provisioning.ml2 import mechanism_hpe
 
 from neutron.tests import base
 
@@ -42,7 +41,7 @@ class TestSNMPClient(base.BaseTestCase):
         self.priv_protocol = 'des'
         self.priv_key = 'test123'
         self.write_community = 'public'
-        CONF.register_opts(snmp_driver.hp_opts, group='default')
+        CONF.register_opts(mechanism_hpe.param_opts, group='default')
         CONF.set_override('snmp_timeout', 3, 'default')
         CONF.set_override('snmp_retries', 5, 'default')
         self.client = snmp_client.SNMPClient(self.ip_address,
