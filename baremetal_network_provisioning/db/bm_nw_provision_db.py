@@ -262,18 +262,15 @@ def add_bnp_phys_switch(context, switch):
         uuid = uuidutils.generate_uuid()
         phy_switch = models.BNPPhysicalSwitch(
             id=uuid,
+            name=switch['name'],
             ip_address=switch['ip_address'],
             mac_address=switch['mac_address'],
-            status=switch['status'],
-            access_protocol=switch['access_protocol'],
-            vendor=switch['vendor'],
-            write_community=switch['write_community'],
-            security_name=switch['security_name'],
-            auth_protocol=switch['auth_protocol'],
-            auth_key=switch['auth_key'],
-            priv_protocol=switch['priv_protocol'],
-            priv_key=switch['priv_key'],
-            security_level=switch['security_level'])
+            port_prov=switch['port_prov'],
+            disc_proto=switch['disc_proto'],
+            disc_creds=switch['disc_creds'],
+            prov_proto=switch['prov_proto'],
+            prov_creds=switch['prov_creds'],
+            vendor=switch['vendor'])
         session.add(phy_switch)
     return phy_switch
 
@@ -453,7 +450,7 @@ def update_bnp_phys_switch_status(context, sw_id, sw_status):
         with context.session.begin(subtransactions=True):
             (context.session.query(models.BNPPhysicalSwitch).filter_by(
                 id=sw_id).update(
-                    {'status': sw_status},
+                    {'port_prov': sw_status},
                     synchronize_session=False))
     except exc.NoResultFound:
         LOG.error(_LE("no physical switch found for id: %s"), sw_id)
@@ -523,6 +520,7 @@ def get_bnp_phys_switch_ports_by_switch_id(context, switch_id):
         LOG.error('no ports found for physical switch %s', switch_id)
         return
     return switch_ports
+
 
 def add_bnp_snmp_cred(context, snmp_cred):
     """Add SNMP Credential."""
@@ -602,3 +600,26 @@ def get_netconf_cred_by_id(context, id):
         LOG.info(_LI("no netconf credential found with id: %s"), id)
         return
     return netconf_cred
+
+
+def get_bnp_phys_switch_by_name(context, name):
+    """Get physical switch that matches name."""
+    try:
+        query = context.session.query(models.BNPPhysicalSwitch)
+        switch = query.filter_by(name=name).all()
+    except exc.NoResultFound:
+        LOG.error(_LE("no physical switch found with name: %s"), name)
+        return
+    return switch
+
+
+def delete_bnp_phys_switch_by_name(context, name):
+    """Delete physical switch that matches name."""
+    try:
+        session = context.session
+        with session.begin(subtransactions=True):
+            if name:
+                session.query(models.BNPPhysicalSwitch).filter_by(
+                    name=name).delete()
+    except exc.NoResultFound:
+        LOG.error(_LE("no switch found for switch name: %s"), name)
