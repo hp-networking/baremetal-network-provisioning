@@ -64,7 +64,7 @@ def validate_switch_attributes(keys, attr_keys):
         msg = _("Unrecognized attribute(s) '%s'") % ', '.join(extra_keys)
         for extra_key in extra_keys:
             if extra_key == 'family':
-                return
+                continue
             else:
                 raise webob.exc.HTTPBadRequest(msg)
 
