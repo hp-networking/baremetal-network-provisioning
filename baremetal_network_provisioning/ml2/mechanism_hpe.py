@@ -368,9 +368,9 @@ class HPEMechanismDriver(api.MechanismDriver):
 
     def _driver_key(self, vendor, protocol, family):
         if family:
-            driver_key = vendor + protocol + family
+            driver_key = vendor + '_' + protocol + '_' + family
         else:
-            driver_key = vendor + protocol
+            driver_key = vendor + '_' + protocol
         return driver_key
 
     def _raise_ml2_error(self, err_type, method_name):

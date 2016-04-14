@@ -75,7 +75,7 @@ class ProvisioningManager(stevedore.named.NamedExtensionManager):
 
     def _register_provisioning(self):
         for ext in self:
-            provisioning_type = ext.obj.get_type()
+            provisioning_type = ext.obj.get_driver_name()
             if provisioning_type in self.drivers:
                 LOG.error(_LE("provisioning driver '%(new_driver)s' ignored "
                               " provisioning driver '%(old_driver)s' already"

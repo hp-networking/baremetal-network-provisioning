@@ -57,6 +57,18 @@ def validate_request(request):
     return body
 
 
+def validate_switch_attributes(keys, attr_keys):
+    """Validate the keys in request body."""
+    extra_keys = set(keys) - set(attr_keys)
+    if extra_keys:
+        msg = _("Unrecognized attribute(s) '%s'") % ', '.join(extra_keys)
+        for extra_key in extra_keys:
+            if extra_key == 'family':
+                continue
+            else:
+                raise webob.exc.HTTPBadRequest(msg)
+
+
 def validate_attributes(keys, attr_keys):
     """Validate the keys in request body."""
     extra_keys = set(keys) - set(attr_keys)

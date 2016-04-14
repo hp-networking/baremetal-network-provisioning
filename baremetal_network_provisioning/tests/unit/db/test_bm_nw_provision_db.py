@@ -205,6 +205,7 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
                        'port_prov': "enable",
                        'name': "test1",
                        'vendor': "HPE",
+                       'family': "test",
                        'disc_proto': 'snmpv1',
                        'disc_creds': 'creds1',
                        'prov_proto': 'snmpv1',

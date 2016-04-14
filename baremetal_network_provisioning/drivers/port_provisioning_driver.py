@@ -55,6 +55,6 @@ class PortProvisioningDriver(object):
         pass
 
     @abc.abstractmethod
-    def get_type(self):
-        """get driver type for stevedore loading."""
+    def get_driver_name(self):
+        """get driver name for stevedore loading."""
         pass
