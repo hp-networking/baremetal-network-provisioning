@@ -99,6 +99,8 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
                                                                  None)
         result_netsoap = self._test_create_credential_for_netconf(body_netsoap,
                                                                   None)
+        result_netsoap = self._test_create_credential_for_netconf(body_netsoap,
+                                                                  None)
         self.assertEqual(None, result_netssh)
         self.assertEqual(None, result_netsoap)
 
@@ -110,7 +112,7 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
         body_netconf = {"bnp_credential":
                         {"name": "CRED2",
                          "netconf-abc":
-                         {"key_path": 'fake_key_path'}}}
+                         {"key_path": "/home/sdn/key2.rsa"}}}
         self.assertRaises(webob.exc.HTTPBadRequest,
                           self._test_create_credential_for_snmp,
                           body_snmp, None)
@@ -182,3 +184,4 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
         self.assertRaises(webob.exc.HTTPBadRequest,
                           self._test_create_credential_for_netconf,
                           body_netsoap, None)
+                                                                              
