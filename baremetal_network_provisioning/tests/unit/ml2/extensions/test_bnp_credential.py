@@ -16,7 +16,6 @@
 from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
 from neutron.tests.unit import testlib_api
 
-from baremetal_network_provisioning.db import bm_nw_provision_db as db
 from baremetal_network_provisioning.ml2.extensions import bnp_credential
 
 import os.path
@@ -34,29 +33,19 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
         super(TestBnpCredential, self).setUp()
         self.bnp_wsgi_controller = bnp_credential.BNPCredentialController()
 
-    def _test_create_credential_for_snmp(self, body, cred_name):
+    def _test_create_credential_for_snmp(self, body):
         create_req = self.new_create_request('bnp-credentials', body,
                                              'json')
-        with contextlib.nested(
-            mock.patch.object(db, 'get_snmp_cred_by_name',
-                              return_value=cred_name),
-                mock.patch.object(db, 'add_bnp_snmp_cred')):
-            self.bnp_wsgi_controller.create(create_req)
-            db.get_snmp_cred_by_name.called
-            db.add_bnp_snmp_cred.called
+        return self.bnp_wsgi_controller.create(create_req)
 
-    def _test_create_credential_for_netconf(self, body, cred_name):
+    def _test_create_credential_for_netconf(self, body):
         create_req = self.new_create_request('bnp-credentials', body,
                                              'json')
         with contextlib.nested(
-            mock.patch.object(os.path, 'isfile', return_value=True),
-            mock.patch.object(db, 'get_netconf_cred_by_name',
-                              return_value=cred_name),
-                mock.patch.object(db, 'add_bnp_netconf_cred')):
-            self.bnp_wsgi_controller.create(create_req)
+                mock.patch.object(os.path, 'isfile', return_value=True)):
+            result = self.bnp_wsgi_controller.create(create_req)
             os.path.isfile.called
-            db.get_netconf_cred_by_name.called
-            db.add_bnp_netconf_cred.called
+            return result
 
     def test_create_valid_cred_for_snmp(self):
         body_snmpv3 = {"bnp_credential":
@@ -75,15 +64,15 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
                         {"name": "CRED3",
                          "snmpv2c":
                          {"write_community": "public"}}}
-        result_snmpv3 = self._test_create_credential_for_snmp(body_snmpv3,
-                                                              None)
-        result_snmpv1 = self._test_create_credential_for_snmp(body_snmpv1,
-                                                              None)
-        result_snmpv2c = self._test_create_credential_for_snmp(body_snmpv2c,
-                                                               None)
-        self.assertEqual(None, result_snmpv3)
-        self.assertEqual(None, result_snmpv1)
-        self.assertEqual(None, result_snmpv2c)
+        result_snmpv3 = self._test_create_credential_for_snmp(body_snmpv3)
+        result_snmpv1 = self._test_create_credential_for_snmp(body_snmpv1)
+        result_snmpv2c = self._test_create_credential_for_snmp(body_snmpv2c)
+        self.assertEqual(result_snmpv3['bnp_credential']['name'],
+                         body_snmpv3['bnp_credential']['name'])
+        self.assertEqual(result_snmpv1['bnp_credential']['name'],
+                         body_snmpv1['bnp_credential']['name'])
+        self.assertEqual(result_snmpv2c['bnp_credential']['name'],
+                         body_snmpv2c['bnp_credential']['name'])
 
     def test_create_valid_cred_for_netconf(self):
         body_netssh = {"bnp_credential":
@@ -95,14 +84,12 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
                          "netconf-soap":
                          {"user_name": "fake_user",
                           "password": "fake_password"}}}
-        result_netssh = self._test_create_credential_for_netconf(body_netssh,
-                                                                 None)
-        result_netsoap = self._test_create_credential_for_netconf(body_netsoap,
-                                                                  None)
-        result_netsoap = self._test_create_credential_for_netconf(body_netsoap,
-                                                                  None)
-        self.assertEqual(None, result_netssh)
-        self.assertEqual(None, result_netsoap)
+        result_netssh = self._test_create_credential_for_netconf(body_netssh)
+        result_netsoap = self._test_create_credential_for_netconf(body_netsoap)
+        self.assertEqual(result_netssh['bnp_credential']['name'],
+                         body_netssh['bnp_credential']['name'])
+        self.assertEqual(result_netsoap['bnp_credential']['name'],
+                         body_netsoap['bnp_credential']['name'])
 
     def test_create_cred_with_invalid_protocol(self):
         body_snmp = {"bnp_credential":
@@ -115,10 +102,10 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
                          {"key_path": "/home/fakedir/key1.rsa"}}}
         self.assertRaises(webob.exc.HTTPBadRequest,
                           self._test_create_credential_for_snmp,
-                          body_snmp, None)
+                          body_snmp)
         self.assertRaises(webob.exc.HTTPBadRequest,
                           self._test_create_credential_for_netconf,
-                          body_netconf, None)
+                          body_netconf)
 
     def test_create_cred_with_existing_name(self):
         body_snmp = {"bnp_credential":
@@ -129,12 +116,14 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
                         {"name": "CRED2",
                          "netconf-ssh":
                          {"key_path": "/home/fakedir/key1.rsa"}}}
+        self._test_create_credential_for_snmp(body_snmp)
         self.assertRaises(webob.exc.HTTPConflict,
                           self._test_create_credential_for_snmp,
-                          body_snmp, 'CRED1')
+                          body_snmp)
+        self._test_create_credential_for_netconf(body_netconf)
         self.assertRaises(webob.exc.HTTPConflict,
                           self._test_create_credential_for_netconf,
-                          body_netconf, 'CRED2')
+                          body_netconf)
 
     def test_create_cred_with_no_name(self):
         body_snmp = {"bnp_credential":
@@ -145,10 +134,10 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
                          {"key_path": "/home/fakedir/key1.rsa"}}}
         self.assertRaises(webob.exc.HTTPBadRequest,
                           self._test_create_credential_for_snmp,
-                          body_snmp, None)
+                          body_snmp)
         self.assertRaises(webob.exc.HTTPBadRequest,
                           self._test_create_credential_for_netconf,
-                          body_netconf, None)
+                          body_netconf)
 
     def test_create_cred_with_invalid_parameters(self):
         body_snmpv2 = {"bnp_credential":
@@ -174,13 +163,13 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
                          {"user_name": "fake_user"}}}
         self.assertRaises(webob.exc.HTTPBadRequest,
                           self._test_create_credential_for_snmp,
-                          body_snmpv2, None)
+                          body_snmpv2)
         self.assertRaises(webob.exc.HTTPBadRequest,
                           self._test_create_credential_for_snmp,
-                          body_snmpv3, None)
+                          body_snmpv3)
         self.assertRaises(webob.exc.HTTPBadRequest,
                           self._test_create_credential_for_netconf,
-                          body_netssh, None)
+                          body_netssh)
         self.assertRaises(webob.exc.HTTPBadRequest,
                           self._test_create_credential_for_netconf,
-                          body_netsoap, None)
+                          body_netsoap)
