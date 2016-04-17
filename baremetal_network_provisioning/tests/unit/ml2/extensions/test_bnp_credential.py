@@ -66,7 +66,7 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
                          "auth_protocol": "md5",
                          "auth_key": "abcd1234",
                          "priv_protocol": "des",
-                         "priv_key": "xxxxxxxx"}}}
+                         "priv_key": "dummy_key"}}}
         body_snmpv1 = {"bnp_credential":
                        {"name": "CRED2",
                         "snmpv1":
@@ -89,12 +89,12 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
         body_netssh = {"bnp_credential":
                        {"name": "CRED1",
                         "netconf-ssh":
-                        {"key_path": "/home/sdn/key2.rsa"}}}
+                        {"key_path": "/home/fakedir/key1.rsa"}}}
         body_netsoap = {"bnp_credential":
                         {"name": "CRED2",
                          "netconf-soap":
-                         {"user_name": "sdn",
-                          "password": "skyline"}}}
+                         {"user_name": "fake_user",
+                          "password": "fake_password"}}}
         result_netssh = self._test_create_credential_for_netconf(body_netssh,
                                                                  None)
         result_netsoap = self._test_create_credential_for_netconf(body_netsoap,
@@ -112,7 +112,7 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
         body_netconf = {"bnp_credential":
                         {"name": "CRED2",
                          "netconf-abc":
-                         {"key_path": "/home/sdn/key2.rsa"}}}
+                         {"key_path": "/home/fakedir/key1.rsa"}}}
         self.assertRaises(webob.exc.HTTPBadRequest,
                           self._test_create_credential_for_snmp,
                           body_snmp, None)
@@ -128,7 +128,7 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
         body_netconf = {"bnp_credential":
                         {"name": "CRED2",
                          "netconf-ssh":
-                         {"key_path": "/home/sdn/key2.rsa"}}}
+                         {"key_path": "/home/fakedir/key1.rsa"}}}
         self.assertRaises(webob.exc.HTTPConflict,
                           self._test_create_credential_for_snmp,
                           body_snmp, 'CRED1')
@@ -142,7 +142,7 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
                       {"write_community": "public"}}}
         body_netconf = {"bnp_credential":
                         {"netconf-ssh":
-                         {"key_path": "/home/sdn/key2.rsa"}}}
+                         {"key_path": "/home/fakedir/key1.rsa"}}}
         self.assertRaises(webob.exc.HTTPBadRequest,
                           self._test_create_credential_for_snmp,
                           body_snmp, None)
@@ -155,23 +155,23 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
                        {"name": "CRED1",
                         "snmpv2c":
                         {"write_community": "public",
-                         "fake_key": "/home/sdn/key2.rsa"}}}
+                         "fake_key": "/home/fakedir/key1.rsa"}}}
         body_snmpv3 = {"bnp_credential":
                        {"name": "CRED2",
                         "snmpv3":
                         {"security_name": "xyz",
                          "auth_protocol": "md5",
                          "priv_protocol": "des",
-                         "priv_key": "xxxxxxxx"}}}
+                         "priv_key": "dummy_key"}}}
         body_netssh = {"bnp_credential":
                        {"name": "CRED3",
                         "fake_key": "fake_value",
                         "netconf-ssh":
-                        {"key_path": "/home/sdn/key2.rsa"}}}
+                        {"key_path": "/home/fakedir/key1.rsa"}}}
         body_netsoap = {"bnp_credential":
                         {"name": "CRED4",
                          "netconf-soap":
-                         {"user_name": "sdn"}}}
+                         {"user_name": "fake_user"}}}
         self.assertRaises(webob.exc.HTTPBadRequest,
                           self._test_create_credential_for_snmp,
                           body_snmpv2, None)
@@ -184,4 +184,3 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
         self.assertRaises(webob.exc.HTTPBadRequest,
                           self._test_create_credential_for_netconf,
                           body_netsoap, None)
-                                                                              
