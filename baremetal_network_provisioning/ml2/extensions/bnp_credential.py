@@ -69,13 +69,19 @@ class BNPCredentialController(wsgi.Controller):
             raise webob.exc.HTTPForbidden(reason)
 
     def index(self, request, **kwargs):
-        pass
-
-    def show(self, request, id, **kwargs):
-        pass
-
-    def delete(self, request, id, **kwargs):
-        pass
+        context = request.context
+        filters = {}
+        creds = []
+        req_dict = dict(request.GET)
+        if req_dict:
+            filters = req_dict
+        creds = db.get_all_snmp_creds(context, **filters)
+        netconf_creds = db.get_all_netconf_creds(context, **filters)
+        for i in netconf_creds:
+            creds.append(i)
+        creds = self._creds_to_show(creds)
+        creds_dict = {'bnp_credentials': creds}
+        return creds_dict
 
     def _creds_to_show(self, creds):
         attr_list = ['security_name', 'auth_protocol', 'auth_key',
@@ -97,13 +103,39 @@ class BNPCredentialController(wsgi.Controller):
                     cred.pop(key)
             return cred
 
+    def show(self, request, id, **kwargs):
+        context = request.context
+        snmp_cred = db.get_snmp_cred_by_id(context, id)
+        netconf_cred = db.get_netconf_cred_by_id(context, id)
+        if snmp_cred:
+            cred = self._creds_to_show(snmp_cred)
+        elif netconf_cred:
+            cred = self._creds_to_show(netconf_cred)
+        else:
+            raise webob.exc.HTTPNotFound(
+                _("Credential with id=%s does not exist") % id)
+        return {const.BNP_CREDENTIAL_RESOURCE_NAME: cred}
+
+    def delete(self, request, id, **kwargs):
+        context = request.context
+        self._check_admin(context)
+        snmp_cred = db.get_snmp_cred_by_id(context, id)
+        netconf_cred = db.get_netconf_cred_by_id(context, id)
+        if snmp_cred:
+            db.delete_snmp_cred_by_id(context, id)
+        elif netconf_cred:
+            db.delete_netconf_cred_by_id(context, id)
+        else:
+            raise webob.exc.HTTPNotFound(
+                _("Credential with id=%s does not exist") % id)
+
     def create(self, request, **kwargs):
         """Create a new Credential."""
         context = request.context
         self._check_admin(context)
         body = validators.validate_request(request)
         key_list = ['name', 'snmpv1', 'snmpv2c',
-                    'snmpv3', 'netconf-ssh', 'netconf-soap']
+                    'snmpv3', 'netconf_ssh', 'netconf_soap']
         keys = body.keys()
         validators.validate_attributes(keys, key_list)
         protocol = validators.validate_access_parameters(body)
@@ -119,13 +151,6 @@ class BNPCredentialController(wsgi.Controller):
 
     def _create_snmp_creds(self, context, body, protocol):
         """Create a new SNMP Credential."""
-        name = body.get('name')
-        snmp_cred = db.get_snmp_cred_by_name(context,
-                                             name)
-        if snmp_cred:
-            raise webob.exc.HTTPConflict(
-                _("SNMP Credential with %s name already present") %
-                name)
         access_parameters = body.pop(protocol)
         snmp_cred_dict = self._create_snmp_cred_dict()
         for key, value in access_parameters.iteritems():
@@ -137,13 +162,6 @@ class BNPCredentialController(wsgi.Controller):
 
     def _create_netconf_creds(self, context, body, protocol):
         """Create a new NETCONF Credential."""
-        name = body.get('name')
-        netconf_cred = db.get_netconf_cred_by_name(context,
-                                                   name)
-        if netconf_cred:
-            raise webob.exc.HTTPConflict(
-                _("NETCONF Credential with %s name already present") %
-                name)
         access_parameters = body.pop(protocol)
         netconf_cred_dict = self._create_netconf_cred_dict()
         for key, value in access_parameters.iteritems():
