@@ -560,7 +560,7 @@ def add_bnp_netconf_cred(context, netconf_cred):
 
 
 def get_all_snmp_creds(context, **args):
-    """Get all physical switches."""
+    """Get all SNMP Credentials."""
     try:
         query = context.session.query(
             models.BNPSNMPCredential).filter_by(**args)
@@ -572,7 +572,7 @@ def get_all_snmp_creds(context, **args):
 
 
 def get_all_netconf_creds(context, **args):
-    """Get all physical switches."""
+    """Get all NETCONF Credentials."""
     try:
         query = context.session.query(
             models.BNPNETCONFCredential).filter_by(**args)

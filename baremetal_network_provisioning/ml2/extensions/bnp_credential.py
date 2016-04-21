@@ -46,10 +46,10 @@ RESOURCE_ATTRIBUTE_MAP = {
         'snmpv3': {'allow_post': True, 'allow_put': True,
                    'validate': {'type:access_dict': None},
                    'is_visible': True},
-        'netconf-ssh': {'allow_post': True, 'allow_put': True,
+        'netconf_ssh': {'allow_post': True, 'allow_put': True,
                         'validate': {'type:access_dict': None},
                         'is_visible': True},
-        'netconf-soap': {'allow_post': True, 'allow_put': True,
+        'netconf_soap': {'allow_post': True, 'allow_put': True,
                          'validate': {'type:access_dict': None},
                          'is_visible': True},
     },
@@ -73,8 +73,9 @@ class BNPCredentialController(wsgi.Controller):
         filters = {}
         creds = []
         req_dict = dict(request.GET)
-        if req_dict:
-            filters = req_dict
+        if req_dict and req_dict.get('fields', None):
+            req_dict.pop('fields')
+        filters = req_dict
         creds = db.get_all_snmp_creds(context, **filters)
         netconf_creds = db.get_all_netconf_creds(context, **filters)
         for i in netconf_creds:
