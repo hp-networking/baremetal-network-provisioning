@@ -80,7 +80,7 @@ def upgrade():
                     sa.UniqueConstraint('ip_address'))
 
     op.create_table('bnp_snmp_credentials',
-                    sa.Column('id', sa.String(40), nullable=False),
+                    sa.Column('id', sa.String(36), nullable=False),
                     sa.Column('name', sa.String(36), nullable=False),
                     sa.Column('proto_type', sa.String(255), nullable=False),
                     sa.Column('write_community',
@@ -91,18 +91,16 @@ def upgrade():
                     sa.Column('priv_protocol', sa.String(16), nullable=True),
                     sa.Column('priv_key', sa.String(255), nullable=True),
                     sa.Column('security_level', sa.String(16), nullable=True),
-                    sa.PrimaryKeyConstraint('id'),
-                    sa.UniqueConstraint('name'))
+                    sa.PrimaryKeyConstraint('id'))
 
     op.create_table('bnp_netconf_credentials',
-                    sa.Column('id', sa.String(40), nullable=False),
+                    sa.Column('id', sa.String(36), nullable=False),
                     sa.Column('name', sa.String(36), nullable=False),
                     sa.Column('proto_type', sa.String(255), nullable=False),
                     sa.Column('user_name', sa.String(255), nullable=True),
                     sa.Column('password', sa.String(255), nullable=True),
                     sa.Column('key_path', sa.String(255), nullable=True),
-                    sa.PrimaryKeyConstraint('id'),
-                    sa.UniqueConstraint('name'))
+                    sa.PrimaryKeyConstraint('id'))
 
     op.create_table('bnp_physical_switch_ports',
                     sa.Column('id', sa.String(36), nullable=False),

@@ -527,7 +527,7 @@ def add_bnp_snmp_cred(context, snmp_cred):
     """Add SNMP Credential."""
     session = context.session
     with session.begin(subtransactions=True):
-        uuid = 's' + uuidutils.generate_uuid()
+        uuid = uuidutils.generate_uuid()
         snmp_cred = models.BNPSNMPCredential(
             id=uuid,
             name=snmp_cred['name'],
@@ -547,7 +547,7 @@ def add_bnp_netconf_cred(context, netconf_cred):
     """Add NETCONF Credential."""
     session = context.session
     with session.begin(subtransactions=True):
-        uuid = 'n' + uuidutils.generate_uuid()
+        uuid = uuidutils.generate_uuid()
         netconf_cred = models.BNPNETCONFCredential(
             id=uuid,
             name=netconf_cred['name'],
@@ -559,15 +559,39 @@ def add_bnp_netconf_cred(context, netconf_cred):
     return netconf_cred
 
 
+def get_all_snmp_creds(context, **args):
+    """Get all SNMP Credentials."""
+    try:
+        query = context.session.query(
+            models.BNPSNMPCredential).filter_by(**args)
+        snmp_creds = query.all()
+    except exc.NoResultFound:
+        LOG.error(_LE("no snmp credential found"))
+        return
+    return snmp_creds
+
+
+def get_all_netconf_creds(context, **args):
+    """Get all NETCONF Credentials."""
+    try:
+        query = context.session.query(
+            models.BNPNETCONFCredential).filter_by(**args)
+        netconf_creds = query.all()
+    except exc.NoResultFound:
+        LOG.error(_LE("no netconf credential found"))
+        return
+    return netconf_creds
+
+
 def get_snmp_cred_by_name(context, name):
     """Get SNMP Credential that matches name."""
     try:
         query = context.session.query(models.BNPSNMPCredential)
-        snmp_cred = query.filter_by(name=name).one()
+        snmp_creds = query.filter_by(name=name).all()
     except exc.NoResultFound:
         LOG.info(_LI("no snmp credential found with name: %s"), name)
         return
-    return snmp_cred
+    return snmp_creds
 
 
 def get_snmp_cred_by_id(context, id):
@@ -585,11 +609,11 @@ def get_netconf_cred_by_name(context, name):
     """Get NETCONF Credential that matches name."""
     try:
         query = context.session.query(models.BNPNETCONFCredential)
-        netconf_cred = query.filter_by(name=name).one()
+        netconf_creds = query.filter_by(name=name).all()
     except exc.NoResultFound:
         LOG.info(_LI("no netconf credential found with name: %s"), name)
         return
-    return netconf_cred
+    return netconf_creds
 
 
 def get_netconf_cred_by_id(context, id):
@@ -601,6 +625,22 @@ def get_netconf_cred_by_id(context, id):
         LOG.info(_LI("no netconf credential found with id: %s"), id)
         return
     return netconf_cred
+
+
+def delete_snmp_cred_by_id(context, id):
+    """Delete SNMP credential by id."""
+    session = context.session
+    with session.begin(subtransactions=True):
+        session.query(models.BNPSNMPCredential).filter_by(
+            id=id).delete()
+
+
+def delete_netconf_cred_by_id(context, id):
+    """Delete NETCONF credential by id."""
+    session = context.session
+    with session.begin(subtransactions=True):
+        session.query(models.BNPNETCONFCredential).filter_by(
+            id=id).delete()
 
 
 def get_bnp_phys_switch_by_name(context, name):
