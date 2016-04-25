@@ -628,7 +628,7 @@ def get_netconf_cred_by_id(context, id):
 
 
 def delete_snmp_cred_by_id(context, id):
-    """Delete snmp credential by id."""
+    """Delete SNMP credential by id."""
     session = context.session
     with session.begin(subtransactions=True):
         session.query(models.BNPSNMPCredential).filter_by(
@@ -636,7 +636,7 @@ def delete_snmp_cred_by_id(context, id):
 
 
 def delete_netconf_cred_by_id(context, id):
-    """Delete snmp credential by id."""
+    """Delete NETCONF credential by id."""
     session = context.session
     with session.begin(subtransactions=True):
         session.query(models.BNPNETCONFCredential).filter_by(
