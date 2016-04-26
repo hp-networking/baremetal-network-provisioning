@@ -21,11 +21,12 @@ from neutronclient.i18n import _
 
 from baremetal_network_provisioning.common import constants as const
 
-meta_snmp = ('security_name=SECURITY_NAME,'
-             'auth_protocol=AUTH_PROTOCOL,'
-             'priv_protocol=PRIV_PROTOCOL,'
-             'auth_key=AUTH_KEY,'
-             'priv_key=PRIV_KEY')
+meta_snmpv1_v2 = 'write_community=WRITE_COMMUNITY'
+meta_snmpv3 = ('security_name=SECURITY_NAME,'
+               'auth_protocol=AUTH_PROTOCOL,'
+               'priv_protocol=PRIV_PROTOCOL,'
+               'auth_key=AUTH_KEY,'
+               'priv_key=PRIV_KEY')
 meta_netconf_ssh = ('user_name=USER_NAME,'
                     'password=PASSWORD,'
                     'key_path=KEY_PATH')
@@ -53,8 +54,7 @@ class UpdateCredentialSnmpNetconfMixin(object):
     def add_arguments_snmp_netconf(self, parser):
         group_snmp_netconf = parser.add_mutually_exclusive_group()
         group_snmp_netconf.add_argument('--snmpv1',
-                                        metavar='write_community='
-                                                'WRITE_COMMUNITY',
+                                        metavar=meta_snmpv1_v2,
                                         action='append',
                                         type=utils.str2dict_type(
                                             optional_keys=['write_community']),
@@ -64,14 +64,13 @@ class UpdateCredentialSnmpNetconfMixin(object):
                                                               ' switch.')
                                         )
         group_snmp_netconf.add_argument('--snmpv2c',
-                                        metavar='write_community='
-                                        'WRITE_COMMUNITY',
+                                        metavar=meta_snmpv1_v2,
                                         action='append', dest='snmpv2c',
                                         type=utils.str2dict_type(
                                             optional_keys=['write_community']),
                                         help=_('SNMPV2c access credentials'
                                                ' for physical switch.'))
-        group_snmp_netconf.add_argument('--snmpv3', metavar=meta_snmp,
+        group_snmp_netconf.add_argument('--snmpv3', metavar=meta_snmpv3,
                                         action='append', dest='snmpv3',
                                         type=utils.str2dict_type(
                                             optional_keys=[
@@ -89,8 +88,8 @@ class UpdateCredentialSnmpNetconfMixin(object):
                                                            'password',
                                                            'key_path']),
                                         help=_('NETCONF-SSH access credentials'
-                                               ' for physical switch,'
-                                               ' absolute path has to be pro'
+                                               ' for physical switch.'
+                                               ' Absolute path has to be pro'
                                                'vided for key_path.'))
 
         group_snmp_netconf.add_argument('--netconf-soap',
@@ -106,27 +105,29 @@ class UpdateCredentialSnmpNetconfMixin(object):
     def args2body_snmp_netconf(self, parsed_args, body):
         if parsed_args.snmpv1:
             check_multiple_args(parsed_args.snmpv1, '--snmpv1')
-            body['bnp_credential']['snmpv1'] = parsed_args.snmpv1[0]
-
+            body[const.BNP_CREDENTIAL_RESOURCE_NAME]['snmpv1'] = (
+                parsed_args.snmpv1[0])
         elif parsed_args.snmpv2c:
             check_multiple_args(parsed_args.snmpv2c, '--snmpv2c')
-            body['bnp_credential']['snmpv2c'] = parsed_args.snmpv2c[0]
-
+            body[const.BNP_CREDENTIAL_RESOURCE_NAME]['snmpv2c'] = (
+                parsed_args.snmpv2c[0])
         elif parsed_args.snmpv3:
             check_multiple_args(parsed_args.snmpv3, '--snmpv3')
-            body['bnp_credential']['snmpv3'] = parsed_args.snmpv3[0]
+            body[const.BNP_CREDENTIAL_RESOURCE_NAME]['snmpv3'] = (
+                parsed_args.snmpv3[0])
         elif parsed_args.netconf_ssh:
             check_multiple_args(parsed_args.netconf_ssh, '--netconf-ssh')
-            body['bnp_credential']['netconf_ssh'] = parsed_args.netconf_ssh[0]
+            body[const.BNP_CREDENTIAL_RESOURCE_NAME]['netconf_ssh'] = (
+                parsed_args.netconf_ssh[0])
         elif parsed_args.netconf_soap:
             check_multiple_args(parsed_args.netconf_soap, '--netconf-soap')
-            body['bnp_credential']['netconf_soap'] = (
+            body[const.BNP_CREDENTIAL_RESOURCE_NAME]['netconf_soap'] = (
                 parsed_args.netconf_soap[0])
 
 
 class BnpCredentialCreate(extension.ClientExtensionCreate, BnpCredential,
                           UpdateCredentialSnmpNetconfMixin):
-    """Create credential for a given physical switch."""
+    """Create credential for a physical switch."""
 
     shell_command = 'credential-create'
 
@@ -145,7 +146,7 @@ class BnpCredentialCreate(extension.ClientExtensionCreate, BnpCredential,
 
 class BnpCredentialUpdate(extension.ClientExtensionUpdate, BnpCredential,
                           UpdateCredentialSnmpNetconfMixin):
-    """Update credential's information of a given physical switch."""
+    """Update credential's information of a physical switch."""
     shell_command = 'credential-update'
 
     def add_known_arguments(self, parser):
@@ -159,12 +160,12 @@ class BnpCredentialUpdate(extension.ClientExtensionUpdate, BnpCredential,
         body = {const.BNP_CREDENTIAL_RESOURCE_NAME: {}}
         self.args2body_snmp_netconf(parsed_args, body)
         if parsed_args.name:
-            body['bnp_credential']['name'] = parsed_args.name
+            body[const.BNP_CREDENTIAL_RESOURCE_NAME]['name'] = parsed_args.name
         return body
 
 
 class BnpCredentialList(extension.ClientExtensionList, BnpCredential):
-    """List credentials that belong to a given physical switch."""
+    """List credential's of a physical switch."""
     shell_command = 'credential-list'
     listcolumns = ['id', 'name', 'type']
     pagination_support = True
@@ -172,10 +173,10 @@ class BnpCredentialList(extension.ClientExtensionList, BnpCredential):
 
 
 class BnpCredentialShow(extension.ClientExtensionShow, BnpCredential):
-    """Show credential information of a given physical switch."""
+    """Show credential information of a physical switch."""
     shell_command = 'credential-show'
 
 
 class BnpCredentialDelete(extension.ClientExtensionDelete, BnpCredential):
-    """Delete credential information of a given physical switch."""
+    """Delete credential information of a physical switch."""
     shell_command = 'credential-delete'
