@@ -22,8 +22,8 @@ Enabling Baremetal Network Provisioning in Devstack
   
 5. Provide the extra config file in local.conf for loading mechanism driver::
 
-    Q_PLUGIN_EXTRA_CONF_PATH=etc/neutron/plugins/ml2
-    Q_PLUGIN_EXTRA_CONF_FILES=(ml2_conf_hpe.ini)
+    Q_PLUGIN_EXTRA_CONF_PATH=/etc/neutron/plugins/ml2
+    Q_PLUGIN_EXTRA_CONF_FILES=(ml2_conf_hp.ini)
 
 6. Read the settings file for more details.
 
