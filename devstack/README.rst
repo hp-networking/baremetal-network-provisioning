@@ -13,12 +13,12 @@ Enabling Baremetal Network Provisioning in Devstack
 
 3. Add the following required flag in local.conf to enable BNP ML2 MechanismDriver::
     
-    Q_ML2_PLUGIN_MECHANISM_DRIVERS=openvswitch,l2population,hp
+    Q_ML2_PLUGIN_MECHANISM_DRIVERS=openvswitch,l2population,hpe_bnp
     
 4. Add the following required flag in local.conf to enable BNP Extension driver::
     
     #append the below lines
-    Q_ML2_PLUGIN_EXT_DRIVERS=port_security,bnp_ext_driver
+    Q_ML2_PLUGIN_EXT_DRIVERS=port_security,bnp_ext_driver,bnp_cred_ext_driver
   
 5. Provide the extra config file in local.conf for loading mechanism driver::
 

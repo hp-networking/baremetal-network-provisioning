@@ -1,4 +1,4 @@
-# Copyright (c) 2015 OpenStack Foundation
+# Copyright (c) 2016 OpenStack Foundation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,41 +20,23 @@ import six
 
 
 @six.add_metaclass(abc.ABCMeta)
-class PortProvisioningDriver(object):
-    """Interface between Back-end driver and other generic
-
-    network-provisioning drivers.
-    """
+class DiscoveryDriverAPI(object):
+    """Interface for back-end discovery drivers."""
 
     def initialize(self):
         pass
 
     @abc.abstractmethod
-    def set_isolation(self, port):
-        """set_isolation create the vlan and the  associate vlan to
-
-         the physical ports.
-         """
+    def discover_switch(self, switch_info):
+        """discover_switch discovers the physical switch and ports."""
         pass
 
     @abc.abstractmethod
-    def delete_isolation(self, port):
-        """delete_isolation deletes the vlan from the physical ports."""
-
-        pass
-
-    @abc.abstractmethod
-    def create_lag(self, port):
-        """create_lag  creates the link aggregation for the physical ports."""
-
-        pass
-
-    @abc.abstractmethod
-    def delete_lag(self, port):
-        """delete_lag  delete the link aggregation for the physical ports."""
+    def get_ports_status(self, switch_info):
+        """get_ports_status gets the operation status of the ports."""
         pass
 
     @abc.abstractmethod
     def get_driver_name(self):
-        """get driver name for stevedore loading."""
+        """get driver name to load the driver."""
         pass

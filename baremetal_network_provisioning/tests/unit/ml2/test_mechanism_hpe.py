@@ -13,9 +13,9 @@
 #    under the License.
 #
 from baremetal_network_provisioning.common import constants as hp_const
-from baremetal_network_provisioning.ml2 import (hp_network_provisioning_driver
-                                                as np_drv)
-from baremetal_network_provisioning.ml2 import mechanism_hp as hp_mech
+from baremetal_network_provisioning.db import bm_nw_provision_db as db
+from baremetal_network_provisioning.db import bm_nw_provision_models as models
+from baremetal_network_provisioning.ml2 import mechanism_hpe as hpe_mech
 
 import contextlib
 
@@ -27,15 +27,12 @@ from neutron.tests import base
 CONF = cfg.CONF
 
 
-class TestHPMechDriver(base.BaseTestCase):
+class TestHPEMechDriver(base.BaseTestCase):
     """Test class for mech driver."""
 
     def setUp(self):
-        super(TestHPMechDriver, self).setUp()
-        self.driver = hp_mech.HPMechanismDriver()
-        self.np_driver = np_drv.HPNetworkProvisioningDriver()
-        self.driver.initialize()
-        self.driver._load_drivers()
+        super(TestHPEMechDriver, self).setUp()
+        self.driver = hpe_mech.HPEMechanismDriver()
 
     def _get_port_context(self, tenant_id, net_id, vm_id, network):
         """Get port context."""
@@ -79,23 +76,34 @@ class TestHPMechDriver(base.BaseTestCase):
 
     def test_create_port_precommit(self):
         """Test create_port_precommit method."""
-        fake_port_dict = mock.Mock()
-        fake_context = mock.Mock()
+        tenant_id = 'ten-1'
+        network_id = 'net1-id'
+        segmentation_id = 1001
+        vm_id = 'vm1'
+        bnp_phys_port = models.BNPPhysicalSwitchPort
+        bnp_phys_switch = models.BNPPhysicalSwitch
+        bnp_phys_switch.port_prov = 'ENABLED'
+        network_context = self._get_network_context(tenant_id,
+                                                    network_id,
+                                                    segmentation_id,
+                                                    False)
+        port_context = self._get_port_context(tenant_id,
+                                              network_id, vm_id,
+                                              network_context)
         with contextlib.nested(
-            mock.patch.object(hp_mech.HPMechanismDriver,
+            mock.patch.object(hpe_mech.HPEMechanismDriver,
                               '_is_port_of_interest',
                               return_value=True),
-            mock.patch.object(hp_mech.HPMechanismDriver,
+            mock.patch.object(hpe_mech.HPEMechanismDriver,
                               '_construct_port',
-                              return_value=fake_port_dict),
-            mock.patch.object(np_drv.HPNetworkProvisioningDriver,
-                              'create_port',
-                              return_value=None)
-        ) as (is_port, cons_port, c_port):
-            self.driver.create_port_precommit(fake_context)
-            is_port.assert_called_with(fake_context)
-            cons_port.assert_called_with(fake_context)
-            c_port.assert_called_with(fake_port_dict)
+                              return_value=self._get_port_dict()),
+            mock.patch.object(db, 'get_subnets_by_network',
+                              return_value=["subnet"]),
+            mock.patch.object(db, 'get_bnp_phys_switch_by_mac',
+                              return_value=bnp_phys_switch),
+            mock.patch.object(db, 'get_bnp_phys_port',
+                              return_value=bnp_phys_port)):
+            self.driver.create_port_precommit(port_context)
 
     def test_delete_port_precommit(self):
         """Test delete_port_precommit method."""
@@ -112,37 +120,10 @@ class TestHPMechDriver(base.BaseTestCase):
                                               network_id,
                                               vm_id,
                                               network_context)
-        port_id = port_context.current['id']
-        with contextlib.nested(
-            mock.patch.object(hp_mech.HPMechanismDriver,
-                              '_get_vnic_type',
-                              return_value=portbindings.VNIC_BAREMETAL),
-            mock.patch.object(np_drv.HPNetworkProvisioningDriver,
-                              'delete_port',
-                              return_value=None)
-        ) as (vnic_type, d_port):
+        with mock.patch.object(hpe_mech.HPEMechanismDriver,
+                               '_get_vnic_type',
+                               return_value=portbindings.VNIC_BAREMETAL):
             self.driver.delete_port_precommit(port_context)
-            vnic_type.assert_called_with(port_context)
-            d_port.assert_called_with(port_id)
-
-    def test__construct_port(self):
-        """Test _construct_port method."""
-        tenant_id = 'ten-1'
-        network_id = 'net1-id'
-        segmentation_id = 1001
-        vm_id = 'vm1'
-        fake_port_dict = self._get_port_dict()
-        network_context = self._get_network_context(tenant_id,
-                                                    network_id,
-                                                    segmentation_id,
-                                                    False)
-
-        port_context = self._get_port_context(tenant_id,
-                                              network_id,
-                                              vm_id,
-                                              network_context)
-        port_dict = self.driver._construct_port(port_context, segmentation_id)
-        self.assertEqual(port_dict, fake_port_dict)
 
     def test__get_binding_profile(self):
         """Test _get_binding_profile method."""
@@ -215,7 +196,20 @@ class FakePortContext(object):
 
     @property
     def current(self):
-        return self._port
+        port = {'device_id': '',
+                'device_owner': 'compute',
+                'binding:host_id': '',
+                'name': 'test-port',
+                'tenant_id': '',
+                'id': 123456,
+                'network_id': '',
+                'binding:profile':
+                {'local_link_information': [{'switch_id': '11:22:33:44:55:66',
+                                             'port_id': 'Tengig0/1'}]},
+                'binding:vnic_type': 'baremetal',
+                'admin_state_up': True,
+                }
+        return port
 
     @property
     def original(self):

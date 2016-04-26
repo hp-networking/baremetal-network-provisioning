@@ -1,13 +1,12 @@
 # Devstack settings
 BNP_DIR=$DEST/baremetal-network-provisioning
-BNP_ML2_CONF_HP_FILE=/etc/neutron/plugins/ml2/ml2_conf_hp.ini
+BNP_ML2_CONF_HPE_FILE=/etc/neutron/plugins/ml2/ml2_conf_hpe.ini
 BNP_ENTRY_POINT_FILE=/opt/stack/neutron/neutron.egg-info/entry_points.txt
 NEUTRON_CONF_DIR=/etc/neutron/plugins/ml2
-SNMP_TIMEOUT=3
-SNMP_RETRIES=5
-NET_PROVISIONING_DRIVER=baremetal_network_provisioning.drivers.hp.hp_snmp_provisioning_driver.HPSNMPProvisioningDriver
-HP_MECHANISM_DRIVER=baremetal_network_provisioning.ml2.mechanism_hp:HPMechanismDriver
-BNP_EXTENSION_DRIVER=baremetal_network_provisioning.ml2.hpironicextensiondriver:HPIronicExtensionDriver
+HPE_MECHANISM_DRIVER=baremetal_network_provisioning.ml2.mechanism_hpe:HPEMechanismDriver
+BNP_EXTENSION_DRIVER=baremetal_network_provisioning.ml2.hpeironicextensiondriver:HPEIronicExtensionDriver
+BNP_CRED_EXT_DRIVER=baremetal_network_provisioning.ml2.hpe_ironic_credential_ext_driver:HPEIronicCredentialExtDriver
+HPE_SNMP=hpe_snmp
 #
 # Each service you enable has the following meaning:
 # bnp-plugin - Add this config flag to  enable bnp service plugin
@@ -16,3 +15,5 @@ BNP_EXTENSION_DRIVER=baremetal_network_provisioning.ml2.hpironicextensiondriver:
 # enable_service bnp-plugin
 #
 # This can be overridden in the localrc file 
+SNMP_TIMEOUT=${SNMP_TIMEOUT:-3}
+SNMP_RETRIES=${SNMP_RETRIES:-5}

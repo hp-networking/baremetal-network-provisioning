@@ -23,12 +23,12 @@ from oslo_log import log as logging
 LOG = logging.getLogger(__name__)
 
 
-class HPIronicExtensionDriver(api.ExtensionDriver):
+class HPEIronicExtensionDriver(api.ExtensionDriver):
     _supported_extension_aliases = 'bnp-switch'
 
     def initialize(self):
         neutron_extensions.append_api_extensions_path(extensions.__path__)
-        LOG.info(_("HPIronicExtensionDriver initialization complete"))
+        LOG.info(_("HPEIronicExtensionDriver initialization complete"))
 
     @property
     def extension_alias(self):

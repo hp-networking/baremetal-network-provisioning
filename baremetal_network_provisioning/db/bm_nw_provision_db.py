@@ -1,4 +1,4 @@
-# Copyright (c) 2015 OpenStack Foundation
+# Copyright (c) 2016 OpenStack Foundation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -262,18 +262,16 @@ def add_bnp_phys_switch(context, switch):
         uuid = uuidutils.generate_uuid()
         phy_switch = models.BNPPhysicalSwitch(
             id=uuid,
+            name=switch['name'],
             ip_address=switch['ip_address'],
             mac_address=switch['mac_address'],
-            status=switch['status'],
-            access_protocol=switch['access_protocol'],
+            port_prov=switch['port_prov'],
+            disc_proto=switch['disc_proto'],
+            disc_creds=switch['disc_creds'],
+            prov_proto=switch['prov_proto'],
+            prov_creds=switch['prov_creds'],
             vendor=switch['vendor'],
-            write_community=switch['write_community'],
-            security_name=switch['security_name'],
-            auth_protocol=switch['auth_protocol'],
-            auth_key=switch['auth_key'],
-            priv_protocol=switch['priv_protocol'],
-            priv_key=switch['priv_key'],
-            security_level=switch['security_level'])
+            family=switch['family'])
         session.add(phy_switch)
     return phy_switch
 
@@ -453,7 +451,7 @@ def update_bnp_phys_switch_status(context, sw_id, sw_status):
         with context.session.begin(subtransactions=True):
             (context.session.query(models.BNPPhysicalSwitch).filter_by(
                 id=sw_id).update(
-                    {'status': sw_status},
+                    {'port_prov': sw_status},
                     synchronize_session=False))
     except exc.NoResultFound:
         LOG.error(_LE("no physical switch found for id: %s"), sw_id)
@@ -523,3 +521,146 @@ def get_bnp_phys_switch_ports_by_switch_id(context, switch_id):
         LOG.error('no ports found for physical switch %s', switch_id)
         return
     return switch_ports
+
+
+def add_bnp_snmp_cred(context, snmp_cred):
+    """Add SNMP Credential."""
+    session = context.session
+    with session.begin(subtransactions=True):
+        uuid = uuidutils.generate_uuid()
+        snmp_cred = models.BNPSNMPCredential(
+            id=uuid,
+            name=snmp_cred['name'],
+            proto_type=snmp_cred['proto_type'],
+            write_community=snmp_cred['write_community'],
+            security_name=snmp_cred['security_name'],
+            auth_protocol=snmp_cred['auth_protocol'],
+            auth_key=snmp_cred['auth_key'],
+            priv_protocol=snmp_cred['priv_protocol'],
+            priv_key=snmp_cred['priv_key'],
+            security_level=snmp_cred['security_level'])
+        session.add(snmp_cred)
+    return snmp_cred
+
+
+def add_bnp_netconf_cred(context, netconf_cred):
+    """Add NETCONF Credential."""
+    session = context.session
+    with session.begin(subtransactions=True):
+        uuid = uuidutils.generate_uuid()
+        netconf_cred = models.BNPNETCONFCredential(
+            id=uuid,
+            name=netconf_cred['name'],
+            proto_type=netconf_cred['proto_type'],
+            user_name=netconf_cred['user_name'],
+            password=netconf_cred['password'],
+            key_path=netconf_cred['key_path'])
+        session.add(netconf_cred)
+    return netconf_cred
+
+
+def get_all_snmp_creds(context, **args):
+    """Get all SNMP Credentials."""
+    try:
+        query = context.session.query(
+            models.BNPSNMPCredential).filter_by(**args)
+        snmp_creds = query.all()
+    except exc.NoResultFound:
+        LOG.error(_LE("no snmp credential found"))
+        return
+    return snmp_creds
+
+
+def get_all_netconf_creds(context, **args):
+    """Get all NETCONF Credentials."""
+    try:
+        query = context.session.query(
+            models.BNPNETCONFCredential).filter_by(**args)
+        netconf_creds = query.all()
+    except exc.NoResultFound:
+        LOG.error(_LE("no netconf credential found"))
+        return
+    return netconf_creds
+
+
+def get_snmp_cred_by_name(context, name):
+    """Get SNMP Credential that matches name."""
+    try:
+        query = context.session.query(models.BNPSNMPCredential)
+        snmp_creds = query.filter_by(name=name).all()
+    except exc.NoResultFound:
+        LOG.info(_LI("no snmp credential found with name: %s"), name)
+        return
+    return snmp_creds
+
+
+def get_snmp_cred_by_id(context, id):
+    """Get SNMP Credential that matches id."""
+    try:
+        query = context.session.query(models.BNPSNMPCredential)
+        snmp_cred = query.filter_by(id=id).one()
+    except exc.NoResultFound:
+        LOG.info(_LI("no snmp credential found with id: %s"), id)
+        return
+    return snmp_cred
+
+
+def get_netconf_cred_by_name(context, name):
+    """Get NETCONF Credential that matches name."""
+    try:
+        query = context.session.query(models.BNPNETCONFCredential)
+        netconf_creds = query.filter_by(name=name).all()
+    except exc.NoResultFound:
+        LOG.info(_LI("no netconf credential found with name: %s"), name)
+        return
+    return netconf_creds
+
+
+def get_netconf_cred_by_id(context, id):
+    """Get NETCONF Credential that matches id."""
+    try:
+        query = context.session.query(models.BNPNETCONFCredential)
+        netconf_cred = query.filter_by(id=id).one()
+    except exc.NoResultFound:
+        LOG.info(_LI("no netconf credential found with id: %s"), id)
+        return
+    return netconf_cred
+
+
+def delete_snmp_cred_by_id(context, id):
+    """Delete SNMP credential by id."""
+    session = context.session
+    with session.begin(subtransactions=True):
+        session.query(models.BNPSNMPCredential).filter_by(
+            id=id).delete()
+
+
+def delete_netconf_cred_by_id(context, id):
+    """Delete NETCONF credential by id."""
+    session = context.session
+    with session.begin(subtransactions=True):
+        session.query(models.BNPNETCONFCredential).filter_by(
+            id=id).delete()
+
+
+def get_bnp_phys_switch_by_name(context, name):
+    """Get physical switch that matches name."""
+    try:
+        query = context.session.query(models.BNPPhysicalSwitch)
+        switch = query.filter_by(name=name).all()
+    except exc.NoResultFound:
+        LOG.error(_LE("no physical switch found with name: %s"), name)
+        return
+    return switch
+
+
+def delete_bnp_phys_switch_by_name(context, name):
+    """Delete physical switch that matches name."""
+    try:
+        session = context.session
+        with session.begin(subtransactions=True):
+            if name:
+                session.query(models.BNPPhysicalSwitch).filter_by(
+                    name=name).delete()
+    except exc.NoResultFound:
+        LOG.error(_LE("no switch found for switch name: %s"), name)

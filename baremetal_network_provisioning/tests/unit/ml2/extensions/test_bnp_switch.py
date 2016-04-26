@@ -22,27 +22,20 @@ from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
 from neutron.tests.unit import testlib_api
 
-from baremetal_network_provisioning.db import bm_nw_provision_db as db
-from baremetal_network_provisioning.drivers import discovery_driver
 from baremetal_network_provisioning.ml2.extensions import bnp_switch
-
-import mock
-import webob.exc
-
-import contextlib
 
 
 TARGET_PLUGIN = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 _get_path = test_base._get_path
+extensions_path = ':'.join(neutron.extensions.__path__)
 
 
 class TestBnpSwitches(test_plugin.NeutronDbPluginV2TestCase,
                       testlib_api.WebTestCase):
 
     fmt = 'json'
-    _mechanism_drivers = ['hp']
+    _mechanism_drivers = ['hpe_bnp']
     _ext_drivers = 'bnp_ext_driver'
-    extensions_path = ':'.join(neutron.extensions.__path__)
 
     def setUp(self):
         super(TestBnpSwitches, self).setUp()
@@ -65,7 +58,7 @@ class TestBnpSwitches(test_plugin.NeutronDbPluginV2TestCase,
                        "security_name": None,
                        "auth_protocol": None,
                        "priv_protocol": None},
-                      "vendor": "hp",
+                      "vendor": "hpe",
                       "ip_address": "1.2.3.4",
                       "access_protocol": "snmpv1"}}
         self.data1 = {"bnp_switch":
@@ -76,7 +69,7 @@ class TestBnpSwitches(test_plugin.NeutronDbPluginV2TestCase,
                         "security_name": None,
                         "auth_protocol": None,
                         "priv_protocol": None},
-                       "vendor": "hp",
+                       "vendor": "hpe",
                        "ip_address": "1.1.1.1",
                        "access_protocol": "snmpv2c"}}
         self.bnp_switch_dict = {"mac_address": "44:31:92:dc:2e:c0",
@@ -84,7 +77,7 @@ class TestBnpSwitches(test_plugin.NeutronDbPluginV2TestCase,
         self.bnp_switch_dict1 = {"mac_address": "11:31:92:aa:2e:c0",
                                  "ports": []}
 
-    def _create_switch(self, data, bnp_switch_dict):
+    '''def _create_switch(self, data, bnp_switch_dict):
         create_req = self.new_create_request('bnp-switches', data, 'json')
         with contextlib.nested(
             mock.patch.object(bnp_switch.BNPSwitchController,
@@ -103,9 +96,20 @@ class TestBnpSwitches(test_plugin.NeutronDbPluginV2TestCase,
         self.bnp_wsgi_controller.update(update_req, switch_id)
 
     def _delete_switch(self, switch_id):
-        delete_req = self.new_delete_request('bnp-switches',
-                                             switch_id)
-        self.bnp_wsgi_controller.delete(delete_req, switch_id)
+        with contextlib.nested(
+            mock.patch.object(db, 'get_bnp_switch_port_map_by_switchid',
+                              return_value=[])):
+            delete_req = self.new_delete_request('bnp-switches',
+                                                 switch_id)
+            self.bnp_wsgi_controller.delete(delete_req, switch_id)
+
+    def _delete_switch_with_active_mappings(self, switch_id):
+        with contextlib.nested(
+            mock.patch.object(db, 'get_bnp_switch_port_map_by_switchid',
+                              return_value=[{'switch_id': switch_id}])):
+            delete_req = self.new_delete_request('bnp-switches',
+                                                 switch_id)
+            self.bnp_wsgi_controller.delete(delete_req, switch_id)
 
     def _show_switch(self, switch_id):
         ports_list = []
@@ -162,6 +166,12 @@ class TestBnpSwitches(test_plugin.NeutronDbPluginV2TestCase,
                           self._delete_switch,
                           switch_id)
 
+    def test_delete_switch_with_mappings(self):
+        switch_id = 'foobar'
+        self.assertRaises(webob.exc.HTTPConflict,
+                          self._delete_switch_with_active_mappings,
+                          switch_id)
+
     def test_create_with_invalid_vendor(self):
         data = self.data
         data['bnp_switch']['vendor'] = 'fake_vendor'
@@ -182,4 +192,4 @@ class TestBnpSwitches(test_plugin.NeutronDbPluginV2TestCase,
                                "access_parameters": {
                                    "write_community": "public"}}}
         self.assertRaises(webob.exc.HTTPBadRequest,
-                          self._update_switch, data, switch_id)
+                          self._update_switch, data, switch_id)'''
