@@ -217,24 +217,18 @@ class HPEMechanismDriver(api.MechanismDriver):
         db_context = neutron_context.get_admin_context()
         subnets = db.get_subnets_by_network(db_context, network_id)
         if not subnets:
-            LOG.error("Subnet not found for the network")
+            LOG.error(_LE("Subnet not found for the network"))
             self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
         for switchport in switchports:
             switch_mac_id = switchport['switch_id']
-            port_id = switchport['port_id']
             bnp_switch = db.get_bnp_phys_switch_by_mac(db_context,
                                                        switch_mac_id)
             # check for port and switch level existence
             if not bnp_switch:
                 LOG.error(_LE("No physical switch found '%s' "), switch_mac_id)
                 self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
-            phys_port = db.get_bnp_phys_port(db_context,
-                                             bnp_switch.id,
-                                             port_id)
-            if not phys_port:
-                LOG.error(_LE("No physical port found for '%s' "), phys_port)
-                self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
-            if bnp_switch.port_prov != hp_const.SWITCH_STATUS['enable']:
+            port_provisioning_db = bnp_switch.port_provisioning
+            if port_provisioning_db != hp_const.SWITCH_STATUS['enable']:
                 LOG.error(_LE("Physical switch is not Enabled '%s' "),
                           bnp_switch.port_prov)
                 self._raise_ml2_error(wexc.HTTPBadRequest, 'create_port')
@@ -251,42 +245,44 @@ class HPEMechanismDriver(api.MechanismDriver):
             port_name = switchport['port_id']
             if not bnp_switch:
                 self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
-            phys_port = db.get_bnp_phys_port(db_context,
-                                             bnp_switch.id,
-                                             port_name)
-            if not phys_port:
-                self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
-            switchport['ifindex'] = phys_port.ifindex
-        credentials_dict = port.get('port')
-        cred_dict = self._get_credentials_dict(bnp_switch, 'create_port')
-        credentials_dict['credentials'] = cred_dict
-        try:
-            prov_protocol = bnp_switch.prov_proto
-            vendor = bnp_switch.vendor
-            family = bnp_switch.family
-            prov_driver = self._provisioning_driver(prov_protocol, vendor,
-                                                    family)
-            if not prov_driver:
-                LOG.error(_LE("No suitable provisioning driver found"
-                              ))
-                self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
-            prov_driver.obj.set_isolation(port)
-            port_id = port['port']['id']
-            segmentation_id = port['port']['segmentation_id']
-            mapping_dict = {'neutron_port_id': port_id,
-                            'switch_port_id': phys_port.id,
-                            'switch_id': bnp_switch.id,
-                            'lag_id': None,
-                            'access_type': hp_const.ACCESS,
-                            'segmentation_id': int(segmentation_id),
-                            'bind_status': 0
-                            }
-            db.add_bnp_switch_port_map(db_context, mapping_dict)
-            db.add_bnp_neutron_port(db_context, mapping_dict)
-            return hp_const.BIND_SUCCESS
-        except Exception as e:
-            LOG.error(_LE("Exception in configuring VLAN '%s' "), e)
-            return hp_const.BIND_FAILURE
+            credentials_dict = port.get('port')
+            cred_dict = self._get_credentials_dict(bnp_switch, 'create_port')
+            credentials_dict['credentials'] = cred_dict
+            try:
+                prov_protocol = bnp_switch.management_protocol
+                vendor = bnp_switch.vendor
+                family = bnp_switch.family
+                prov_driver = self._provisioning_driver(prov_protocol, vendor,
+                                                        family)
+                if not prov_driver:
+                    LOG.error(_LE("No suitable provisioning driver found"
+                                  ))
+                    self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
+                port_list = prov_driver.obj.get_device_info(port)
+                ifindex = self._get_if_index(port_list, port_name)
+                switchport['ifindex'] = ifindex
+                if not port_list:
+                    LOG.error(_LE("No physical port found for '%s' "),
+                              switch_id)
+                    self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
+                prov_driver.obj.set_isolation(port)
+                port_id = port['port']['id']
+                segmentation_id = port['port']['segmentation_id']
+                mapping_dict = {'neutron_port_id': port_id,
+                                'switch_port_name': port_name,
+                                'switch_id': bnp_switch.id,
+                                'lag_id': None,
+                                'access_type': hp_const.ACCESS,
+                                'segmentation_id': int(segmentation_id),
+                                'bind_status': 0,
+                                'ifindex': ifindex
+                                }
+                db.add_bnp_switch_port_map(db_context, mapping_dict)
+                db.add_bnp_neutron_port(db_context, mapping_dict)
+                return hp_const.BIND_SUCCESS
+            except Exception as e:
+                LOG.error(_LE("Exception in configuring VLAN '%s' "), e)
+                return hp_const.BIND_FAILURE
 
     def update_port(self, port):
         """update_port ."""
@@ -311,12 +307,9 @@ class HPEMechanismDriver(api.MechanismDriver):
         is_last_port_in_vlan = False
         seg_id = port_map.segmentation_id
         bnp_sw_map = db.get_bnp_switch_port_mappings(db_context, port_id)
-        switch_port_id = bnp_sw_map[0].switch_port_id
         bnp_switch = db.get_bnp_phys_switch(db_context,
                                             bnp_sw_map[0].switch_id)
         cred_dict = self._get_credentials_dict(bnp_switch, 'delete_port')
-        phys_port = db.get_bnp_phys_switch_port_by_id(db_context,
-                                                      switch_port_id)
         result = db.get_bnp_neutron_port_by_seg_id(db_context, seg_id)
         if not result:
             LOG.error(_LE("No neutron port is associated with the phys port"))
@@ -327,14 +320,14 @@ class HPEMechanismDriver(api.MechanismDriver):
         port_dict = {'port':
                      {'id': port_id,
                       'segmentation_id': seg_id,
-                      'ifindex': phys_port.ifindex,
+                      'ifindex': bnp_sw_map[0].ifindex,
                       'is_last_port_vlan': is_last_port_in_vlan
                       }
                      }
         credentials_dict = port_dict.get('port')
         credentials_dict['credentials'] = cred_dict
         try:
-            prov_protocol = bnp_switch.prov_proto
+            prov_protocol = bnp_switch.management_protocol
             vendor = bnp_switch.vendor
             family = bnp_switch.family
             prov_driver = self._provisioning_driver(prov_protocol, vendor,
@@ -383,11 +376,12 @@ class HPEMechanismDriver(api.MechanismDriver):
         db_context = neutron_context.get_admin_context()
         creds_dict = {}
         creds_dict['ip_address'] = bnp_switch.ip_address
-        prov_creds = bnp_switch.prov_creds
-        prov_protocol = bnp_switch.prov_proto
+        prov_creds = bnp_switch.credentials
+        prov_protocol = bnp_switch.management_protocol
         if hp_const.PROTOCOL_SNMP in prov_protocol:
             if not uuidutils.is_uuid_like(prov_creds):
                 snmp_cred = db.get_snmp_cred_by_name(db_context, prov_creds)
+                snmp_cred = snmp_cred[0]
             else:
                 snmp_cred = db.get_snmp_cred_by_id(db_context, prov_creds)
             if not snmp_cred:
@@ -397,7 +391,7 @@ class HPEMechanismDriver(api.MechanismDriver):
             creds_dict['security_name'] = snmp_cred.security_name
             creds_dict['security_level'] = snmp_cred.security_level
             creds_dict['auth_protocol'] = snmp_cred.auth_protocol
-            creds_dict['access_protocol'] = prov_protocol
+            creds_dict['management_protocol'] = prov_protocol
             creds_dict['auth_key'] = snmp_cred.auth_key
             creds_dict['priv_protocol'] = snmp_cred.priv_protocol
             creds_dict['priv_key'] = snmp_cred.priv_key
@@ -415,3 +409,15 @@ class HPEMechanismDriver(api.MechanismDriver):
             creds_dict['password'] = netconf_cred.security_name
             creds_dict['key_path'] = netconf_cred.security_level
         return creds_dict
+
+    def _get_if_index(self, port_list, port_name):
+        if_index = ''
+        if not port_list:
+            LOG.error(_LE("No Physical ports found."))
+            return
+        for port_dict in port_list:
+            interface_name = port_dict['interface_name']
+            if port_name == interface_name:
+                if_index = port_dict['ifindex']
+                break
+        return if_index

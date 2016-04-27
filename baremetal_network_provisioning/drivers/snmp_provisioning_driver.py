@@ -99,10 +99,10 @@ class SNMPProvisioningDriver(driver.PortProvisioningDriver):
         auth_key = creds_dict['auth_key']
         priv_protocol = creds_dict['priv_protocol']
         priv_key = creds_dict['priv_key']
-        access_protocol = creds_dict['access_protocol']
+        management_protocol = creds_dict['management_protocol']
         switch_dict = {
             'ip_address': ip_address,
-            'access_protocol': access_protocol,
+            'management_protocol': management_protocol,
             'write_community': write_community,
             'security_name': security_name,
             'auth_protocol': auth_protocol,
@@ -133,11 +133,48 @@ class SNMPProvisioningDriver(driver.PortProvisioningDriver):
     def _snmp_get(self, snmp_client, oid):
         try:
             snmp_response = snmp_client.get(oid)
+            LOG.debug(" snmp_response %s ", snmp_response)
         except Exception as e:
             LOG.error(_LE("Error in get response '%s' "), e)
-            return None
+            return str(e)
         return snmp_response
 
     def get_driver_name(self):
         """get driver name for loading the driver using stevedore."""
         return 'hpe' + '_' + constants.PROTOCOL_SNMP
+
+    def get_protocol_validation_result(self, credentials):
+        """Get protocol validation result by fetching device MAC."""
+        client = snmp_client.get_client(credentials)
+        oid = constants.OID_MAC_ADDRESS
+        var_binds = self._snmp_get(client, oid)
+        for name, val in var_binds:
+            mac = val.prettyPrint().zfill(12)
+            mac = mac[2:]
+            mac_addr = ':'.join([mac[i:i + 2] for i in range(0, 12, 2)])
+            return mac_addr
+
+    def get_device_info(self, credentials):
+        """Get device information for provisioning."""
+        device_ports_list = self._get_ports_info(credentials)
+        return device_ports_list
+
+    def _get_ports_info(self, snmp_info):
+        """retrieves switch port information."""
+        client = snmp_client.get_client(self._get_switch_dict(snmp_info))
+        oids = [constants.OID_IF_INDEX,
+                constants.OID_PORTS,
+                constants.OID_IF_TYPE,
+                constants.OID_PORT_STATUS]
+        var_binds = client.get_bulk(*oids)
+        ports_list = []
+        for var_bind_table_row in var_binds:
+            if_index = (var_bind_table_row[0][1]).prettyPrint()
+            port_name = (var_bind_table_row[1][1]).prettyPrint()
+            if_type = (var_bind_table_row[2][1]).prettyPrint()
+            if if_type == constants.PHY_PORT_TYPE:
+                ports_list.append(
+                    {'ifindex': if_index,
+                     'interface_name': port_name,
+                     'port_status': var_bind_table_row[3][1].prettyPrint()})
+        return ports_list
