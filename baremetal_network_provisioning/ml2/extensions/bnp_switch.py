@@ -176,6 +176,8 @@ class BNPSwitchController(wsgi.Controller):
         else:
             access_params_iterator = access_parameters[0].iteritems()
         for key, value in access_params_iterator:
+            if key == 'name':
+                continue
             body[key] = value
         body['port_provisioning'] = const.SWITCH_STATUS['enable']
         driver_key = self._protocol_driver(body)

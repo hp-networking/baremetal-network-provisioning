@@ -38,7 +38,7 @@ from baremetal_network_provisioning import managers
 
 LOG = logging.getLogger(__name__)
 driver_opts = [
-    cfg.StrOpt('prov_driver',
+    cfg.StrOpt('provisioning_driver',
                default='baremetal_network_provisioning.drivers'
                '.snmp_provisioning_driver.SNMPProvisioningDriver',
                help=_("Driver to provision networks on the switches in"

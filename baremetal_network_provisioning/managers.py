@@ -30,9 +30,9 @@ class ProvisioningManager(stevedore.named.NamedExtensionManager):
         self.drivers = {}
 
         LOG.info(_LI("Configured provisioning driver names: %s"),
-                 cfg.CONF.ml2_hpe.prov_driver)
-        super(ProvisioningManager, self).__init__('bnp.prov_driver',
-                                                  cfg.CONF.ml2_hpe.prov_driver,
+                 cfg.CONF.ml2_hpe.provisioning_driver)
+        super(ProvisioningManager, self).__init__('bnp.provisioning_driver',
+                                                  cfg.CONF.ml2_hpe.provisioning_driver,
                                                   invoke_on_load=True)
         LOG.info(_LI("Loaded provisioning driver names: %s"), self.names())
         self._register_provisioning()
