@@ -212,7 +212,7 @@ def get_client(snmp_info):
 
     """
     return SNMPClient(snmp_info['ip_address'],
-                      snmp_info['access_protocol'],
+                      snmp_info['management_protocol'],
                       snmp_info['write_community'],
                       snmp_info['security_name'],
                       snmp_info['auth_protocol'],

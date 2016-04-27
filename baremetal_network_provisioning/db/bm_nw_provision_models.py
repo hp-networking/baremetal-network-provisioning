@@ -20,50 +20,6 @@ import sqlalchemy as sa
 # from sqlalchemy import orm
 
 
-class HPSwitchLAGPort(model_base.BASEV2, models_v2.HasId):
-    """Define HP switch LAG port properties."""
-    external_lag_id = sa.Column(sa.String(255))
-
-
-class HPSwitchPort(model_base.BASEV2, models_v2.HasId):
-    """Define HP switch port properties."""
-    switch_id = sa.Column(sa.String(48))
-    port_name = sa.Column(sa.String(255))
-    lag_id = sa.Column(sa.String(36),
-                       sa.ForeignKey('hpswitchlagports.id',
-                                     ondelete='CASCADE'))
-
-
-class HPIronicSwitchPortMapping(model_base.BASEV2):
-    """Define neutron port and HP switch port mapping."""
-    neutron_port_id = sa.Column(sa.String(36))
-    switch_port_id = sa.Column(sa.String(36),
-                               sa.ForeignKey('hpswitchports.id',
-                                             ondelete='CASCADE'),
-                               primary_key=True)
-    lag_id = sa.Column(sa.String(36),
-                       sa.ForeignKey('hpswitchlagports.id',
-                                     ondelete='CASCADE'))
-    access_type = sa.Column(sa.String(36))
-    segmentation_id = sa.Column(sa.Integer)
-    host_id = sa.Column(sa.String(36))
-
-
-class BNPPhysicalSwitchPort(model_base.BASEV2, models_v2.HasId):
-    """Define physical switch port properties."""
-    __tablename__ = "bnp_physical_switch_ports"
-    switch_id = sa.Column(sa.String(255), nullable=False)
-    interface_name = sa.Column(sa.String(255), nullable=False)
-    ifindex = sa.Column(sa.String(255), nullable=False)
-    port_status = sa.Column(sa.String(16), nullable=False)
-    __table_args__ = (sa.PrimaryKeyConstraint('id'),
-                      sa.UniqueConstraint('switch_id',
-                                          'interface_name'),)
-    sa.ForeignKeyConstraint(['switch_id'],
-                            ['bnp_physical_switches.id'],
-                            ondelete='CASCADE')
-
-
 class BNPPhysicalSwitch(model_base.BASEV2, models_v2.HasId):
     """Define physical switch properties."""
     __tablename__ = "bnp_physical_switches"
@@ -72,25 +28,24 @@ class BNPPhysicalSwitch(model_base.BASEV2, models_v2.HasId):
     family = sa.Column(sa.String(16), nullable=True)
     ip_address = sa.Column(sa.String(64), nullable=False)
     mac_address = sa.Column(sa.String(32), nullable=True)
-    port_prov = sa.Column(sa.String(16), nullable=False)
-    disc_proto = sa.Column(sa.String(16), nullable=False)
-    disc_creds = sa.Column(sa.String(36), nullable=False)
-    prov_proto = sa.Column(sa.String(16), nullable=False)
-    prov_creds = sa.Column(sa.String(36), nullable=False)
+    port_provisioning = sa.Column(sa.String(16), nullable=False)
+    management_protocol = sa.Column(sa.String(16), nullable=False)
+    credentials = sa.Column(sa.String(36), nullable=False)
+    validation_result = sa.Column(sa.String(255), nullable=True)
     __table_args__ = (sa.PrimaryKeyConstraint('id'),
-                      sa.UniqueConstraint('ip_address'),)
+                      sa.UniqueConstraint('ip_address', 'mac_address'))
 
 
 class BNPSwitchPortMapping(model_base.BASEV2):
     """Define neutron port and switch port mapping."""
     __tablename__ = "bnp_switch_port_mappings"
     neutron_port_id = sa.Column(sa.String(36), nullable=False)
-    switch_port_id = sa.Column(sa.String(255), nullable=False)
+    switch_port_name = sa.Column(sa.String(255), nullable=False)
     switch_id = sa.Column(sa.String(255), nullable=False)
-    __table_args__ = (sa.PrimaryKeyConstraint('neutron_port_id',
-                                              'switch_port_id'),)
-    sa.ForeignKeyConstraint(['switch_port_id'],
-                            ['bnp_physical_switch_ports.id'],
+    ifindex = sa.Column(sa.String(36), nullable=False)
+    __table_args__ = (sa.PrimaryKeyConstraint('neutron_port_id'),)
+    sa.ForeignKeyConstraint(['switch_id'],
+                            ['bnp_physical_switches.id'],
                             ondelete='CASCADE')
 
 
