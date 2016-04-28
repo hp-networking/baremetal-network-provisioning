@@ -221,6 +221,18 @@ def update_bnp_phys_switch_status(context, sw_id, sw_status):
         LOG.error(_LE("no physical switch found for id: %s"), sw_id)
 
 
+def update_bnp_phys_switch_result_status(context, sw_id, sw_status):
+    """Update physical switch validation result status."""
+    try:
+        with context.session.begin(subtransactions=True):
+            (context.session.query(models.BNPPhysicalSwitch).filter_by(
+                id=sw_id).update(
+                    {'validation_result': sw_status},
+                    synchronize_session=False))
+    except exc.NoResultFound:
+        LOG.error(_LE("no physical switch found for id: %s"), sw_id)
+
+
 def update_bnp_phys_switch_access_params(context, switch_id, params):
     """Update physical switch with access params."""
     try:

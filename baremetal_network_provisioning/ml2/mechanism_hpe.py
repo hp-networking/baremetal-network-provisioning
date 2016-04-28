@@ -230,7 +230,7 @@ class HPEMechanismDriver(api.MechanismDriver):
             port_provisioning_db = bnp_switch.port_provisioning
             if port_provisioning_db != hp_const.SWITCH_STATUS['enable']:
                 LOG.error(_LE("Physical switch is not Enabled '%s' "),
-                          bnp_switch.port_prov)
+                          bnp_switch.port_provisioning)
                 self._raise_ml2_error(wexc.HTTPBadRequest, 'create_port')
 
     def bind_port_to_segment(self, port):
@@ -279,6 +279,10 @@ class HPEMechanismDriver(api.MechanismDriver):
                                 }
                 db.add_bnp_switch_port_map(db_context, mapping_dict)
                 db.add_bnp_neutron_port(db_context, mapping_dict)
+                if bnp_switch.validation_result != hp_const.SUCCESS:
+                    db.update_bnp_phys_switch_result_status(db_context,
+                                                            bnp_switch.id,
+                                                            hp_const.SUCCESS)
                 return hp_const.BIND_SUCCESS
             except Exception as e:
                 LOG.error(_LE("Exception in configuring VLAN '%s' "), e)
