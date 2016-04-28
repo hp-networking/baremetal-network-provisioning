@@ -114,36 +114,18 @@ class BNPSwitchController(wsgi.Controller):
         context = request.context
         self._check_admin(context)
         port_prov = None
-        is_uuid = False
-        if not uuidutils.is_uuid_like(id):
-            switch = db.get_bnp_phys_switch_by_name(context, id)
-        else:
-            is_uuid = True
-            switch = db.get_bnp_phys_switch(context, id)
+        switch = db.get_bnp_phys_switch(context, id)
         if not switch:
             raise webob.exc.HTTPNotFound(
                 _("Switch %s does not exist") % id)
-        if isinstance(switch, list) and len(switch) > 1:
-            raise webob.exc.HTTPConflict(
-                _("Multiple switches matches found "
-                  "for name %s, use an ID to be more specific.") % id)
-        if isinstance(switch, list) and len(switch) == 1:
-            portmap = db.get_bnp_switch_port_map_by_switchid(context,
-                                                             switch[0].id)
-            port_prov = switch[0].port_prov
-        else:
-            portmap = db.get_bnp_switch_port_map_by_switchid(context, id)
-            port_prov = switch['port_provisioning']
+        portmap = db.get_bnp_switch_port_map_by_switchid(context, id)
         if portmap:
             raise webob.exc.HTTPConflict(
                 _("Switch id %s has active port mappings") % id)
         if port_prov == const.SWITCH_STATUS['enable']:
             raise webob.exc.HTTPBadRequest(
                 _("Disable the switch %s to delete") % id)
-        if is_uuid:
             db.delete_bnp_phys_switch(context, id)
-        else:
-            db.delete_bnp_phys_switch_by_name(context, id)
 
     def create(self, request, **kwargs):
         context = request.context
@@ -234,10 +216,7 @@ class BNPSwitchController(wsgi.Controller):
                     'management_protocol', 'credentials',
                     'mac_address', 'port_provisioning', 'validate']
         validators.validate_attributes(body.keys(), key_list)
-        if uuidutils.is_uuid_like(id):
-            phys_switch = db.get_bnp_phys_switch(context, id)
-        else:
-            phys_switch = db.get_bnp_phys_switch_name(context, id)
+        phys_switch = db.get_bnp_phys_switch(context, id)
         if not phys_switch:
             raise webob.exc.HTTPNotFound(
                 _("Switch %s does not exist") % id)

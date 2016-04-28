@@ -28,11 +28,11 @@ class ProvisioningManager(stevedore.named.NamedExtensionManager):
     def __init__(self):
         # Mapping from provisioning driver name to DriverManager
         self.drivers = {}
-
+        conf = cfg.CONF.ml2_hpe
         LOG.info(_LI("Configured provisioning driver names: %s"),
-                 cfg.CONF.ml2_hpe.provisioning_driver)
+                 conf.provisioning_driver)
         super(ProvisioningManager, self).__init__('bnp.provisioning_driver',
-                                                  cfg.CONF.ml2_hpe.provisioning_driver,
+                                                  conf.provisioning_driver,
                                                   invoke_on_load=True)
         LOG.info(_LI("Loaded provisioning driver names: %s"), self.names())
         self._register_provisioning()

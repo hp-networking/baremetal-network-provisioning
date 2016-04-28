@@ -92,7 +92,7 @@ def get_bnp_phys_switch_name(context, name):
     """Get physical switch that matches name."""
     try:
         query = context.session.query(models.BNPPhysicalSwitch)
-        switch = query.filter_by(name=name).one()
+        switch = query.filter_by(name=name).all()
     except exc.NoResultFound:
         LOG.error(_LE("no physical switch found with name: %s"), name)
         return

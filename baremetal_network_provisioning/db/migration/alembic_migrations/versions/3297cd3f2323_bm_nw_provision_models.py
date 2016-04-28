@@ -39,7 +39,7 @@ def upgrade():
                               nullable=False),
                     sa.Column('management_protocol', sa.String(16),
                               nullable=False),
-                    sa.Column('credentials', sa.String(40), nullable=False),
+                    sa.Column('credentials', sa.String(36), nullable=False),
                     sa.Column('validation_result', sa.String(255),
                               nullable=False),
                     sa.PrimaryKeyConstraint('id'),
