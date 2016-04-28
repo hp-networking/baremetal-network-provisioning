@@ -25,8 +25,8 @@ BIND_SUCCESS = 'bind_success'
 BIND_FAILURE = 'bind_failure'
 HP_VIF_TYPE = 'hp-ironic'
 
-SSUPPORTED_PROTOCOLS = ['snmpv1', 'snmpv2c',
-                        'snmpv3', 'netconf_ssh', 'netconf_soap']
+SUPPORTED_PROTOCOLS = ['snmpv1', 'snmpv2c',
+                       'snmpv3', 'netconf_ssh', 'netconf_soap']
 SUPPORTED_AUTH_PROTOCOLS = [None, 'md5', 'sha', 'sha1']
 SUPPORTED_PRIV_PROTOCOLS = [None, 'des', '3des', 'aes',
                             'des56', 'aes128', 'aes192', 'aes256']
