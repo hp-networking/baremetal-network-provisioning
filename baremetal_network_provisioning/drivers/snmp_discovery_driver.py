@@ -83,4 +83,4 @@ class SNMPDiscoveryDriver(discovery_driver_api.DiscoveryDriverAPI):
         return ports_dict
 
     def get_driver_name(self):
-        return 'hpe' + constants.PROTOCOL_SNMP
+        return 'hpe' + '_' + constants.PROTOCOL_SNMP

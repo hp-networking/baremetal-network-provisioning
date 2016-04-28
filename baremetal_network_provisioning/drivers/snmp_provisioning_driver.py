@@ -138,6 +138,6 @@ class SNMPProvisioningDriver(driver.PortProvisioningDriver):
             return None
         return snmp_response
 
-    def get_type(self):
+    def get_driver_name(self):
         """get driver name for loading the driver using stevedore."""
-        return 'hpe' + constants.PROTOCOL_SNMP
+        return 'hpe' + '_' + constants.PROTOCOL_SNMP

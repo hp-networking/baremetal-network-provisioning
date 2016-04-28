@@ -22,6 +22,8 @@ import os.path
 
 from baremetal_network_provisioning.common import constants as const
 
+from oslo_utils import uuidutils
+
 
 access_parameter_keys = ['write_community', 'security_name',
                          'auth_protocol', 'priv_protocol', 'auth_key',
@@ -57,6 +59,18 @@ def validate_request(request):
     return body
 
 
+def validate_switch_attributes(keys, attr_keys):
+    """Validate the keys in request body."""
+    extra_keys = set(keys) - set(attr_keys)
+    if extra_keys:
+        msg = _("Unrecognized attribute(s) '%s'") % ', '.join(extra_keys)
+        for extra_key in extra_keys:
+            if extra_key == 'family':
+                continue
+            else:
+                raise webob.exc.HTTPBadRequest(msg)
+
+
 def validate_attributes(keys, attr_keys):
     """Validate the keys in request body."""
     extra_keys = set(keys) - set(attr_keys)
@@ -71,6 +85,10 @@ def validate_access_parameters(body):
     if const.NAME not in protocol_dict.keys():
         raise webob.exc.HTTPBadRequest(
             _("Name not found in request body"))
+    if uuidutils.is_uuid_like(protocol_dict['name']):
+        raise webob.exc.HTTPBadRequest(
+            _("Name=%s should not be in uuid format") %
+            protocol_dict['name'])
     protocol_dict.pop('name')
     keys = protocol_dict.keys()
     if not len(keys):
@@ -164,10 +182,6 @@ def validate_netconf_parameters(protocol_dict, key):
             if not os.path.isfile(access_parameters.get('key_path')):
                 raise webob.exc.HTTPBadRequest(
                     _("Invalid key path"))
-            if (access_parameters.get('user_name') or
-               access_parameters.get('password')):
-                raise webob.exc.HTTPBadRequest(
-                    _("Specify username and password OR keypath, not both"))
             return const.NETCONF_SSH
         _validate_user_name_password(access_parameters)
         return const.NETCONF_SSH
