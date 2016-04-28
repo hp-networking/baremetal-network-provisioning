@@ -113,7 +113,6 @@ class BNPSwitchController(wsgi.Controller):
     def delete(self, request, id, **kwargs):
         context = request.context
         self._check_admin(context)
-        port_prov = None
         switch = db.get_bnp_phys_switch(context, id)
         if not switch:
             raise webob.exc.HTTPNotFound(
@@ -122,10 +121,10 @@ class BNPSwitchController(wsgi.Controller):
         if portmap:
             raise webob.exc.HTTPConflict(
                 _("Switch id %s has active port mappings") % id)
-        if port_prov == const.SWITCH_STATUS['enable']:
+        if switch['port_provisioning'] == const.SWITCH_STATUS['enable']:
             raise webob.exc.HTTPBadRequest(
                 _("Disable the switch %s to delete") % id)
-            db.delete_bnp_phys_switch(context, id)
+        db.delete_bnp_phys_switch(context, id)
 
     def create(self, request, **kwargs):
         context = request.context
