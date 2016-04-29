@@ -203,9 +203,6 @@ class BNPSwitchController(wsgi.Controller):
             proto_type = access_parameters[0].proto_type
         else:
             proto_type = access_parameters.proto_type
-        if not access_parameters:
-            raise webob.exc.HTTPNotFound(
-                _("Invalid credentials %s") % creds)
         if access_parameters and proto_type == protocol:
             return access_parameters
         if isinstance(access_parameters, list) and len(access_parameters) > 1:
