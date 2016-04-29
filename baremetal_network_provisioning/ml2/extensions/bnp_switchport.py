@@ -20,6 +20,7 @@ from neutron.api.v2 import base
 from neutron.api.v2 import resource
 from neutron import wsgi
 
+from baremetal_network_provisioning.common import constants as const
 from baremetal_network_provisioning.db import bm_nw_provision_db as db
 
 RESOURCE_ATTRIBUTE_MAP = {
@@ -57,9 +58,9 @@ class BNPSwitchPortController(wsgi.Controller):
         port_list = []
         for port_map in port_maps:
             if (port_map[5] == 0):
-                bind_val = 'Success'
+                bind_val = const.BIND_SUCCESS
             else:
-                bind_val = 'Failure'
+                bind_val = const.BIND_FAILURE
             port_dict = {'neutron_port_id': port_map[0],
                          'switch_port_name': port_map[1],
                          'lag_id': port_map[2],
