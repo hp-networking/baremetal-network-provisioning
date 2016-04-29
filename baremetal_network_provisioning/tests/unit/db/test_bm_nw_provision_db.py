@@ -69,26 +69,6 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
                        'family': "test"}
         return switch_dict
 
-    def _get_bnp_access_param_dict(self):
-        """Get a phy switch access params dict."""
-        param_dict = {'access_protocol': "snmpv3",
-                      'write_community': "public",
-                      'security_name': "xyz",
-                      'auth_protocol': "md5",
-                      'auth_key': "abc",
-                      'priv_protocol': "des",
-                      'priv_key': "abc",
-                      'security_level': "authPriv"}
-        return param_dict
-
-    def _get_bnp_phys_switchport_dict(self):
-        """Get phy switch port dict."""
-        swport_dict = {'switch_id': "123",
-                       'interface_name': "Tengig1/0/1",
-                       'ifindex': "12345",
-                       'port_status': "UP"}
-        return swport_dict
-
     def _get_bnp_neutron_port_dict(self):
         """Get neutron port dict."""
         nport_dict = {'neutron_port_id': "1234",
@@ -154,6 +134,18 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
         count = self.ctx.session.query(models.BNPPhysicalSwitch).count()
         self.assertEqual(0, count)
 
+    def test_get_all_bnp_switch_ports(self):
+        """Test get_all_bnp_switch_ports method."""
+        sw_dict = self._get_bnp_phys_switch_dict()
+        phy_switch = db.add_bnp_phys_switch(self.ctx, sw_dict)
+        port_dict = self._get_bnp_neutron_port_dict()
+        db.add_bnp_neutron_port(self.ctx, port_dict)
+        port_map = self._get_bnp_switch_port_map_dict()
+        port_map['switch_id'] = phy_switch['id']
+        db.add_bnp_switch_port_map(self.ctx, port_map)
+        ports = db.get_all_bnp_switch_ports(self.ctx)
+        self.assertEqual(ports[0][0], port_map['neutron_port_id'])
+
     def test_get_bnp_phys_switch(self):
         """Test get_bnp_phys_switch method."""
         sw_dict = self._get_bnp_phys_switch_dict()
@@ -173,18 +165,6 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
         db.add_bnp_phys_switch(self.ctx, sw_dict)
         switches = db.get_all_bnp_phys_switches(self.ctx)
         self.assertEqual(1, len(switches))
-
-    '''def test_update_bnp_phys_switch_access_params(self):
-        """Tests update_bnp_phys_switch_access_params method."""
-        sw_dict = self._get_bnp_phys_switch_dict()
-        param_dict = self._get_bnp_access_param_dict()
-        db.add_bnp_phys_switch(self.ctx, sw_dict)
-        switches = db.get_all_bnp_phys_switches(self.ctx)
-        db.update_bnp_phys_switch_access_params(self.ctx,
-                                                switches[0]['id'],
-                                                param_dict)
-        sw_updt = self.ctx.session.query(models.BNPPhysicalSwitch).all()
-        self.assertNotEqual(sw_updt[0]['access_protocol'], "snmpv3")'''
 
     def test_add_bnp_snmp_cred(self):
         """Test test_add_bnp_snmp_cred method."""

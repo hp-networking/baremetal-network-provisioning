@@ -1,17 +1,17 @@
-# Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
-# All Rights Reserved.
+# Copyright (c) 2016 OpenStack Foundation
 #
-#    Licensed under the Apache License, Version 2.0 (the "License"); you may
-#    not use this file except in compliance with the License. You may obtain
-#    a copy of the License at
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-#         http://www.apache.org/licenses/LICENSE-2.0
+#    http://www.apache.org/licenses/LICENSE-2.0
 #
-#    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-#    License for the specific language governing permissions and limitations
-#    under the License.
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import webob.exc
 
@@ -49,23 +49,21 @@ class BNPSwitchPortController(wsgi.Controller):
 
     def index(self, request, **kwargs):
         context = request.context
-        filters = {}
         req_dict = dict(request.GET)
         if req_dict and req_dict.get('fields', None):
             req_dict.pop('fields')
-            filters = req_dict
+        filters = req_dict
         port_maps = db.get_all_bnp_switch_ports(context, **filters)
         port_list = []
-        if isinstance(port_maps, list):
-            for port_map in port_maps:
-                port_dict = {'switch_name': port_map[6],
-                             'neutron_port_id': port_map[0],
-                             'switch_port_name': port_map[1],
-                             'segmentation_id': port_map[3],
-                             'lag_id': port_map[2],
-                             'bind_status': port_map[5],
-                             'access_type': port_map[4]}
-                port_list.append(port_dict)
+        for port_map in port_maps:
+            port_dict = {'switch_name': port_map[6],
+                         'neutron_port_id': port_map[0],
+                         'switch_port_name': port_map[1],
+                         'segmentation_id': port_map[3],
+                         'lag_id': port_map[2],
+                         'bind_status': port_map[5],
+                         'access_type': port_map[4]}
+            port_list.append(port_dict)
         return {'bnp_switch_ports': port_list}
 
     def create(self, request, **kwargs):
@@ -100,7 +98,8 @@ class Bnp_switchport(extensions.ExtensionDescriptor):
     @classmethod
     def get_description(cls):
         return ("Abstraction for physical switch ports"
-                "for bare metal instance network provisioning")
+                "which are mapped to neutron port bindings"
+                "for a given switch")
 
     @classmethod
     def get_updated(cls):

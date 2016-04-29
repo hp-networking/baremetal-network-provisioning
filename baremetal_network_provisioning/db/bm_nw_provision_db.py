@@ -156,6 +156,30 @@ def get_bnp_switch_port_mappings(context, neutron_port_id):
     return port_map
 
 
+def get_all_bnp_switch_ports(context, **args):
+    """Get all switch port maps."""
+    try:
+        Switchportmap = models.BNPSwitchPortMapping
+        Neutronport = models.BNPNeutronPort
+        Physwitch = models.BNPPhysicalSwitch
+        query = context.session.query(Switchportmap.neutron_port_id,
+                                      Switchportmap.switch_port_name,
+                                      Neutronport.lag_id,
+                                      Neutronport.segmentation_id,
+                                      Neutronport.access_type,
+                                      Neutronport.bind_status, Physwitch.name)
+        query = query.join(Neutronport,
+                           Neutronport.neutron_port_id ==
+                           Switchportmap.neutron_port_id)
+        query = query.join(Physwitch, Switchportmap.switch_id == Physwitch.id)
+        query = query.filter_by(**args)
+        port_maps = query.all()
+    except exc.NoResultFound:
+        LOG.error(_LE("no switch port mappings found"))
+        return
+    return port_maps
+
+
 def get_bnp_phys_switch_by_mac(context, mac):
     """Get physical switch that matches mac address."""
     try:
