@@ -53,16 +53,16 @@ class BNPSwitchPortController(wsgi.Controller):
         if req_dict and req_dict.get('fields', None):
             req_dict.pop('fields')
         filters = req_dict
-        port_maps = db.get_all_bnp_switch_ports(context, **filters)
+        port_maps = db.get_all_bnp_switch_port_maps(context, **filters)
         port_list = []
         for port_map in port_maps:
-            port_dict = {'switch_name': port_map[6],
-                         'neutron_port_id': port_map[0],
+            port_dict = {'neutron_port_id': port_map[0],
                          'switch_port_name': port_map[1],
-                         'segmentation_id': port_map[3],
                          'lag_id': port_map[2],
-                         'bind_status': port_map[5],
-                         'access_type': port_map[4]}
+                         'segmentation_id': str(port_map[3]),
+                         'access_type': port_map[4],
+                         'bind_status': str(port_map[5]),
+                         'switch_name': port_map[6]}
             port_list.append(port_dict)
         return {'bnp_switch_ports': port_list}
 

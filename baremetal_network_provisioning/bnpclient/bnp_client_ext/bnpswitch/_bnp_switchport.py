@@ -26,7 +26,7 @@ class BnpSwitchPort(extension.NeutronClientExtension):
 
 
 class BnpSwitchPortList(extension.ClientExtensionList, BnpSwitchPort):
-    """List all physical switch information."""
+    """List all switch ports information."""
 
     shell_command = 'switch-port-list'
     allow_names = False

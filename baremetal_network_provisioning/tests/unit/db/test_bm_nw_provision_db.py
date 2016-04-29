@@ -134,8 +134,8 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
         count = self.ctx.session.query(models.BNPPhysicalSwitch).count()
         self.assertEqual(0, count)
 
-    def test_get_all_bnp_switch_ports(self):
-        """Test get_all_bnp_switch_ports method."""
+    def test_get_all_bnp_switch_port_maps(self):
+        """Test get_all_bnp_switch_port_maps method."""
         sw_dict = self._get_bnp_phys_switch_dict()
         phy_switch = db.add_bnp_phys_switch(self.ctx, sw_dict)
         port_dict = self._get_bnp_neutron_port_dict()
@@ -143,7 +143,7 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
         port_map = self._get_bnp_switch_port_map_dict()
         port_map['switch_id'] = phy_switch['id']
         db.add_bnp_switch_port_map(self.ctx, port_map)
-        ports = db.get_all_bnp_switch_ports(self.ctx)
+        ports = db.get_all_bnp_switch_port_maps(self.ctx)
         self.assertEqual(ports[0][0], port_map['neutron_port_id'])
 
     def test_get_bnp_phys_switch(self):
