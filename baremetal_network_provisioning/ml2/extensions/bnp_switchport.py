@@ -56,12 +56,16 @@ class BNPSwitchPortController(wsgi.Controller):
         port_maps = db.get_all_bnp_switch_port_maps(context, **filters)
         port_list = []
         for port_map in port_maps:
+            if (port_map[5] == 0):
+                bind_val = 'Success'
+            else:
+                bind_val = 'Failure'
             port_dict = {'neutron_port_id': port_map[0],
                          'switch_port_name': port_map[1],
                          'lag_id': port_map[2],
                          'segmentation_id': str(port_map[3]),
                          'access_type': port_map[4],
-                         'bind_status': str(port_map[5]),
+                         'bind_status': bind_val,
                          'switch_name': port_map[6]}
             port_list.append(port_dict)
         return {'bnp_switch_ports': port_list}
@@ -85,11 +89,11 @@ class BNPSwitchPortController(wsgi.Controller):
 
 class Bnp_switchport(extensions.ExtensionDescriptor):
 
-    """API extension for Baremetal Switch port support."""
+    """API extension for Neutron Port Mapping support."""
 
     @classmethod
     def get_name(cls):
-        return "Baremetal Switch Ports"
+        return "Neutron Port Mapping"
 
     @classmethod
     def get_alias(cls):
