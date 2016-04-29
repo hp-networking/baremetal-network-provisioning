@@ -79,11 +79,10 @@ class BNPSwitchController(wsgi.Controller):
 
     def index(self, request, **kwargs):
         context = request.context
-        filters = {}
         req_dict = dict(request.GET)
         if req_dict and req_dict.get('fields', None):
             req_dict.pop('fields')
-            filters = req_dict
+        filters = req_dict
         switches = db.get_all_bnp_phys_switches(context, **filters)
         switches = self._switch_to_show(switches)
         switches_dict = {'bnp_switches': switches}
@@ -152,6 +151,10 @@ class BNPSwitchController(wsgi.Controller):
                                                    body['management_protocol'],
                                                    body['credentials'])
         credentials = body['credentials']
+        if isinstance(access_parameters, list) and len(access_parameters) > 1:
+            raise webob.exc.HTTPConflict(
+                _("Multiple credentials matches found "
+                  "for name %s, use an ID to be more specific.") % credentials)
         if uuidutils.is_uuid_like(credentials):
             access_params_iterator = access_parameters.iteritems()
         else:
@@ -182,27 +185,33 @@ class BNPSwitchController(wsgi.Controller):
         return {const.BNP_SWITCH_RESOURCE_NAME: dict(db_switch)}
 
     def _get_access_param(self, context, protocol, creds):
-        access_parameters = None
-        proto_type = None
         if const.PROTOCOL_SNMP in protocol:
             if not uuidutils.is_uuid_like(creds):
                 access_parameters = db.get_snmp_cred_by_name(context, creds)
-                proto_type = access_parameters[0].proto_type
             else:
                 access_parameters = db.get_snmp_cred_by_id(context, creds)
-                proto_type = access_parameters.proto_type
         else:
-            if not uuidutils.is_uuid_like(id):
+            if not uuidutils.is_uuid_like(creds):
                 access_parameters = db.get_netconf_cred_by_name(context, creds)
-                proto_type = access_parameters[0].proto_type
             else:
                 access_parameters = db.get_netconf_cred_by_id(context, creds)
-                proto_type = access_parameters.proto_type
+        if not access_parameters:
+            raise webob.exc.HTTPBadRequest(
+                _("Credentials not found "
+                  "for  %s ") % creds)
+        if isinstance(access_parameters, list):
+            proto_type = access_parameters[0].proto_type
+        else:
+            proto_type = access_parameters.proto_type
         if not access_parameters:
             raise webob.exc.HTTPNotFound(
                 _("Invalid credentials %s") % creds)
         if access_parameters and proto_type == protocol:
             return access_parameters
+        if isinstance(access_parameters, list) and len(access_parameters) > 1:
+            raise webob.exc.HTTPBadRequest(
+                _("Multiple credentials matches found "
+                  "for name %s, use an ID to be more specific.") % id)
         if access_parameters and proto_type != protocol:
             raise webob.exc.HTTPBadRequest(
                 _("Invalid management_protocol %s") % protocol)
