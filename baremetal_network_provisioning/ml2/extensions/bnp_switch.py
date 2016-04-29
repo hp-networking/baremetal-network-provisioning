@@ -151,10 +151,6 @@ class BNPSwitchController(wsgi.Controller):
                                                    body['management_protocol'],
                                                    body['credentials'])
         credentials = body['credentials']
-        if isinstance(access_parameters, list) and len(access_parameters) > 1:
-            raise webob.exc.HTTPConflict(
-                _("Multiple credentials matches found "
-                  "for name %s, use an ID to be more specific.") % credentials)
         if uuidutils.is_uuid_like(credentials):
             access_params_iterator = access_parameters.iteritems()
         else:
