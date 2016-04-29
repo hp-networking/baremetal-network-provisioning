@@ -28,42 +28,6 @@ import sqlalchemy as sa
 
 
 def upgrade():
-    op.create_table('hpswitchlagports',
-                    sa.Column('id', sa.String(length=36), nullable=False),
-                    sa.Column('external_lag_id', sa.String(length=255),
-                              nullable=True),
-                    sa.PrimaryKeyConstraint('id'))
-
-    op.create_table('hpswitchports',
-                    sa.Column('id', sa.String(length=36), nullable=False),
-                    sa.Column('switch_id', sa.String(length=48),
-                              nullable=False),
-                    sa.Column('port_name', sa.String(length=255),
-                              nullable=False),
-                    sa.Column('lag_id', sa.String(length=36), nullable=True),
-                    sa.ForeignKeyConstraint(['lag_id'],
-                                            ['hpswitchlagports.id'],
-                                            ondelete='CASCADE'),
-                    sa.PrimaryKeyConstraint('id'))
-
-    op.create_table('hpironicswitchportmappings',
-                    sa.Column('neutron_port_id', sa.String(length=36),
-                              nullable=False),
-                    sa.Column('switch_port_id', sa.String(length=36),
-                              nullable=True),
-                    sa.Column('lag_id', sa.String(length=36), nullable=True),
-                    sa.Column('access_type', sa.String(length=36),
-                              nullable=True),
-                    sa.Column('segmentation_id', sa.Integer, nullable=True),
-                    sa.Column('host_id', sa.String(length=36), nullable=True),
-                    sa.ForeignKeyConstraint(['lag_id'],
-                                            ['hpswitchlagports.id'],
-                                            ondelete='CASCADE'),
-                    sa.ForeignKeyConstraint(['switch_port_id'],
-                                            ['hpswitchports.id'],
-                                            ondelete='CASCADE'),
-                    sa.PrimaryKeyConstraint('switch_port_id'))
-
     op.create_table('bnp_physical_switches',
                     sa.Column('id', sa.String(36), nullable=False),
                     sa.Column('name', sa.String(36), nullable=False),
@@ -71,13 +35,15 @@ def upgrade():
                     sa.Column('family', sa.String(16), nullable=True),
                     sa.Column('ip_address', sa.String(64), nullable=False),
                     sa.Column('mac_address', sa.String(32), nullable=True),
-                    sa.Column('port_prov', sa.String(16), nullable=False),
-                    sa.Column('disc_proto', sa.String(16), nullable=False),
-                    sa.Column('disc_creds', sa.String(40), nullable=False),
-                    sa.Column('prov_proto', sa.String(16), nullable=False),
-                    sa.Column('prov_creds', sa.String(40), nullable=False),
+                    sa.Column('port_provisioning', sa.String(16),
+                              nullable=False),
+                    sa.Column('management_protocol', sa.String(16),
+                              nullable=False),
+                    sa.Column('credentials', sa.String(36), nullable=False),
+                    sa.Column('validation_result', sa.String(255),
+                              nullable=False),
                     sa.PrimaryKeyConstraint('id'),
-                    sa.UniqueConstraint('ip_address'))
+                    sa.UniqueConstraint('ip_address', 'mac_address'))
 
     op.create_table('bnp_snmp_credentials',
                     sa.Column('id', sa.String(36), nullable=False),
@@ -102,31 +68,17 @@ def upgrade():
                     sa.Column('key_path', sa.String(255), nullable=True),
                     sa.PrimaryKeyConstraint('id'))
 
-    op.create_table('bnp_physical_switch_ports',
-                    sa.Column('id', sa.String(36), nullable=False),
-                    sa.Column('switch_id', sa.String(36), nullable=False),
-                    sa.Column('interface_name', sa.String(255),
-                              nullable=False),
-                    sa.Column('ifindex', sa.String(255), nullable=False),
-                    sa.Column('port_status', sa.String(16), nullable=False),
-                    sa.PrimaryKeyConstraint('id'),
-                    sa.UniqueConstraint('switch_id', 'interface_name'),
-                    sa.ForeignKeyConstraint(
-                        ['switch_id'],
-                        ['bnp_physical_switches.id'],
-                        ondelete='CASCADE'))
-
     op.create_table('bnp_switch_port_mappings',
                     sa.Column('neutron_port_id', sa.String(36),
                               nullable=False),
-                    sa.Column('switch_port_id', sa.String(36),
+                    sa.Column('switch_port_name', sa.String(36),
                               nullable=False),
                     sa.Column('switch_id', sa.String(36), nullable=False),
-                    sa.PrimaryKeyConstraint('neutron_port_id',
-                                            'switch_port_id'),
+                    sa.Column('ifindex', sa.String(36), nullable=False),
+                    sa.PrimaryKeyConstraint('neutron_port_id'),
                     sa.ForeignKeyConstraint(
-                        ['switch_port_id'],
-                        ['bnp_physical_switch_ports.id'],
+                        ['switch_id'],
+                        ['bnp_physical_switches.id'],
                         ondelete='CASCADE'))
 
     op.create_table('bnp_neutron_ports',

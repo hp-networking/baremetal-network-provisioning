@@ -22,53 +22,17 @@ import stevedore
 LOG = log.getLogger(__name__)
 
 
-class DiscoveryManager(stevedore.named.NamedExtensionManager):
-    """Manage discovery drivers for BNP."""
-
-    def __init__(self):
-        # Mapping from discovery type name to DriverManager
-        self.drivers = {}
-
-        LOG.info(_LI("Configured discovery type driver names: %s"),
-                 cfg.CONF.ml2_hpe.disc_driver)
-        super(DiscoveryManager, self).__init__('bnp.disc_driver',
-                                               cfg.CONF.ml2_hpe.disc_driver,
-                                               invoke_on_load=True)
-        LOG.info(_LI("Loaded discovery driver names: %s"), self.names())
-        self._register_discovery()
-
-    def _register_discovery(self):
-        for ext in self:
-            discovery_name = ext.obj.get_driver_name()
-            if discovery_name in self.drivers:
-                LOG.error(_LE("discovery driver '%(new_driver)s' ignored "
-                              " discovery driver '%(old_driver)s' is already"
-                              " registered for discovery '%(type)s'"),
-                          {'new_driver': ext.name,
-                           'old_driver': self.drivers[discovery_name].name,
-                           'type': discovery_name})
-            else:
-                self.drivers[discovery_name] = ext
-        LOG.info(_LI("Registered discovery driver: %s"), self.drivers.keys())
-
-    def discovery_driver(self, discovery_type):
-        """discovery driver instance."""
-        driver = self.drivers.get(discovery_type)
-        LOG.info(_LI("Loaded discovery driver type: %s"), driver.obj)
-        return driver
-
-
 class ProvisioningManager(stevedore.named.NamedExtensionManager):
     """Manage provisioning drivers for BNP."""
 
     def __init__(self):
         # Mapping from provisioning driver name to DriverManager
         self.drivers = {}
-
+        conf = cfg.CONF.ml2_hpe
         LOG.info(_LI("Configured provisioning driver names: %s"),
-                 cfg.CONF.ml2_hpe.prov_driver)
-        super(ProvisioningManager, self).__init__('bnp.prov_driver',
-                                                  cfg.CONF.ml2_hpe.prov_driver,
+                 conf.provisioning_driver)
+        super(ProvisioningManager, self).__init__('bnp.provisioning_driver',
+                                                  conf.provisioning_driver,
                                                   invoke_on_load=True)
         LOG.info(_LI("Loaded provisioning driver names: %s"), self.names())
         self._register_provisioning()

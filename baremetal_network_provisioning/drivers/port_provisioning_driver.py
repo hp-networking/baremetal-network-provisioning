@@ -58,3 +58,13 @@ class PortProvisioningDriver(object):
     def get_driver_name(self):
         """get driver name for stevedore loading."""
         pass
+
+    @abc.abstractmethod
+    def get_protocol_validation_result(self, credentials):
+        """Returns the protocol validation result."""
+        pass
+
+    @abc.abstractmethod
+    def get_device_info(self, credentials):
+        """get device information needed for provisioning."""
+        pass
