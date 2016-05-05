@@ -6,6 +6,7 @@ NEUTRON_CONF_DIR=/etc/neutron/plugins/ml2
 HPE_MECHANISM_DRIVER=baremetal_network_provisioning.ml2.mechanism_hpe:HPEMechanismDriver
 BNP_EXTENSION_DRIVER=baremetal_network_provisioning.ml2.hpeironicextensiondriver:HPEIronicExtensionDriver
 BNP_CRED_EXT_DRIVER=baremetal_network_provisioning.ml2.hpe_ironic_credential_ext_driver:HPEIronicCredentialExtDriver
+BNP_SWITCH_PORTS_EXT_DRIVER=baremetal_network_provisioning.ml2.hpe_ironic_switch_ports_ext_driver:HPEIronicSwitchPortsExtDriver
 HPE_SNMP=hpe_snmp
 #
 # Each service you enable has the following meaning:
