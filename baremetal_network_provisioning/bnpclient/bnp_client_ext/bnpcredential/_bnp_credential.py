@@ -127,6 +127,7 @@ class UpdateCredentialSnmpNetconfMixin(object):
 
 class BnpCredentialCreate(extension.ClientExtensionCreate, BnpCredential,
                           UpdateCredentialSnmpNetconfMixin):
+
     """Create credential for a physical switch."""
 
     shell_command = 'credential-create'
@@ -146,25 +147,21 @@ class BnpCredentialCreate(extension.ClientExtensionCreate, BnpCredential,
 
 class BnpCredentialUpdate(extension.ClientExtensionUpdate, BnpCredential,
                           UpdateCredentialSnmpNetconfMixin):
+
     """Update credential's information of a physical switch."""
     shell_command = 'credential-update'
 
     def add_known_arguments(self, parser):
-
-        parser.add_argument('--name', metavar='NAME', dest='name',
-                            help=_('Name of the credential.'))
-
         self.add_arguments_snmp_netconf(parser)
 
     def args2body(self, parsed_args):
         body = {const.BNP_CREDENTIAL_RESOURCE_NAME: {}}
         self.args2body_snmp_netconf(parsed_args, body)
-        if parsed_args.name:
-            body[const.BNP_CREDENTIAL_RESOURCE_NAME]['name'] = parsed_args.name
         return body
 
 
 class BnpCredentialList(extension.ClientExtensionList, BnpCredential):
+
     """List credential's of a physical switch."""
     shell_command = 'credential-list'
     listcolumns = ['id', 'name', 'type']
@@ -173,10 +170,12 @@ class BnpCredentialList(extension.ClientExtensionList, BnpCredential):
 
 
 class BnpCredentialShow(extension.ClientExtensionShow, BnpCredential):
+
     """Show credential information of a physical switch."""
     shell_command = 'credential-show'
 
 
 class BnpCredentialDelete(extension.ClientExtensionDelete, BnpCredential):
+
     """Delete credential information of a physical switch."""
     shell_command = 'credential-delete'

@@ -26,6 +26,7 @@ from baremetal_network_provisioning.common import validators
 from baremetal_network_provisioning.db import bm_nw_provision_db as db
 
 from oslo_log import log as logging
+from oslo_utils import uuidutils
 
 LOG = logging.getLogger(__name__)
 
@@ -196,6 +197,12 @@ class BNPCredentialController(wsgi.Controller):
             'key_path': None}
         return netconf_cred_dict
 
+    def check_creds_proto_type(self, switch_creds, id, protocol):
+        if not switch_creds or (switch_creds.get('proto_type')
+                                != protocol.lower()):
+            raise webob.exc.HTTPBadRequest(
+                _("protocol type cannot be updated for the id %s") % id)
+
     def _update_dict(self, body, cred_dict):
         """Update the existing dict."""
         for key in cred_dict.keys():
@@ -204,7 +211,103 @@ class BNPCredentialController(wsgi.Controller):
         return cred_dict
 
     def update(self, request, id, **kwargs):
-        pass
+        context = request.context
+        self._check_admin(context)
+        body = validators.validate_request(request)
+        protocol = validators.validate_access_parameters_for_update(body)
+        key_list = ['name', 'snmpv1', 'snmpv2c',
+                    'snmpv3', 'netconf_ssh', 'netconf_soap']
+        keys = body.keys()
+        validators.validate_attributes(keys, key_list)
+        if not uuidutils.is_uuid_like(id):
+            raise webob.exc.HTTPBadRequest(
+                _("Invalid Id"))
+        if not protocol:
+            switch_creds = db.get_snmp_cred_by_id(context, id)
+            if switch_creds:
+                switch_creds_dict = self._update_dict(body, dict(switch_creds))
+                db.update_bnp_snmp_cred_by_id(context, id, switch_creds_dict)
+                return switch_creds_dict
+            switch_creds = db.get_netconf_cred_by_id(context, id)
+            if switch_creds:
+                switch_creds_dict = self._update_dict(body, dict(switch_creds))
+                db.update_bnp_netconf_cred_by_id(
+                    context, id, switch_creds_dict)
+                return switch_creds_dict
+            raise webob.exc.HTTPNotFound(
+                _("Credential with id=%s does not exist") % id)
+
+        elif protocol in [const.SNMP_V1, const.SNMP_V2C]:
+            switch_creds = db.get_snmp_cred_by_id(context, id)
+            if not switch_creds:
+                raise webob.exc.HTTPNotFound(
+                    _("Credential with id=%s does not exist") % id)
+            self.check_creds_proto_type(switch_creds, id, protocol)
+            params = body.pop(protocol)
+            for key, value in params.iteritems():
+                body[key] = value
+            creds_dict = self._update_dict(body, dict(switch_creds))
+            db.update_bnp_snmp_cred_by_id(context, id, creds_dict)
+            return creds_dict
+
+        elif protocol == const.SNMP_V3:
+            switch_creds = db.get_snmp_cred_by_id(context, id)
+            if not switch_creds:
+                raise webob.exc.HTTPNotFound(
+                    _("Credential with id=%s does not exist") % id)
+            self.check_creds_proto_type(switch_creds, id, protocol)
+            params = body.pop(protocol)
+            if ('auth_protocol' in params.keys()) ^ (
+                    'auth_key' in params.keys()):
+                if (switch_creds['auth_protocol'] is None) and (
+                        switch_creds['auth_key'] is None):
+                    raise webob.exc.HTTPBadRequest(
+                        _("auth_protocol and auth_key values does not exist,"
+                          " so both has to be provided"))
+            if ('priv_protocol' in params.keys()) ^ ('priv_key'
+                                                     in params.keys()):
+                if (switch_creds['priv_protocol'] is None) and (
+                        switch_creds['priv_key'] is None):
+                    raise webob.exc.HTTPBadRequest(
+                        _("priv_protocol and priv_key values does not exist,"
+                          " so both has to be provided"))
+            for key, value in params.iteritems():
+                body[key] = value
+            creds_dict = self._update_dict(body, dict(switch_creds))
+            db.update_bnp_snmp_cred_by_id(context, id, creds_dict)
+            return creds_dict
+
+        elif protocol == const.NETCONF_SOAP:
+            switch_creds = db.get_netconf_cred_by_id(context, id)
+            if not switch_creds:
+                raise webob.exc.HTTPNotFound(
+                    _("Credential with id=%s does not exist") % id)
+            self.check_creds_proto_type(switch_creds, id, protocol)
+            params = body.pop(protocol)
+            for key, value in params.iteritems():
+                body[key] = value
+            creds_dict = self._update_dict(body, dict(switch_creds))
+            db.update_bnp_netconf_cred_by_id(context, id, creds_dict)
+            return creds_dict
+
+        elif protocol == const.NETCONF_SSH:
+            switch_creds = db.get_netconf_cred_by_id(context, id)
+            if not switch_creds:
+                raise webob.exc.HTTPNotFound(
+                    _("Credential with id=%s does not exist") % id)
+            self.check_creds_proto_type(switch_creds, id, protocol)
+            params = body.pop(protocol)
+            if ('user_name' in params.keys()) ^ ('password' in params.keys()):
+                if (switch_creds['user_name'] is None) and (
+                        switch_creds['password'] is None):
+                    raise webob.exc.HTTPBadRequest(
+                        _("user_name and password values does not exist, so"
+                          " both has to be provided"))
+            for key, value in params.iteritems():
+                body[key] = value
+            creds_dict = self._update_dict(body, dict(switch_creds))
+            db.update_bnp_netconf_cred_by_id(context, id, creds_dict)
+            return creds_dict
 
 
 class Bnp_credential(extensions.ExtensionDescriptor):
