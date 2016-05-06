@@ -16,6 +16,7 @@
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 from sqlalchemy.orm import exc
+from sqlalchemy.sql import text
 
 from baremetal_network_provisioning.db import bm_nw_provision_models as models
 
@@ -172,7 +173,7 @@ def get_all_bnp_switch_port_maps(context, filter_str):
                            neutronport.neutron_port_id ==
                            switchportmap.neutron_port_id)
         query = query.join(physwitch, switchportmap.switch_id == physwitch.id)
-        query = query.filter(filter_str)
+        query = query.filter(text(filter_str))
         port_maps = query.all()
     except exc.NoResultFound:
         LOG.error(_LE("no switch port mappings found"))
