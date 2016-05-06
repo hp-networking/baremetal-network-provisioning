@@ -191,3 +191,98 @@ def validate_netconf_parameters(protocol_dict, key):
                 _("Invalid attribute key_path"))
         _validate_user_name_password(access_parameters)
         return const.NETCONF_SOAP
+
+
+def validate_access_parameters_for_update(body):
+    """Validate if the request body is in proper format."""
+
+    protocol_dict = deepcopy(body)
+    if (const.NAME not in protocol_dict.keys() and
+       not len(protocol_dict.keys())):
+        raise webob.exc.HTTPBadRequest(
+            _("Request must have name or one protocol type"))
+    if const.NAME in protocol_dict.keys():
+        if uuidutils.is_uuid_like(protocol_dict['name']):
+            raise webob.exc.HTTPBadRequest(
+                _("Name=%s should not be in uuid format") %
+                protocol_dict['name'])
+        protocol_dict.pop('name')
+    if protocol_dict:
+        keys = protocol_dict.keys()
+        if len(keys) > 1:
+            raise webob.exc.HTTPBadRequest(
+                _("Multiple protocols in a single request is not supported"))
+        key = keys[0]
+        if key.lower() not in const.SUPPORTED_PROTOCOLS:
+            raise webob.exc.HTTPBadRequest(
+                _("Protocol %s is not supported") % keys)
+        if key.lower() == const.SNMP_V3:
+            return validate_snmpv3_parameters_for_update(protocol_dict, key)
+        elif key.lower() in [const.NETCONF_SSH, const.NETCONF_SOAP]:
+            return validate_netconf_parameters_for_update(protocol_dict, key)
+        else:
+            return validate_snmp_parameters_for_update(protocol_dict, key)
+    else:
+        return None
+
+
+def validate_snmpv3_parameters_for_update(protocol_dict, key):
+    """Validate SNMP v3 parameters."""
+    access_parameters = protocol_dict.pop(key)
+    keys = access_parameters.keys()
+    attr_keys = ['security_name', 'auth_protocol',
+                 'auth_key', 'priv_protocol', 'priv_key']
+    validate_attributes(keys, attr_keys)
+    if access_parameters.get('auth_protocol'):
+        if access_parameters.get('auth_protocol').lower(
+        ) not in const.SUPPORTED_AUTH_PROTOCOLS:
+            raise webob.exc.HTTPBadRequest(
+                _("auth_protocol %s is not supported") %
+                access_parameters['auth_protocol'])
+    if access_parameters.get('auth_key'):
+        if len(access_parameters.get('auth_key')) < 8:
+            raise webob.exc.HTTPBadRequest(
+                _("auth_key %s should be equal or more than"
+                  " 8 characters") % access_parameters['auth_key'])
+    if access_parameters.get('priv_protocol'):
+        if access_parameters.get('priv_protocol').lower(
+        ) not in const.SUPPORTED_PRIV_PROTOCOLS:
+            raise webob.exc.HTTPBadRequest(
+                _("priv_protocol %s is not supported") %
+                access_parameters['priv_protocol'])
+    if access_parameters.get('priv_key'):
+        if len(access_parameters.get('priv_key')) < 8:
+            raise webob.exc.HTTPBadRequest(
+                _("priv_key %s should be equal or more than"
+                  " 8 characters") % access_parameters['priv_key'])
+    return const.SNMP_V3
+
+
+def validate_netconf_parameters_for_update(protocol_dict, key):
+    """Validate NETCONF SSH/SOAP parameters."""
+    access_parameters = protocol_dict.pop(key)
+    if key.lower() == const.NETCONF_SSH:
+        keys = access_parameters.keys()
+        attr_keys = ['user_name', 'password', 'key_path']
+        validate_attributes(keys, attr_keys)
+        if access_parameters.get('key_path'):
+            if not os.path.isfile(access_parameters.get('key_path')):
+                raise webob.exc.HTTPBadRequest(
+                    _("Invalid key path"))
+        return const.NETCONF_SSH
+    else:
+        keys = access_parameters.keys()
+        attr_keys = ['user_name', 'password']
+        validate_attributes(keys, attr_keys)
+        return const.NETCONF_SOAP
+
+
+def validate_snmp_parameters_for_update(protocol_dict, key):
+    """Validate SNMP v1 and v2c parameters."""
+    access_parameters = protocol_dict.pop(key)
+    keys = access_parameters.keys()
+    validate_attributes(keys, ['write_community'])
+    if key.lower() == const.SNMP_V1:
+        return const.SNMP_V1
+    else:
+        return const.SNMP_V2C
