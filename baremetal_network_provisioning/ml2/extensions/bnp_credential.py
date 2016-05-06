@@ -259,15 +259,15 @@ class BNPCredentialController(wsgi.Controller):
             params = body.pop(protocol)
             if ('auth_protocol' in params.keys()) ^ (
                     'auth_key' in params.keys()):
-                if (switch_creds['auth_protocol'] is None) and (
-                        switch_creds['auth_key'] is None):
+                if (not switch_creds['auth_protocol']) and (
+                        not switch_creds['auth_key']):
                     raise webob.exc.HTTPBadRequest(
                         _("auth_protocol and auth_key values does not exist,"
                           " so both has to be provided"))
             if ('priv_protocol' in params.keys()) ^ ('priv_key'
                                                      in params.keys()):
-                if (switch_creds['priv_protocol'] is None) and (
-                        switch_creds['priv_key'] is None):
+                if (not switch_creds['priv_protocol']) and (
+                        not switch_creds['priv_key']):
                     raise webob.exc.HTTPBadRequest(
                         _("priv_protocol and priv_key values does not exist,"
                           " so both has to be provided"))
@@ -298,8 +298,8 @@ class BNPCredentialController(wsgi.Controller):
             self.check_creds_proto_type(switch_creds, id, protocol)
             params = body.pop(protocol)
             if ('user_name' in params.keys()) ^ ('password' in params.keys()):
-                if (switch_creds['user_name'] is None) and (
-                        switch_creds['password'] is None):
+                if (not switch_creds['user_name']) and (
+                        not switch_creds['password']):
                     raise webob.exc.HTTPBadRequest(
                         _("user_name and password values does not exist, so"
                           " both has to be provided"))
