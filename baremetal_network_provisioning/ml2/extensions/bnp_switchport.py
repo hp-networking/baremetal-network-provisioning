@@ -51,10 +51,11 @@ class BNPSwitchPortController(wsgi.Controller):
     def index(self, request, **kwargs):
         context = request.context
         req_dict = dict(request.GET)
-        if req_dict and req_dict.get('fields', None):
-            req_dict.pop('fields')
-        filters = req_dict
-        port_maps = db.get_all_bnp_switch_port_maps(context, **filters)
+        if req_dict:
+            filter_str = self.get_filter_str(**req_dict)
+        else:
+            filter_str = ''
+        port_maps = db.get_all_bnp_switch_port_maps(context, filter_str)
         port_list = []
         for port_map in port_maps:
             if (port_map[5] == 0):
@@ -70,6 +71,34 @@ class BNPSwitchPortController(wsgi.Controller):
                          'switch_name': port_map[6]}
             port_list.append(port_dict)
         return {'bnp_switch_ports': port_list}
+
+    def get_filter_str(self, **args):
+        filter_str = ''
+        for key in args:
+            val = args[key]
+            if key == 'switch_name':
+                field = 'bnp_physical_switches.name'
+            elif key == 'neutron_port_id':
+                field = 'bnp_switch_port_mappings.neutron_port_id'
+            elif key == 'switch_port_name':
+                field = 'bnp_switch_port_mappings.switch_port_name'
+            elif key == 'segmentation_id':
+                field = 'bnp_neutron_ports.segmentation_id'
+            elif key == 'lag_id':
+                field = 'bnp_neutron_ports.lag_id'
+            elif key == 'bind_status':
+                field = 'bnp_neutron_ports.bind_status'
+                if val == 'bind_success':
+                    val = '0'
+                else:
+                    val = '1'
+            elif key == 'access_type':
+                field = 'bnp_neutron_ports.access_type'
+            else:
+                raise webob.exc.HTTPBadRequest(_("Invalid field value"))
+        filter_str = filter_str + field + " = " + "'" + val + "'" + " AND "
+        filter_str = filter_str[:-5]
+        return filter_str
 
     def create(self, request, **kwargs):
         raise webob.exc.HTTPBadRequest(

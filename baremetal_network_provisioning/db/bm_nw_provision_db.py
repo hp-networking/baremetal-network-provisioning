@@ -156,7 +156,7 @@ def get_bnp_switch_port_mappings(context, neutron_port_id):
     return port_map
 
 
-def get_all_bnp_switch_port_maps(context, **args):
+def get_all_bnp_switch_port_maps(context, filter_str):
     """Get all switch port maps."""
     try:
         switchportmap = models.BNPSwitchPortMapping
@@ -172,7 +172,7 @@ def get_all_bnp_switch_port_maps(context, **args):
                            neutronport.neutron_port_id ==
                            switchportmap.neutron_port_id)
         query = query.join(physwitch, switchportmap.switch_id == physwitch.id)
-        query = query.filter_by(**args)
+        query = query.filter(filter_str)
         port_maps = query.all()
     except exc.NoResultFound:
         LOG.error(_LE("no switch port mappings found"))
