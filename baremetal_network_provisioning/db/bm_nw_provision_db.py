@@ -277,6 +277,43 @@ def update_bnp_phys_switch_access_params(context, switch_id, params):
         LOG.error(_LE("no physical switch found for id: %s"), switch_id)
 
 
+def update_bnp_snmp_cred_by_id(context, cred_id, creds):
+    """Update snmp switch credentials."""
+    try:
+        with context.session.begin(subtransactions=True):
+            (context.session.query(models.BNPSNMPCredential).filter_by(
+             id=cred_id).update(
+                {'name': creds['name'],
+                 'proto_type': creds['proto_type'],
+                 'write_community': creds['write_community'],
+                 'security_name': creds['security_name'],
+                 'auth_protocol': creds['auth_protocol'],
+                 'auth_key': creds['auth_key'],
+                 'priv_protocol': creds['priv_protocol'],
+                 'priv_key': creds['priv_key'],
+                 'security_level': creds['security_level']},
+             synchronize_session=False))
+    except exc.NoResultFound:
+        LOG.error(_LE("no snmp switch credentials found for id: %s"), cred_id)
+
+
+def update_bnp_netconf_cred_by_id(context, cred_id, creds):
+    """Update netconf switch credentials."""
+    try:
+        with context.session.begin(subtransactions=True):
+            (context.session.query(models.BNPNETCONFCredential).filter_by(
+             id=cred_id).update(
+             {'name': creds['name'],
+              'proto_type': creds['proto_type'],
+              'user_name': creds['user_name'],
+              'password': creds['password'],
+              'key_path': creds['key_path']},
+             synchronize_session=False))
+    except exc.NoResultFound:
+        LOG.error(
+            _LE("no netconf switch credentials found for id: %s"), cred_id)
+
+
 def add_bnp_snmp_cred(context, snmp_cred):
     """Add SNMP Credential."""
     session = context.session

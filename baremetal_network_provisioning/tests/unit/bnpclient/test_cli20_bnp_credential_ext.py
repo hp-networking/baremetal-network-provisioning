@@ -14,8 +14,11 @@
 #    under the License.
 #
 
-from baremetal_network_provisioning.bnpclient.bnp_client_ext.bnpswitch import (
-    _bnp_credential as bnp_credential)
+import importlib
+bnp_credential = importlib.import_module('._bnp_credential',
+                                         'baremetal_network_provisioning.'
+                                         'bnpclient.bnp_client_ext.'
+                                         'bnpcredential')
 from baremetal_network_provisioning.bnpclient.bnp_client_ext import shell
 from baremetal_network_provisioning.tests.unit.bnpclient import test_cli20
 
@@ -275,7 +278,7 @@ class CLITestV20ExtensionBNPCredentialJSON(test_cli20.CLITestV20Base):
             test_cli20.MyApp(sys.stdout), None)
         myid = 'myid'
         args = ['--snmpv1', 'write_community=public',
-                '--name', 'bnpCredName', myid]
+                '--name=bnpCredName', myid]
         updatefields = {'snmpv1': {
             'write_community': 'public'}, 'name': 'bnpCredName'}
         self._test_update_resource(resource, cmd, myid, args, updatefields)
@@ -286,7 +289,8 @@ class CLITestV20ExtensionBNPCredentialJSON(test_cli20.CLITestV20Base):
             test_cli20.MyApp(sys.stdout), None)
         myid = 'myid'
         name = 'bnpCredName'
-        args = ['--snmpv2c', 'write_community=public', '--name', name, myid]
+        args = ['--snmpv2c', 'write_community=public',
+                '--name=bnpCredName', myid]
         updatefields = {'snmpv2c': {'write_community': 'public'}, 'name': name}
         self._test_update_resource(resource, cmd, myid, args, updatefields)
 
@@ -298,7 +302,7 @@ class CLITestV20ExtensionBNPCredentialJSON(test_cli20.CLITestV20Base):
         name = 'bnpCredName'
         args = ['--snmpv3', 'security_name=secName,auth_protocol=authProtocol,'
                 'priv_protocol=privProtocol,priv_key=privKey,auth_key=authKey',
-                '--name', name, myid]
+                '--name=bnpCredName', myid]
         snmpv3 = {'security_name': 'secName', 'auth_protocol': 'authProtocol',
                   'priv_protocol': 'privProtocol', 'priv_key': 'privKey',
                   'auth_key': 'authKey'}
@@ -312,7 +316,7 @@ class CLITestV20ExtensionBNPCredentialJSON(test_cli20.CLITestV20Base):
         myid = 'myid'
         name = 'bnpCredName'
         args = ['--netconf-ssh', 'user_name=userName,password=Password,'
-                'key_path=KeyPath', '--name', name, myid]
+                'key_path=KeyPath', '--name=bnpCredName', myid]
         netconf_ssh = {'user_name': 'userName',
                        'password': 'Password', 'key_path': 'KeyPath'}
         updatefields = {'netconf_ssh': netconf_ssh, 'name': name}
@@ -325,7 +329,7 @@ class CLITestV20ExtensionBNPCredentialJSON(test_cli20.CLITestV20Base):
         myid = 'myid'
         name = 'bnpCredName'
         args = ['--netconf-soap', 'user_name=userName,password=Password',
-                '--name', name, myid]
+                '--name=bnpCredName', myid]
         netconf_soap = {'user_name': 'userName', 'password': 'Password'}
         updatefields = {'netconf_soap': netconf_soap, 'name': name}
         self._test_update_resource(resource, cmd, myid, args, updatefields)
