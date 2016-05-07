@@ -222,6 +222,7 @@ class BNPSwitchController(wsgi.Controller):
                     'mac_address', 'port_provisioning', 'validate']
         validators.validate_attributes(body.keys(), key_list)
         phys_switch = db.get_bnp_phys_switch(context, id)
+        update_list = []
         if not phys_switch:
             raise webob.exc.HTTPNotFound(
                 _("Switch %s does not exist") % id)
@@ -236,7 +237,7 @@ class BNPSwitchController(wsgi.Controller):
                     ip)
             else:
                 ip_dict = {'ip_address': ip}
-                db.update_bnp_phy_switch(context, id, ip_dict)
+                update_list.append(ip_dict)
                 switch['ip_address'] = ip
         if body.get('port_provisioning'):
             enable = body['port_provisioning']
@@ -244,17 +245,17 @@ class BNPSwitchController(wsgi.Controller):
                 raise webob.exc.HTTPBadRequest(
                     _("Invalid port-provisioning option %s ") % enable.lower())
             prov_dict = {'port_provisioning': enable.lower()}
-            db.update_bnp_phy_switch(context, id, prov_dict)
+            update_list.append(prov_dict)
             switch['port_provisioning'] = enable
         if body.get('name'):
             name = body['name']
             name_dict = {'name': name}
-            db.update_bnp_phy_switch(context, id, name_dict)
+            update_list.append(name_dict)
             switch['name'] = name
         if body.get('vendor'):
             vendor = body['vendor']
             vendor_dict = {'vendor': vendor}
-            db.update_bnp_phy_switch(context, id, vendor_dict)
+            update_list.append(vendor_dict)
             switch['vendor'] = vendor
         if body.get('management_protocol') or body.get('credentials'):
             if body.get('management_protocol') and body.get('credentials'):
@@ -263,10 +264,10 @@ class BNPSwitchController(wsgi.Controller):
                 self._get_access_param(context,
                                        proto,
                                        cred)
-                db.update_bnp_phy_switch(context, id,
-                                         {'management_protocol': proto})
-                db.update_bnp_phy_switch(context, id,
-                                         {'credentials': cred})
+                proto_dict = {'management_protocol': proto}
+                cred_dict = {'credentials': cred}
+                update_list.append(proto_dict)
+                update_list.append(cred_dict)
                 switch['management_protocol'] = proto
                 switch['credentials'] = cred
             if body.get('management_protocol') and not body.get('credentials'):
@@ -274,15 +275,16 @@ class BNPSwitchController(wsgi.Controller):
                 self._get_access_param(context,
                                        proto,
                                        switch['credentials'])
-                db.update_bnp_phy_switch(context, id,
-                                         {'management_protocol': proto})
+                proto_dict = {'management_protocol': proto}
+                update_list.append(proto_dict)
                 switch['management_protocol'] = proto
             if body.get('credentials') and not body.get('management_protocol'):
                 cred = body['credentials']
                 self._get_access_param(context,
                                        switch['management_protocol'],
                                        cred)
-                db.update_bnp_phy_switch(context, id, {'credentials': cred})
+                cred_dict = {'credentials': cred}
+                update_list.append(cred_dict)
                 switch['credentials'] = cred
         if body.get('mac_address') or body.get('validate'):
             body['vendor'] = switch['vendor']
@@ -297,13 +299,13 @@ class BNPSwitchController(wsgi.Controller):
                                                            sw_cred)
                 result = self.validate_protocol(access_parameters,
                                                 switch['credentials'], body)
-                db.update_bnp_phy_switch(context, id,
-                                         {'validation_result': result})
-                db.update_bnp_phy_switch(context, id,
-                                         {'mac_address': body['mac_address']})
+                val_dict = {'validation_result': result}
+                mac_dict = {'mac_address': body['mac_address']}
+                update_list.append(val_dict)
+                update_list.append(mac_dict)
                 switch['validation_result'] = result
                 switch['mac_address'] = body['mac_address']
-            if body.get('validate'):
+            if body.get('validate')  and not body.get('mac_address'):
                 body['ip_address'] = switch['ip_address']
                 body['mac_address'] = switch['mac_address']
                 access_parameters = self._get_access_param(context,
@@ -311,22 +313,25 @@ class BNPSwitchController(wsgi.Controller):
                                                            sw_cred)
                 result = self.validate_protocol(access_parameters,
                                                 switch['credentials'], body)
-                db.update_bnp_phy_switch(context, id,
-                                         {'validation_result': result})
+                val_dict = {'validation_result': result}
+                update_list.append(val_dict)
                 switch['validation_result'] = result
-            if body.get('mac_address'):
+            if body.get('mac_address') and not body.get('validate'):
                 body['ip_address'] = switch['ip_address']
                 access_parameters = self._get_access_param(context,
                                                            sw_proto,
                                                            sw_cred)
                 result = self.validate_protocol(access_parameters,
                                                 switch['credentials'], body)
-                db.update_bnp_phy_switch(context, id,
-                                         {'validation_result': result})
-                db.update_bnp_phy_switch(context, id,
-                                         {'mac_address': body['mac_address']})
+                val_dict = {'validation_result': result}
+                mac_dict = {'mac_address': body['mac_address']}
+                update_list.append(val_dict)
+                update_list.append(mac_dict)
                 switch['mac_address'] = body['mac_address']
                 switch['validation_result'] = result
+        for update_dict in update_list:
+            if update_dict:
+                db.update_bnp_phy_switch(context, id, update_dict) 
         return switch
 
     def _protocol_driver(self, switch):
