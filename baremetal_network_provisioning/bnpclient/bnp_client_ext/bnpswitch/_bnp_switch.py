@@ -106,8 +106,6 @@ class BnpSwitchUpdate(extension.ClientExtensionUpdate, BnpSwitch):
 
     def add_known_arguments(self, parser):
 
-        parser.add_argument('--name', metavar='SWITCH_NAME',
-                            help=_('Name of the physical switch.'))
         parser.add_argument('--vendor', metavar='VENDOR',
                             help=_('Vendor of the physical switch.'))
         parser.add_argument('--mac-address', metavar='MAC_ADDRESS',
@@ -138,6 +136,6 @@ class BnpSwitchUpdate(extension.ClientExtensionUpdate, BnpSwitch):
                                const.BNP_SWITCH_RESOURCE_NAME], [
                                'name', 'vendor', 'mac_address',
                                'family', 'port_provisioning',
-                               'management_protocol'
+                               'management_protocol',
                                'credentials', 'validate'])
         return body
