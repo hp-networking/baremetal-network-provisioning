@@ -305,7 +305,7 @@ class BNPSwitchController(wsgi.Controller):
                 update_list.append(mac_dict)
                 switch['validation_result'] = result
                 switch['mac_address'] = body['mac_address']
-            if body.get('validate')  and not body.get('mac_address'):
+            if body.get('validate') and not body.get('mac_address'):
                 body['ip_address'] = switch['ip_address']
                 body['mac_address'] = switch['mac_address']
                 access_parameters = self._get_access_param(context,
@@ -331,7 +331,7 @@ class BNPSwitchController(wsgi.Controller):
                 switch['validation_result'] = result
         for update_dict in update_list:
             if update_dict:
-                db.update_bnp_phy_switch(context, id, update_dict) 
+                db.update_bnp_phy_switch(context, id, update_dict)
         return switch
 
     def _protocol_driver(self, switch):
