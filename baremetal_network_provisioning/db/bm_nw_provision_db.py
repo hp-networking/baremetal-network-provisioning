@@ -284,7 +284,7 @@ def update_bnp_snmp_cred_by_id(context, cred_id, creds):
             (context.session.query(models.BNPSNMPCredential).filter_by(
              id=cred_id).update(
                 {'name': creds['name'],
-                 'proto_type': creds['proto_type'],
+                 'protocol_type': creds['protocol_type'],
                  'write_community': creds['write_community'],
                  'security_name': creds['security_name'],
                  'auth_protocol': creds['auth_protocol'],
@@ -304,7 +304,7 @@ def update_bnp_netconf_cred_by_id(context, cred_id, creds):
             (context.session.query(models.BNPNETCONFCredential).filter_by(
              id=cred_id).update(
              {'name': creds['name'],
-              'proto_type': creds['proto_type'],
+              'protocol_type': creds['protocol_type'],
               'user_name': creds['user_name'],
               'password': creds['password'],
               'key_path': creds['key_path']},
@@ -322,7 +322,7 @@ def add_bnp_snmp_cred(context, snmp_cred):
         snmp_cred = models.BNPSNMPCredential(
             id=uuid,
             name=snmp_cred['name'],
-            proto_type=snmp_cred['proto_type'],
+            protocol_type=snmp_cred['protocol_type'],
             write_community=snmp_cred['write_community'],
             security_name=snmp_cred['security_name'],
             auth_protocol=snmp_cred['auth_protocol'],
@@ -342,7 +342,7 @@ def add_bnp_netconf_cred(context, netconf_cred):
         netconf_cred = models.BNPNETCONFCredential(
             id=uuid,
             name=netconf_cred['name'],
-            proto_type=netconf_cred['proto_type'],
+            protocol_type=netconf_cred['protocol_type'],
             user_name=netconf_cred['user_name'],
             password=netconf_cred['password'],
             key_path=netconf_cred['key_path'])

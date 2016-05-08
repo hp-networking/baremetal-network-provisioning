@@ -151,7 +151,7 @@ class BNPSwitchController(wsgi.Controller):
                                                    body['management_protocol'],
                                                    body['credentials'])
         credentials = body['credentials']
-        body['port_provisioning'] = const.SWITCH_STATUS['enable']
+        body['port_provisioning'] = const.SWITCH_STATUS['enable'].upper()
         result = self.validate_protocol(access_parameters, credentials, body)
         body['validation_result'] = result
         db_switch = db.add_bnp_phys_switch(context, body)
@@ -200,16 +200,16 @@ class BNPSwitchController(wsgi.Controller):
                 _("Credentials not found "
                   "for  %s ") % creds)
         if isinstance(access_parameters, list):
-            proto_type = access_parameters[0].proto_type
+            protocol_type = access_parameters[0].protocol_type
         else:
-            proto_type = access_parameters.proto_type
-        if access_parameters and proto_type == protocol:
+            protocol_type = access_parameters.protocol_type
+        if access_parameters and protocol_type == protocol:
             return access_parameters
         if isinstance(access_parameters, list) and len(access_parameters) > 1:
             raise webob.exc.HTTPBadRequest(
                 _("Multiple credentials matches found "
                   "for name %s, use an ID to be more specific.") % id)
-        if access_parameters and proto_type != protocol:
+        if access_parameters and protocol_type != protocol:
             raise webob.exc.HTTPBadRequest(
                 _("Invalid management_protocol %s") % protocol)
 
@@ -243,8 +243,8 @@ class BNPSwitchController(wsgi.Controller):
             enable = body['port_provisioning']
             if enable.lower() not in const.SWITCH_STATUS.values():
                 raise webob.exc.HTTPBadRequest(
-                    _("Invalid port-provisioning option %s ") % enable.lower())
-            prov_dict = {'port_provisioning': enable.lower()}
+                    _("Invalid port-provisioning option %s ") % enable.upper())
+            prov_dict = {'port_provisioning': enable.upper()}
             update_list.append(prov_dict)
             switch['port_provisioning'] = enable
         if body.get('name'):

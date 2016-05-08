@@ -157,7 +157,7 @@ class BNPCredentialController(wsgi.Controller):
         snmp_cred_dict = self._create_snmp_cred_dict()
         for key, value in access_parameters.iteritems():
             body[key] = value
-        body['proto_type'] = protocol
+        body['protocol_type'] = protocol
         snmp_cred = self._update_dict(body, snmp_cred_dict)
         db_snmp_cred = db.add_bnp_snmp_cred(context, snmp_cred)
         return db_snmp_cred

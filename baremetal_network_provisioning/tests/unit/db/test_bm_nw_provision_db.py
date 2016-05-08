@@ -35,7 +35,7 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
         """Get a snmp credential dict."""
         snmp_cred_dict = {
             'name': 'CRED1',
-            'proto_type': 'snmpv3',
+            'protocol_type': 'snmpv3',
             'write_community': None,
             'security_name': 'xyz',
             'auth_protocol': 'md5',
@@ -49,7 +49,7 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
         """Get a netconf credential dict."""
         netconf_cred_dict = {
             'name': 'CRED1',
-            'proto_type': 'netconf-soap',
+            'protocol_type': 'netconf-soap',
             'user_name': 'sdn',
             'password': 'skyline',
             'key_path': None}
