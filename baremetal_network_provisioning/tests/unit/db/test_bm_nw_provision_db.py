@@ -61,7 +61,7 @@ class NetworkProvisionDBTestCase(testlib_api.SqlTestCase):
         switch_dict = {'name': "test1",
                        'ip_address': "1.1.1.1",
                        'mac_address': "A:B:C:D",
-                       'port_provisioning': "enable",
+                       'port_provisioning': "ENABLED",
                        'management_protocol': "snmpv1",
                        'credentials': "creds1",
                        'validation_result': "Successful",

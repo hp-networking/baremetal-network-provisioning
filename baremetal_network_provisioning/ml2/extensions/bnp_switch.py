@@ -151,7 +151,7 @@ class BNPSwitchController(wsgi.Controller):
                                                    body['management_protocol'],
                                                    body['credentials'])
         credentials = body['credentials']
-        body['port_provisioning'] = const.SWITCH_STATUS['enable'].upper()
+        body['port_provisioning'] = const.SWITCH_STATUS['enable']
         result = self.validate_protocol(access_parameters, credentials, body)
         body['validation_result'] = result
         db_switch = db.add_bnp_phys_switch(context, body)
@@ -241,7 +241,7 @@ class BNPSwitchController(wsgi.Controller):
                 switch['ip_address'] = ip
         if body.get('port_provisioning'):
             enable = body['port_provisioning']
-            if enable.lower() not in const.SWITCH_STATUS.values():
+            if enable.upper() not in const.SWITCH_STATUS.values():
                 raise webob.exc.HTTPBadRequest(
                     _("Invalid port-provisioning option %s ") % enable.upper())
             prov_dict = {'port_provisioning': enable.upper()}
