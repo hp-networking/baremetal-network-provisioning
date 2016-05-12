@@ -22,6 +22,7 @@ from neutron import wsgi
 
 from baremetal_network_provisioning.common import constants as const
 from baremetal_network_provisioning.db import bm_nw_provision_db as db
+from baremetal_network_provisioning.db import bm_nw_provision_models as models
 
 RESOURCE_ATTRIBUTE_MAP = {
     'bnp-switch-ports': {
@@ -51,10 +52,8 @@ class BNPSwitchPortController(wsgi.Controller):
     def index(self, request, **kwargs):
         context = request.context
         req_dict = dict(request.GET)
-        if req_dict and req_dict.get('fields', None):
-            req_dict.pop('fields')
-        filters = req_dict
-        port_maps = db.get_all_bnp_switch_port_maps(context, **filters)
+        filter_dict = self.get_filter_dict(**req_dict)
+        port_maps = db.get_all_bnp_switch_port_maps(context, filter_dict)
         port_list = []
         for port_map in port_maps:
             if (port_map[5] == 0):
@@ -70,6 +69,36 @@ class BNPSwitchPortController(wsgi.Controller):
                          'switch_name': port_map[6]}
             port_list.append(port_dict)
         return {'bnp_switch_ports': port_list}
+
+    def get_filter_dict(self, **args):
+        switchportmap = models.BNPSwitchPortMapping
+        neutronport = models.BNPNeutronPort
+        physwitch = models.BNPPhysicalSwitch
+        filter_dict = {}
+        for key in args:
+            val = args[key]
+            if key == 'switch_name':
+                field = physwitch.name
+            elif key == 'neutron_port_id':
+                field = switchportmap.neutron_port_id
+            elif key == 'switch_port_name':
+                field = switchportmap.switch_port_name
+            elif key == 'segmentation_id':
+                field = neutronport.segmentation_id
+            elif key == 'lag_id':
+                field = neutronport.lag_id
+            elif key == 'bind_status':
+                field = neutronport.bind_status
+                if val == 'bind_success':
+                    val = '0'
+                else:
+                    val = '1'
+            elif key == 'access_type':
+                field = neutronport.access_type
+            else:
+                raise webob.exc.HTTPBadRequest(_("Invalid field value"))
+            filter_dict[field] = val
+        return filter_dict
 
     def create(self, request, **kwargs):
         raise webob.exc.HTTPBadRequest(
