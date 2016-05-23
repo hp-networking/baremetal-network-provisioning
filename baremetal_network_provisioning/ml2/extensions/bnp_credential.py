@@ -24,7 +24,6 @@ from neutron import wsgi
 from baremetal_network_provisioning.common import constants as const
 from baremetal_network_provisioning.common import validators
 from baremetal_network_provisioning.db import bm_nw_provision_db as db
-from baremetal_network_provisioning.ml2.extensions import bnp_switch
 
 from oslo_log import log as logging
 from oslo_utils import uuidutils
@@ -122,14 +121,12 @@ class BNPCredentialController(wsgi.Controller):
     def delete(self, request, id, **kwargs):
         context = request.context
         self._check_admin(context)
-        filters = {}
+        filters = {'credentials': id}
         switches = db.get_all_bnp_phys_switches(context, **filters)
-        switches = bnp_switch.BNPSwitchController()._switch_to_show(switches)
-        for switch in switches:
-            if id == switch['credentials']:
-                raise webob.exc.HTTPConflict(
-                    _("credential with id=%s is associated with a switch."
-                      "Hence can't be deleted.") % id)
+        if switches:
+            raise webob.exc.HTTPConflict(
+                _("credential with id=%s is associated with a switch."
+                  "Hence can't be deleted.") % id)
         snmp_cred = db.get_snmp_cred_by_id(context, id)
         netconf_cred = db.get_netconf_cred_by_id(context, id)
         if snmp_cred:

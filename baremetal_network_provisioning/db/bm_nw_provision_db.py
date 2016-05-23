@@ -234,13 +234,21 @@ def get_all_bnp_phys_switches(context, **args):
     return switches
 
 
-def update_bnp_phy_switch(context, sw_id, dict):
+def update_bnp_phy_switch(context, sw_id, switch):
     """Update physical switch name."""
     try:
         with context.session.begin(subtransactions=True):
             (context.session.query(models.BNPPhysicalSwitch).filter_by(
                 id=sw_id).update(
-                    dict,
+                    {'name': switch['name'],
+                     'ip_address': switch['ip_address'],
+                     'mac_address': switch['mac_address'],
+                     'port_provisioning': switch['port_provisioning'],
+                     'management_protocol': switch['management_protocol'],
+                     'credentials': switch['credentials'],
+                     'validation_result': switch['validation_result'],
+                     'vendor': switch['vendor'],
+                     'family': switch['family']},
                     synchronize_session=False))
     except exc.NoResultFound:
         LOG.error(_LE("no physical switch found for id: %s"), sw_id)
