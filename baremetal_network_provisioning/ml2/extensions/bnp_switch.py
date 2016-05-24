@@ -241,13 +241,10 @@ class BNPSwitchController(wsgi.Controller):
                     _("Invalid port-provisioning option %s ") % port_prov)
             switch['port_provisioning'] = port_prov.upper()
         if body.get('name'):
-            name = body['name']
-            switch['name'] = name
+            switch['name'] = body['name']
         if body.get('vendor'):
-            vendor = body['vendor']
-            switch['vendor'] = vendor
-        if body.get('management_protocol') or body.get('credentials'):
-            if body.get('management_protocol') and body.get('credentials'):
+            switch['vendor'] = body['vendor']
+        if body.get('management_protocol') and body.get('credentials'):
                 proto = body['management_protocol']
                 cred = body['credentials']
                 self._get_access_param(context,
@@ -255,7 +252,7 @@ class BNPSwitchController(wsgi.Controller):
                                        cred)
                 switch['management_protocol'] = proto
                 switch['credentials'] = cred
-            elif (body.get('management_protocol')
+        elif (body.get('management_protocol')
                   and not body.get('credentials')):
                 proto = body['management_protocol']
                 if (body['management_protocol'] !=
@@ -263,7 +260,7 @@ class BNPSwitchController(wsgi.Controller):
                         raise webob.exc.HTTPBadRequest(
                             _("Invalid management_protocol : %s ") % proto)
                 switch['management_protocol'] = proto
-            elif (body.get('credentials') and not
+        elif (body.get('credentials') and not
                   body.get('management_protocol')):
                 cred = body['credentials']
                 self._get_access_param(context,

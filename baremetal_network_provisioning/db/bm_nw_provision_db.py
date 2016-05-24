@@ -115,11 +115,11 @@ def get_if_bnp_phy_switch_exists(context, **args):
     try:
         query = context.session.query(
             models.BNPPhysicalSwitch).filter_by(**args)
-        switch_count = query.count()
+        switch_exists = context.session.query(query.exists()).scalar() 
     except exc.NoResultFound:
         LOG.error(_LE("no physical switch found"))
         return
-    return switch_count
+    return switch_exists
 
 
 def get_bnp_neutron_port(context, neutron_port_id):

@@ -122,8 +122,8 @@ class BNPCredentialController(wsgi.Controller):
         context = request.context
         self._check_admin(context)
         filters = {'credentials': id}
-        switch_count = db.get_if_bnp_phy_switch_exists(context, **filters)
-        if switch_count:
+        switch_exists = db.get_if_bnp_phy_switch_exists(context, **filters)
+        if switch_exists:
             raise webob.exc.HTTPConflict(
                 _("credential with id=%s is associated with a switch."
                   "Hence can't be deleted.") % id)
