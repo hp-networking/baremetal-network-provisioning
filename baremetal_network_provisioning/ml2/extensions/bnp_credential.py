@@ -121,6 +121,12 @@ class BNPCredentialController(wsgi.Controller):
     def delete(self, request, id, **kwargs):
         context = request.context
         self._check_admin(context)
+        filters = {'credentials': id}
+        switch_exists = db.get_if_bnp_phy_switch_exists(context, **filters)
+        if switch_exists:
+            raise webob.exc.HTTPConflict(
+                _("credential with id=%s is associated with a switch."
+                  "Hence can't be deleted.") % id)
         snmp_cred = db.get_snmp_cred_by_id(context, id)
         netconf_cred = db.get_netconf_cred_by_id(context, id)
         if snmp_cred:
@@ -157,7 +163,7 @@ class BNPCredentialController(wsgi.Controller):
         snmp_cred_dict = self._create_snmp_cred_dict()
         for key, value in access_parameters.iteritems():
             body[key] = value
-        body['proto_type'] = protocol
+        body['protocol_type'] = protocol
         snmp_cred = self._update_dict(body, snmp_cred_dict)
         db_snmp_cred = db.add_bnp_snmp_cred(context, snmp_cred)
         return db_snmp_cred

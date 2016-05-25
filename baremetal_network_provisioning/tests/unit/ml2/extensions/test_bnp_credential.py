@@ -212,7 +212,7 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
         update_data = {"bnp_credential": {"snmpv1": {
             "write_community": "private"}, "name": "NewCredName"}}
         updated_dict = self._test_update_credential(update_data, credential_id)
-        expected_dict = {"id": credential_id, "proto_type": "snmpv1",
+        expected_dict = {"id": credential_id, "protocol_type": "snmpv1",
                          "write_community": "private", "name": "NewCredName",
                          "security_name": None, "auth_protocol": None,
                          "auth_key": None, "priv_protocol": None,
@@ -225,7 +225,7 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
         update_data = {"bnp_credential": {"snmpv2c": {
             "write_community": "private"}, "name": "NewCredName"}}
         updated_dict = self._test_update_credential(update_data, credential_id)
-        expected_dict = {"id": credential_id, "proto_type": "snmpv2c",
+        expected_dict = {"id": credential_id, "protocol_type": "snmpv2c",
                          "write_community": "private", "name": "NewCredName",
                          "security_name": None, "auth_protocol": None,
                          "auth_key": None, "priv_protocol": None,
@@ -243,7 +243,7 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
                                                      "priv_key": "FakePrivKey"
                                                      }, "name": "NewCredName"}}
         updated_dict = self._test_update_credential(update_data, credential_id)
-        expected_dict = {"id": credential_id, "proto_type": "snmpv3",
+        expected_dict = {"id": credential_id, "protocol_type": "snmpv3",
                          "write_community": None, "name": "NewCredName",
                          "security_name": "NewFakeSecurityName",
                          "auth_protocol": "md5", "auth_key": "FakeAuthKey",
@@ -267,7 +267,7 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
                                                              "NewCredName"}}
         updated_dict = self._test_update_credential_for_netconf_ssh(
             update_data, credential_id)
-        expected_dict = {"id": credential_id, "proto_type": "netconf_ssh",
+        expected_dict = {"id": credential_id, "protocol_type": "netconf_ssh",
                          "user_name": "NewFakeUserName",
                          "password": "NewFakePassword", "key_path":
                          "/home/fakedir/key1.rsa", "name": "NewCredName"}
@@ -281,7 +281,7 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
             "user_name": "NewFakeUserName", "password": "NewFakePassword"},
             "name": "NewCredName"}}
         updated_dict = self._test_update_credential(update_data, credential_id)
-        expected_dict = {"id": credential_id, "proto_type": "netconf_soap",
+        expected_dict = {"id": credential_id, "protocol_type": "netconf_soap",
                          "user_name": "NewFakeUserName",
                          "password": "NewFakePassword", "key_path": None,
                          "name": "NewCredName"}
@@ -292,7 +292,7 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
         credential_id = credential["bnp_credential"]["id"]
         update_data = {"bnp_credential": {"name": "NewCredName"}}
         updated_dict = self._test_update_credential(update_data, credential_id)
-        expected_dict = {"id": credential_id, "proto_type": "snmpv1",
+        expected_dict = {"id": credential_id, "protocol_type": "snmpv1",
                          "write_community": "public", "name": "NewCredName",
                          "security_name": None, "auth_protocol": None,
                          "auth_key": None, "priv_protocol": None,
@@ -304,7 +304,7 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
         credential_id = credential["bnp_credential"]["id"]
         update_data = {"bnp_credential": {"name": "NewCredName"}}
         updated_dict = self._test_update_credential(update_data, credential_id)
-        expected_dict = {"id": credential_id, "proto_type": "snmpv2c",
+        expected_dict = {"id": credential_id, "protocol_type": "snmpv2c",
                          "write_community": "public", "name": "NewCredName",
                          "security_name": None, "auth_protocol": None,
                          "auth_key": None, "priv_protocol": None,
@@ -316,7 +316,7 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
         credential_id = credential["bnp_credential"]["id"]
         update_data = {"bnp_credential": {"name": "NewCredName"}}
         updated_dict = self._test_update_credential(update_data, credential_id)
-        expected_dict = {"id": credential_id, "proto_type": "snmpv3",
+        expected_dict = {"id": credential_id, "protocol_type": "snmpv3",
                          "write_community": None, "name": "NewCredName",
                          "security_name": "FakeSecName", "auth_protocol": None,
                          "auth_key": None, "priv_protocol": None,
@@ -330,7 +330,7 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
         update_data = {"bnp_credential": {"name": "NewCredName"}}
         updated_dict = self._test_update_credential_for_netconf_ssh(
             update_data, credential_id)
-        expected_dict = {"id": credential_id, "proto_type": "netconf_ssh",
+        expected_dict = {"id": credential_id, "protocol_type": "netconf_ssh",
                          "user_name": "FakeUserName",
                          "password": "FakePassword", "key_path":
                          "/home/fakedir/key1.rsa", "name": "NewCredName"}
@@ -342,7 +342,7 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
         credential_id = credential["bnp_credential"]["id"]
         update_data = {"bnp_credential": {"name": "NewCredName"}}
         updated_dict = self._test_update_credential(update_data, credential_id)
-        expected_dict = {"id": credential_id, "proto_type": "netconf_soap",
+        expected_dict = {"id": credential_id, "protocol_type": "netconf_soap",
                          "user_name": "FakeUserName",
                          "password": "FakePassword", "key_path": None,
                          "name": "NewCredName"}
@@ -464,9 +464,9 @@ class TestBnpCredential(test_plugin.NeutronDbPluginV2TestCase,
                                               " format")
         self._test_raised_exception_message(
             update_data, credential_id, error_string)
-        update_data = {"bnp_credential": {"fake_proto_type": {
+        update_data = {"bnp_credential": {"fake_protocol_type": {
             "user_name": "FakeUserName", "password": "FakePassword"}}}
-        fake_proto_str = unicode("fake_proto_type", "utf-8")
+        fake_proto_str = unicode("fake_protocol_type", "utf-8")
         fake_proto_list = [fake_proto_str]
         error_string = unicode("Protocol " + str(fake_proto_list) + (" is not"
                                                                      " support"

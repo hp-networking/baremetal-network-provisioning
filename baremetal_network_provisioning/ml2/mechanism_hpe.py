@@ -34,6 +34,7 @@ from neutron.plugins.ml2 import driver_api as api
 from baremetal_network_provisioning.common import constants as hp_const
 from baremetal_network_provisioning.db import bm_nw_provision_db as db
 from baremetal_network_provisioning import managers
+from baremetal_network_provisioning.ml2.extensions import bnp_switch as bnp_sw
 
 
 LOG = logging.getLogger(__name__)
@@ -227,6 +228,31 @@ class HPEMechanismDriver(api.MechanismDriver):
             if not bnp_switch:
                 LOG.error(_LE("No physical switch found '%s' "), switch_mac_id)
                 self._raise_ml2_error(wexc.HTTPNotFound, 'create_port')
+            self.sw_obj = bnp_sw.BNPSwitchController()
+            mgmt_proto = bnp_switch['management_protocol']
+            creds = bnp_switch['credentials']
+            access_parameters = self.sw_obj._get_access_param(db_context,
+                                                              mgmt_proto,
+                                                              creds)
+            if uuidutils.is_uuid_like(creds):
+                access_params_iterator = access_parameters.iteritems()
+            else:
+                access_params_iterator = access_parameters[0].iteritems()
+            for key, value in access_params_iterator:
+                if key == hp_const.NAME:
+                    continue
+                bnp_switch[key] = value
+            driver_key = self.sw_obj._protocol_driver(bnp_switch)
+            try:
+                if driver_key:
+                    dr_obj = driver_key.obj
+                    mac_val = dr_obj.get_protocol_validation_result(bnp_switch)
+                    if mac_val != bnp_switch['mac_address']:
+                        self._raise_ml2_error(wexc.HTTPBadRequest,
+                                              'Invalid mac address')
+            except Exception as e:
+                LOG.error(e)
+                self._raise_ml2_error(wexc.HTTPBadRequest, 'create_port')
             port_provisioning_db = bnp_switch.port_provisioning
             if port_provisioning_db != hp_const.SWITCH_STATUS['enable']:
                 LOG.error(_LE("Physical switch is not Enabled '%s' "),

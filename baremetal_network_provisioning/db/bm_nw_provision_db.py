@@ -110,6 +110,18 @@ def get_bnp_phys_switch_by_ip(context, ip_addr):
     return switch
 
 
+def get_if_bnp_phy_switch_exists(context, **args):
+    """check if physical switch exists for a given filter."""
+    try:
+        query = context.session.query(
+            models.BNPPhysicalSwitch).filter_by(**args)
+        switch_exists = context.session.query(query.exists()).scalar() 
+    except exc.NoResultFound:
+        LOG.error(_LE("no physical switch found"))
+        return
+    return switch_exists
+
+
 def get_bnp_neutron_port(context, neutron_port_id):
     """Get bnp neutron port that matches neutron_port_id."""
     try:
@@ -234,13 +246,21 @@ def get_all_bnp_phys_switches(context, **args):
     return switches
 
 
-def update_bnp_phys_switch_status(context, sw_id, sw_status):
-    """Update physical switch status."""
+def update_bnp_phy_switch(context, sw_id, switch):
+    """Update physical switch name."""
     try:
         with context.session.begin(subtransactions=True):
             (context.session.query(models.BNPPhysicalSwitch).filter_by(
                 id=sw_id).update(
-                    {'port_provisioning': sw_status},
+                    {'name': switch['name'],
+                     'ip_address': switch['ip_address'],
+                     'mac_address': switch['mac_address'],
+                     'port_provisioning': switch['port_provisioning'],
+                     'management_protocol': switch['management_protocol'],
+                     'credentials': switch['credentials'],
+                     'validation_result': switch['validation_result'],
+                     'vendor': switch['vendor'],
+                     'family': switch['family']},
                     synchronize_session=False))
     except exc.NoResultFound:
         LOG.error(_LE("no physical switch found for id: %s"), sw_id)
@@ -284,7 +304,7 @@ def update_bnp_snmp_cred_by_id(context, cred_id, creds):
             (context.session.query(models.BNPSNMPCredential).filter_by(
              id=cred_id).update(
                 {'name': creds['name'],
-                 'proto_type': creds['proto_type'],
+                 'protocol_type': creds['protocol_type'],
                  'write_community': creds['write_community'],
                  'security_name': creds['security_name'],
                  'auth_protocol': creds['auth_protocol'],
@@ -304,7 +324,7 @@ def update_bnp_netconf_cred_by_id(context, cred_id, creds):
             (context.session.query(models.BNPNETCONFCredential).filter_by(
              id=cred_id).update(
              {'name': creds['name'],
-              'proto_type': creds['proto_type'],
+              'protocol_type': creds['protocol_type'],
               'user_name': creds['user_name'],
               'password': creds['password'],
               'key_path': creds['key_path']},
@@ -322,7 +342,7 @@ def add_bnp_snmp_cred(context, snmp_cred):
         snmp_cred = models.BNPSNMPCredential(
             id=uuid,
             name=snmp_cred['name'],
-            proto_type=snmp_cred['proto_type'],
+            protocol_type=snmp_cred['protocol_type'],
             write_community=snmp_cred['write_community'],
             security_name=snmp_cred['security_name'],
             auth_protocol=snmp_cred['auth_protocol'],
@@ -342,7 +362,7 @@ def add_bnp_netconf_cred(context, netconf_cred):
         netconf_cred = models.BNPNETCONFCredential(
             id=uuid,
             name=netconf_cred['name'],
-            proto_type=netconf_cred['proto_type'],
+            protocol_type=netconf_cred['protocol_type'],
             user_name=netconf_cred['user_name'],
             password=netconf_cred['password'],
             key_path=netconf_cred['key_path'])

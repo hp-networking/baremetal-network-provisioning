@@ -67,7 +67,7 @@ class BNPSNMPCredential(model_base.BASEV2, models_v2.HasId):
     """Define snmp credentials."""
     __tablename__ = "bnp_snmp_credentials"
     name = sa.Column(sa.String(36), nullable=False)
-    proto_type = sa.Column(sa.String(255), nullable=False)
+    protocol_type = sa.Column(sa.String(255), nullable=False)
     write_community = sa.Column(sa.String(255), nullable=True)
     security_name = sa.Column(sa.String(255), nullable=True)
     auth_protocol = sa.Column(sa.String(16), nullable=True)
@@ -82,7 +82,7 @@ class BNPNETCONFCredential(model_base.BASEV2, models_v2.HasId):
     """Define netconf credentials."""
     __tablename__ = "bnp_netconf_credentials"
     name = sa.Column(sa.String(36), nullable=False)
-    proto_type = sa.Column(sa.String(255), nullable=False)
+    protocol_type = sa.Column(sa.String(255), nullable=False)
     user_name = sa.Column(sa.String(255), nullable=True)
     password = sa.Column(sa.String(255), nullable=True)
     key_path = sa.Column(sa.String(255), nullable=True)
