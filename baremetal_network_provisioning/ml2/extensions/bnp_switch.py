@@ -137,7 +137,8 @@ class BNPSwitchController(wsgi.Controller):
             if key not in keys:
                 raise webob.exc.HTTPBadRequest(
                     _("Key %s not found in request body") % key)
-        validators.validate_switch_attributes(keys, key_list)
+        key_list.append('family')
+        validators.validate_attributes(keys, key_list)
         ip_address = body['ip_address']
         if const.FAMILY not in body:
             body['family'] = ''
@@ -147,6 +148,12 @@ class BNPSwitchController(wsgi.Controller):
             raise webob.exc.HTTPConflict(
                 _("Switch with ip_address %s is already present") %
                 ip_address)
+        filters = {'mac_address': body['mac_address']}
+        switch_exists = db.get_if_bnp_phy_switch_exists(context, **filters)
+        if switch_exists:
+            raise webob.exc.HTTPConflict(
+                _("Switch with mac_address %s is already present") %
+                body['mac_address'])
         access_parameters = self._get_access_param(context,
                                                    body['management_protocol'],
                                                    body['credentials'])
@@ -158,14 +165,11 @@ class BNPSwitchController(wsgi.Controller):
         return {const.BNP_SWITCH_RESOURCE_NAME: dict(db_switch)}
 
     def validate_protocol(self, access_parameters, credentials, body):
-        if uuidutils.is_uuid_like(credentials):
-            access_params_iterator = access_parameters.iteritems()
-        else:
-            access_params_iterator = access_parameters[0].iteritems()
-        for key, value in access_params_iterator:
+        for key, value in access_parameters.iteritems():
             if key == const.NAME:
                 continue
             body[key] = value
+        body['credentials'] = access_parameters['id']
         driver_key = self._protocol_driver(body)
         try:
             if driver_key:
@@ -187,31 +191,29 @@ class BNPSwitchController(wsgi.Controller):
     def _get_access_param(self, context, protocol, creds):
         if const.PROTOCOL_SNMP in protocol:
             if not uuidutils.is_uuid_like(creds):
-                access_parameters = db.get_snmp_cred_by_name(context, creds)
+                access_parameters = db.get_snmp_cred_by_name_and_protocol(
+                    context, creds, protocol)
             else:
                 access_parameters = db.get_snmp_cred_by_id(context, creds)
         else:
             if not uuidutils.is_uuid_like(creds):
-                access_parameters = db.get_netconf_cred_by_name(context, creds)
+                access_parameters = db.get_netconf_cred_by_name_and_protocol(
+                    context, creds, protocol)
             else:
                 access_parameters = db.get_netconf_cred_by_id(context, creds)
         if not access_parameters:
             raise webob.exc.HTTPBadRequest(
-                _("Credentials not found "
-                  "for  %s ") % creds)
-        if isinstance(access_parameters, list):
-            protocol_type = access_parameters[0].protocol_type
-        else:
-            protocol_type = access_parameters.protocol_type
-        if access_parameters and protocol_type == protocol:
-            return access_parameters
+                _("Credentials not found for Id or name: %s") % creds)
         if isinstance(access_parameters, list) and len(access_parameters) > 1:
             raise webob.exc.HTTPBadRequest(
                 _("Multiple credentials matches found "
-                  "for name %s, use an ID to be more specific.") % id)
-        if access_parameters and protocol_type != protocol:
+                  "for name: %s, use an ID to be more specific.") % creds)
+        if isinstance(access_parameters, list):
+            access_parameters = access_parameters[0]
+        if access_parameters['protocol_type'] != protocol:
             raise webob.exc.HTTPBadRequest(
-                _("Invalid management_protocol %s") % protocol)
+                _("Credentials not found for Id or name: %s") % creds)
+        return access_parameters
 
     def update(self, request, id, **kwargs):
         context = request.context
@@ -245,28 +247,28 @@ class BNPSwitchController(wsgi.Controller):
         if body.get('vendor'):
             switch['vendor'] = body['vendor']
         if body.get('management_protocol') and body.get('credentials'):
-                proto = body['management_protocol']
-                cred = body['credentials']
-                self._get_access_param(context,
-                                       proto,
-                                       cred)
-                switch['management_protocol'] = proto
-                switch['credentials'] = cred
+            proto = body['management_protocol']
+            cred = body['credentials']
+            self._get_access_param(context,
+                                   proto,
+                                   cred)
+            switch['management_protocol'] = proto
+            switch['credentials'] = cred
         elif (body.get('management_protocol')
-                  and not body.get('credentials')):
-                proto = body['management_protocol']
-                if (body['management_protocol'] !=
-                        switch['management_protocol']):
-                        raise webob.exc.HTTPBadRequest(
-                            _("Invalid management_protocol : %s ") % proto)
-                switch['management_protocol'] = proto
+              and not body.get('credentials')):
+            proto = body['management_protocol']
+            if (body['management_protocol'] !=
+                    switch['management_protocol']):
+                raise webob.exc.HTTPBadRequest(
+                    _("Invalid management_protocol : %s ") % proto)
+            switch['management_protocol'] = proto
         elif (body.get('credentials') and not
-                  body.get('management_protocol')):
-                cred = body['credentials']
-                self._get_access_param(context,
-                                       switch['management_protocol'],
-                                       cred)
-                switch['credentials'] = cred
+              body.get('management_protocol')):
+            cred = body['credentials']
+            self._get_access_param(context,
+                                   switch['management_protocol'],
+                                   cred)
+            switch['credentials'] = cred
         if body.get('mac_address') or body.get('validate'):
             body['vendor'] = switch['vendor']
             body['management_protocol'] = switch['management_protocol']
@@ -278,6 +280,13 @@ class BNPSwitchController(wsgi.Controller):
                                                        sw_proto,
                                                        sw_cred)
             if body.get('mac_address'):
+                filters = {'mac_address': body['mac_address']}
+                switch_exists = db.get_if_bnp_phy_switch_exists(
+                    context, **filters)
+                if switch_exists:
+                    raise webob.exc.HTTPConflict(
+                        _("Switch with mac_address %s is already present") %
+                        body['mac_address'])
                 result = self.validate_protocol(access_parameters,
                                                 switch['credentials'], body)
                 switch['validation_result'] = result

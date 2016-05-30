@@ -58,6 +58,7 @@ cfg.CONF.register_opts(param_opts, "default")
 
 
 class HPEMechanismDriver(api.MechanismDriver):
+
     """Ml2 Mechanism front-end driver interface for bare
 
     metal provisioning.
@@ -234,11 +235,7 @@ class HPEMechanismDriver(api.MechanismDriver):
             access_parameters = self.sw_obj._get_access_param(db_context,
                                                               mgmt_proto,
                                                               creds)
-            if uuidutils.is_uuid_like(creds):
-                access_params_iterator = access_parameters.iteritems()
-            else:
-                access_params_iterator = access_parameters[0].iteritems()
-            for key, value in access_params_iterator:
+            for key, value in access_parameters.iteritems():
                 if key == hp_const.NAME:
                     continue
                 bnp_switch[key] = value

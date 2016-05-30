@@ -174,7 +174,7 @@ class BNPCredentialController(wsgi.Controller):
         netconf_cred_dict = self._create_netconf_cred_dict()
         for key, value in access_parameters.iteritems():
             body[key] = value
-        body['proto_type'] = protocol
+        body['protocol_type'] = protocol
         netconf_cred = self._update_dict(body, netconf_cred_dict)
         db_netconf_cred = db.add_bnp_netconf_cred(context, netconf_cred)
         return db_netconf_cred
@@ -183,7 +183,7 @@ class BNPCredentialController(wsgi.Controller):
         """Create SNMP credential dict."""
         snmp_cred_dict = {
             'name': None,
-            'proto_type': None,
+            'protocol_type': None,
             'security_name': None,
             'write_community': None,
             'auth_protocol': None,
@@ -197,14 +197,14 @@ class BNPCredentialController(wsgi.Controller):
         """Create NETCONF credential dict."""
         netconf_cred_dict = {
             'name': None,
-            'proto_type': None,
+            'protocol_type': None,
             'user_name': None,
             'password': None,
             'key_path': None}
         return netconf_cred_dict
 
     def check_creds_proto_type(self, switch_creds, id, protocol):
-        if not switch_creds or (switch_creds.get('proto_type')
+        if not switch_creds or (switch_creds.get('protocol_type')
                                 != protocol.lower()):
             raise webob.exc.HTTPBadRequest(
                 _("protocol type cannot be updated for the id %s") % id)

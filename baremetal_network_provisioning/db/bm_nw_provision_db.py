@@ -28,8 +28,8 @@ LOG = logging.getLogger(__name__)
 
 
 def get_subnets_by_network(context, network_id):
-        subnet_qry = context.session.query(models_v2.Subnet)
-        return subnet_qry.filter_by(network_id=network_id).all()
+    subnet_qry = context.session.query(models_v2.Subnet)
+    return subnet_qry.filter_by(network_id=network_id).all()
 
 
 def add_bnp_phys_switch(context, switch):
@@ -115,7 +115,7 @@ def get_if_bnp_phy_switch_exists(context, **args):
     try:
         query = context.session.query(
             models.BNPPhysicalSwitch).filter_by(**args)
-        switch_exists = context.session.query(query.exists()).scalar() 
+        switch_exists = context.session.query(query.exists()).scalar()
     except exc.NoResultFound:
         LOG.error(_LE("no physical switch found"))
         return
@@ -315,6 +315,36 @@ def update_bnp_snmp_cred_by_id(context, cred_id, creds):
              synchronize_session=False))
     except exc.NoResultFound:
         LOG.error(_LE("no snmp switch credentials found for id: %s"), cred_id)
+
+
+def get_snmp_cred_by_name_and_protocol(context, name, proto_type):
+    """Get SNMP Credential that matches name and protocol."""
+    try:
+        query = context.session.query(models.BNPSNMPCredential)
+        snmp_creds = query.filter_by(name=name, protocol_type=proto_type).all()
+    except exc.NoResultFound:
+        LOG.info(
+            _LI("no snmp credential found with name:"
+                " %(name)s and protocol: %(proto_type)s"), {'name': name,
+                                                            'proto_type':
+                                                            proto_type})
+        return
+    return snmp_creds
+
+
+def get_netconf_cred_by_name_and_protocol(context, name, proto_type):
+    """Get NETCONF Credentials that matches name and protocol."""
+    try:
+        query = context.session.query(models.BNPNETCONFCredential)
+        netconf_creds = query.filter_by(name=name,
+                                        protocol_type=proto_type).all()
+    except exc.NoResultFound:
+        LOG.info(_LI("no netconf credential found with name:"
+                     " %(name)s and protocol:  %(proto_type)s"), {'name': name,
+                                                                  'proto_type':
+                                                                  proto_type})
+        return
+    return netconf_creds
 
 
 def update_bnp_netconf_cred_by_id(context, cred_id, creds):
