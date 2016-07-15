@@ -19,7 +19,7 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron.api.v2 import resource
-from neutron.i18n import _LE
+from neutron._i18n import _LE
 from neutron import wsgi
 
 from baremetal_network_provisioning.common import constants as const

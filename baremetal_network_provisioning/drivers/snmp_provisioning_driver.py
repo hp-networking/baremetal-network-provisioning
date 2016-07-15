@@ -18,7 +18,7 @@ from baremetal_network_provisioning.common import snmp_client
 from baremetal_network_provisioning.drivers import (port_provisioning_driver
                                                     as driver)
 
-from neutron.i18n import _LE
+from neutron._i18n import _LE
 
 from oslo_log import log as logging
 
