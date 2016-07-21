@@ -76,7 +76,7 @@ The following switches are supported in this project
 5900, 5920, 5930, 5700, 7900
 
 .. _references:
-7. References
+8. References
 =============
 https://specs.openstack.org/openstack/ironic-specs/specs/not-implemented/network-provider.html
 https://specs.openstack.org/openstack/ironic-specs/specs/not-implemented/ironic-ml2-integration.html
