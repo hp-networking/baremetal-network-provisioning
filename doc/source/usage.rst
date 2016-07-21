@@ -69,6 +69,12 @@ The mechanism driver acts based on VNIC_TYPE =='baremetal' and process the neutr
 
 The physical information like switch_id and port_id is fetched from the 'local_link_information' list from portbindings.PROFILE
 
+.. _supported_switches:
+7. Supported Switches
+===========================
+The following switches are supported in this project
+5900, 5920, 5930, 5700, 7900
+
 .. _references:
 7. References
 =============
