@@ -19,9 +19,9 @@ from sqlalchemy.orm import exc
 
 from baremetal_network_provisioning.db import bm_nw_provision_models as models
 
-from neutron.db import models_v2
 from neutron._i18n import _LE
 from neutron._i18n import _LI
+from neutron.db import models_v2
 
 
 LOG = logging.getLogger(__name__)

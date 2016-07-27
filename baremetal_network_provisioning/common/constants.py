@@ -58,8 +58,8 @@ PORT_STATUS = {'1': 'UP',
                '6': 'NOTPRESENT',
                '7': 'LOWERLAYERDOWN'}
 
-SWITCH_STATUS = {'enable': 'ENABLED',
-                 'disable': 'DISABLED'}
+PORT_PROVISIONING_STATUS = {'enable': 'ENABLED',
+                            'disable': 'DISABLED'}
 SUCCESS = 'Success'
 REQUEST_TIMED_OUT = 'Request Timed Out'
 NO_DRVR_FOUND = 'No Provisioning driver found for given Vendor/Family/Protocol'
