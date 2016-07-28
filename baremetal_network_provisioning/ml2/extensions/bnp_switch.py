@@ -15,11 +15,11 @@
 
 import webob.exc
 
+from neutron._i18n import _LE
 from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron.api.v2 import resource
-from neutron._i18n import _LE
 from neutron import wsgi
 
 from baremetal_network_provisioning.common import constants as const
@@ -120,7 +120,8 @@ class BNPSwitchController(wsgi.Controller):
         if portmap:
             raise webob.exc.HTTPConflict(
                 _("Switch id %s has active port mappings") % id)
-        if switch['port_provisioning'] == const.SWITCH_STATUS['enable']:
+        if (switch['port_provisioning'] ==
+                const.PORT_PROVISIONING_STATUS['enable']):
             raise webob.exc.HTTPBadRequest(
                 _("Disable the switch %s to delete") % id)
         db.delete_bnp_phys_switch(context, id)
@@ -158,7 +159,7 @@ class BNPSwitchController(wsgi.Controller):
                                                    body['management_protocol'],
                                                    body['credentials'])
         credentials = body['credentials']
-        body['port_provisioning'] = const.SWITCH_STATUS['enable']
+        body['port_provisioning'] = const.PORT_PROVISIONING_STATUS['enable']
         result = self.validate_protocol(access_parameters, credentials, body)
         body['validation_result'] = result
         db_switch = db.add_bnp_phys_switch(context, body)
@@ -228,17 +229,19 @@ class BNPSwitchController(wsgi.Controller):
             raise webob.exc.HTTPNotFound(
                 _("Switch %s does not exist") % id)
         if body.get('ip_address'):
-            ip = body['ip_address']
-            bnp_switch = db.get_bnp_phys_switch_by_ip(context, ip)
-            if bnp_switch:
-                raise webob.exc.HTTPConflict(
-                    _("Switch with ip_address %s is already present") %
-                    ip)
-            else:
-                switch['ip_address'] = ip
+            if (body['ip_address'] != switch['ip_address']):
+                ip = body['ip_address']
+                bnp_switch = db.get_bnp_phys_switch_by_ip(context, ip)
+                if bnp_switch:
+                    raise webob.exc.HTTPConflict(
+                        _("Switch with ip_address %s is already present") %
+                        ip)
+                else:
+                    switch['ip_address'] = ip
         if body.get('port_provisioning'):
             port_prov = body['port_provisioning']
-            if port_prov.upper() not in const.SWITCH_STATUS.values():
+            if (port_prov.upper() not in
+                    const.PORT_PROVISIONING_STATUS.values()):
                 raise webob.exc.HTTPBadRequest(
                     _("Invalid port-provisioning option %s ") % port_prov)
             switch['port_provisioning'] = port_prov.upper()

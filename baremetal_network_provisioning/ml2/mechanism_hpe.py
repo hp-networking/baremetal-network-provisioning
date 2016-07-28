@@ -251,7 +251,8 @@ class HPEMechanismDriver(api.MechanismDriver):
                 LOG.error(e)
                 self._raise_ml2_error(wexc.HTTPBadRequest, 'create_port')
             port_provisioning_db = bnp_switch.port_provisioning
-            if port_provisioning_db != hp_const.SWITCH_STATUS['enable']:
+            if (port_provisioning_db !=
+                    hp_const.PORT_PROVISIONING_STATUS['enable']):
                 LOG.error(_LE("Physical switch is not Enabled '%s' "),
                           bnp_switch.port_provisioning)
                 self._raise_ml2_error(wexc.HTTPBadRequest, 'create_port')
